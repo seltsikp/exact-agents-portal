@@ -43,6 +43,7 @@ window.addEventListener("DOMContentLoaded", () => {
   let currentSession = null;          // session object when logged in
   let currentProfile = null;          // agent_users row
   let currentAgentIdForInsert = null; // agent inserts use own agent_id; admin picks
+  let hydratedUserId = null;
 
   const setAuthMsg = (t) => (authMsg.textContent = t || "");
   const setCustMsg = (t) => (custMsg.textContent = t || "");
@@ -62,6 +63,7 @@ window.addEventListener("DOMContentLoaded", () => {
     currentSession = null;
     currentProfile = null;
     currentAgentIdForInsert = null;
+    hydratedUserId = null;
   }
 
   function setLoggedInShell(session) {
@@ -146,9 +148,12 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  async function hydrateAfterLogin(session) {
-    try {
-      setLoggedInShell(session);
+async function hydrateAfterLogin(session) {
+  if (hydratedUserId === session.user.id) return;
+  hydratedUserId = session.user.id;
+
+  try {
+    setLoggedInShell(session);
 
       const profile = await loadProfileForUser(session.user.id);
       if (!profile) {
