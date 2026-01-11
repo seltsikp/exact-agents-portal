@@ -302,4 +302,10 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   })();
 
-  // --- Auth events
+ // --- Auth state events ---
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    console.log("Auth state change:", event);
+    if (event === "SIGNED_OUT") setLoggedOutUI("Logged out");
+    if (event === "SIGNED_IN" && session) hydrateAfterLogin(session);
+  });
+});
