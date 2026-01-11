@@ -1,8 +1,8 @@
 console.log("EXACT Agents Portal loaded");
 
 // 1) Paste your Supabase URL + anon key here
-const SUPABASE_URL = "PASTE_SUPABASE_URL";
-const SUPABASE_ANON_KEY = "PASTE_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_yqZdEBcb0ee4vioiir1hag_U8VIIRzk";
 
 // 2) Create client
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
