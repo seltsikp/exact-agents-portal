@@ -14,17 +14,15 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 
 window.addEventListener("DOMContentLoaded", () => {
   // Auth UI
+  const loginBox = document.getElementById("loginBox");
+  const topBar = document.getElementById("topBar");
+  const topBarTitle = document.getElementById("topBarTitle");
+  const topBarSub = document.getElementById("topBarSub");
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
   const loginBtn = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
   const authMsg = document.getElementById("authMsg");
-
-  // Status UI
-  const statusBox = document.getElementById("statusBox");
-  const statusUser = document.getElementById("statusUser");
-  const statusRole = document.getElementById("statusRole");
-  const statusAgent = document.getElementById("statusAgent");
 
   // App UI
   const appBox = document.getElementById("appBox");
@@ -66,13 +64,16 @@ window.addEventListener("DOMContentLoaded", () => {
     hydratedUserId = null;
   }
 
-  function setLoggedInShell(session) {
-    currentSession = session;
+function setLoggedInShell(session) {
+  currentSession = session;
 
-    loginBtn.style.display = "none";
-    logoutBtn.style.display = "inline-block";
-    statusBox.style.display = "block";
-    appBox.style.display = "block";
+  // Show / hide main UI blocks
+  loginBox.style.display = "none";
+  topBar.style.display = "block";
+  appBox.style.display = "block";
+
+  setAuthMsg("Logged in ✅");
+}
 
     statusUser.textContent = session.user.email || "";
     setAuthMsg("Logged in ✅");
@@ -161,6 +162,17 @@ async function hydrateAfterLogin(session) {
         return;
       }
       currentProfile = profile;
+    
+    // Top bar text
+    if (profile.role === "admin") {
+    topBarTitle.textContent = "Logged in as Admin";
+    topBarSub.textContent = session.user.email || "";
+      } else {
+    const agentName = await loadAgentName(profile.agent_id);
+    topBarTitle.textContent = `Logged in as Agent — ${agentName || "Unknown Agent"}`;
+    topBarSub.textContent = session.user.email || "";
+}
+
 
       statusRole.textContent = profile.role || "";
 
