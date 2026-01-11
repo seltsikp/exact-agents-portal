@@ -8,25 +8,56 @@
  <body>
   <h1>EXACT Agents Portal</h1>
 
-  <div id="authBox" style="max-width:420px;">
-    <h2>Login</h2>
-    <input id="email" placeholder="Email" style="display:block;width:100%;margin:8px 0;padding:10px;" />
-    <input id="password" type="password" placeholder="Password" style="display:block;width:100%;margin:8px 0;padding:10px;" />
-    <button id="loginBtn" style="padding:10px 14px;">Login</button>
-    <button id="logoutBtn" style="display:none;padding:10px 14px;">Logout</button>
-    <p id="authMsg" style="margin-top:10px;"></p>
+  <h2>Login</h2>
+  <div>
+    <input id="email" placeholder="Email" style="width:360px;" />
+  </div>
+  <div>
+    <input id="password" type="password" placeholder="Password" style="width:360px;" />
+  </div>
+  <div style="margin-top:8px;">
+    <button id="loginBtn">Login</button>
+    <button id="logoutBtn" style="display:none;">Logout</button>
   </div>
 
-  <hr style="margin:24px 0;" />
+  <p id="authMsg"></p>
 
-  <div id="statusBox" style="display:none;max-width:600px;">
+  <hr />
+
+  <div id="statusBox" style="display:none;">
     <h2>Status</h2>
-    <p id="statusMsg"></p>
+    <p><strong>User:</strong> <span id="statusUser"></span></p>
+    <p><strong>Role:</strong> <span id="statusRole"></span></p>
+    <p><strong>Agent:</strong> <span id="statusAgent"></span></p>
   </div>
 
-  <!-- Scripts at bottom of body -->
+  <hr />
+
+  <div id="appBox" style="display:none;">
+    <h2>Customers</h2>
+
+    <!-- Admin-only agent picker -->
+    <div id="adminAgentPicker" style="display:none; margin-bottom:10px;">
+      <label for="agentSelect"><strong>Insert as agent:</strong></label>
+      <select id="agentSelect"></select>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <input id="firstName" placeholder="First name" />
+      <input id="lastName" placeholder="Last name" />
+      <input id="custEmail" placeholder="Email (optional)" />
+      <input id="custPhone" placeholder="Phone (optional)" />
+      <button id="addCustomerBtn">Add customer</button>
+      <p id="custMsg"></p>
+    </div>
+
+    <ul id="customerList"></ul>
+  </div>
+
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./app.js?v=9"></script>
+  <script src="./app.js?v=10"></script>
 </body>
+
 
 </html>
