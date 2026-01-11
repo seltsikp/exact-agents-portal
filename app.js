@@ -2,7 +2,7 @@ console.log("EXACT Agents Portal loaded (v3)");
 
 // Supabase config
 const SUPABASE_URL = "https://hwsxcurvaayknghfgjxo.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_yqZdEBcb0ee4vioiirIhag_U8VIIRzk";
+const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
 
 // Use a unique variable name (NOT "supabase")
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
