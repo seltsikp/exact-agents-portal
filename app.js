@@ -1,77 +1,86 @@
-console.log("EXACT Agents Portal loaded (v4)");
-console.log("Using SUPABASE_URL:", SUPABASE_URL);
+console.log("EXACT Agents Portal loaded (v5)");
 
-// Supabase config
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co/";
 const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
-console.log("SUPABASE_URL =", SUPABASE_URL);
-// Use a unique variable name (avoid conflicts)
+
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// UI elements
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-const loginBtn = document.getElementById("loginBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-const authMsg = document.getElementById("authMsg");
+window.addEventListener("DOMContentLoaded", () => {
+  // Grab elements after DOM is definitely ready
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const authMsg = document.getElementById("authMsg");
+  const statusBox = document.getElementById("statusBox");
+  const statusMsg = document.getElementById("statusMsg");
 
-const statusBox = document.getElementById("statusBox");
-const statusMsg = document.getElementById("statusMsg");
+  // If any are missing, show it immediately
+  const missing = [];
+  if (!emailInput) missing.push("email");
+  if (!passwordInput) missing.push("password");
+  if (!loginBtn) missing.push("loginBtn");
+  if (!logoutBtn) missing.push("logoutBtn");
+  if (!authMsg) missing.push("authMsg");
+  if (!statusBox) missing.push("statusBox");
+  if (!statusMsg) missing.push("statusMsg");
 
-async function refreshUI() {
-  authMsg.textContent = "";
-
-  const { data, error } = await supabaseClient.auth.getSession();
-  if (error) {
-    authMsg.textContent = "Session error: " + error.message;
-    console.error("Supabase session check failed:", error.message);
+  if (missing.length) {
+    alert("Missing elements: " + missing.join(", ") + ". Check index.html IDs.");
+    console.error("Missing elements:", missing);
     return;
   }
 
-  const loggedIn = !!data.session?.user;
+  async function refreshUI() {
+    authMsg.textContent = "";
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error) {
+      authMsg.textContent = "Session error: " + error.message;
+      console.error(error);
+      return;
+    }
 
-  loginBtn.style.display = loggedIn ? "none" : "inline-block";
-  logoutBtn.style.display = loggedIn ? "inline-block" : "none";
-  statusBox.style.display = loggedIn ? "block" : "none";
+    const loggedIn = !!data.session?.user;
+    loginBtn.style.display = loggedIn ? "none" : "inline-block";
+    logoutBtn.style.display = loggedIn ? "inline-block" : "none";
+    statusBox.style.display = loggedIn ? "block" : "none";
 
-  if (loggedIn) {
-    statusMsg.textContent = `Logged in as: ${data.session.user.email}`;
-    console.log("Supabase connected. Session: logged in");
-  } else {
-    statusMsg.textContent = "";
-    console.log("Supabase connected. Session: not logged in");
-  }
-}
-
-loginBtn.addEventListener("click", async () => {
-  authMsg.textContent = "";
-
-  const email = emailInput.value.trim();
-  const password = passwordInput.value;
-
-  if (!email || !password) {
-    authMsg.textContent = "Enter email + password.";
-    return;
+    if (loggedIn) {
+      statusMsg.textContent = `Logged in as: ${data.session.user.email}`;
+    } else {
+      statusMsg.textContent = "";
+    }
   }
 
-  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-  if (error) {
-    authMsg.textContent = "Login failed: " + error.message;
-    return;
-  }
+  loginBtn.addEventListener("click", async () => {
+    // Visible feedback so it never feels like "nothing"
+    authMsg.textContent = "Logging in…";
+    console.log("Login button clicked");
 
-  await refreshUI();
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!email || !password) {
+      authMsg.textContent = "Enter email + password.";
+      return;
+    }
+
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      authMsg.textContent = "Login failed: " + error.message;
+      console.error("Login error:", error);
+      return;
+    }
+
+    await refreshUI();
+  });
+
+  logoutBtn.addEventListener("click", async () => {
+    authMsg.textContent = "Logging out…";
+    await supabaseClient.auth.signOut();
+    await refreshUI();
+  });
+
+  supabaseClient.auth.onAuthStateChange(() => refreshUI());
+  refreshUI();
 });
-
-logoutBtn.addEventListener("click", async () => {
-  await supabaseClient.auth.signOut();
-  await refreshUI();
-});
-
-// React to auth changes (login/logout in other tab etc.)
-supabaseClient.auth.onAuthStateChange(async () => {
-  await refreshUI();
-});
-
-// Initial load
-refreshUI();
