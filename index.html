@@ -5,12 +5,28 @@
     <title>EXACT Agents Portal</title>
   </head>
 
-  <body>
-    <h1>EXACT Agents Portal</h1>
-    <p>If you can see this, GitHub Pages is working.</p>
+ <body>
+  <h1>EXACT Agents Portal</h1>
 
-    <!-- Scripts MUST be inside body -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./app.js?v=3"></script>
-  </body>
+  <div id="authBox" style="max-width:420px;">
+    <h2>Login</h2>
+    <input id="email" placeholder="Email" style="display:block;width:100%;margin:8px 0;padding:10px;" />
+    <input id="password" type="password" placeholder="Password" style="display:block;width:100%;margin:8px 0;padding:10px;" />
+    <button id="loginBtn" style="padding:10px 14px;">Login</button>
+    <button id="logoutBtn" style="display:none;padding:10px 14px;">Logout</button>
+    <p id="authMsg" style="margin-top:10px;"></p>
+  </div>
+
+  <hr style="margin:24px 0;" />
+
+  <div id="statusBox" style="display:none;max-width:600px;">
+    <h2>Status</h2>
+    <p id="statusMsg"></p>
+  </div>
+
+  <!-- Scripts at bottom of body -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./app.js?v=4"></script>
+</body>
+
 </html>
