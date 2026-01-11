@@ -5,42 +5,45 @@
     <title>EXACT Agents Portal</title>
   </head>
 
- <body>
+<body>
   <h1>EXACT Agents Portal</h1>
 
-  <h2>Login</h2>
-  <div>
-    <input id="email" placeholder="Email" style="width:360px;" />
+  <!-- Logged-in header -->
+  <div id="topBar" style="display:none; padding:10px 0; border-bottom:1px solid #ddd; margin-bottom:12px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+      <div>
+        <div><strong id="topBarTitle">Logged in</strong></div>
+        <div style="font-size:12px; opacity:0.8;" id="topBarSub"></div>
+      </div>
+      <div>
+        <button id="logoutBtn">Logout</button>
+      </div>
+    </div>
   </div>
-  <div>
-    <input id="password" type="password" placeholder="Password" style="width:360px;" />
-  </div>
-  <div style="margin-top:8px;">
+
+  <!-- Login box -->
+  <div id="loginBox" style="max-width:420px; padding:12px; border:1px solid #ddd; border-radius:6px;">
+    <h2 style="margin-top:0;">Login</h2>
+    <div style="margin-bottom:8px;">
+      <input id="email" placeholder="Email" style="width:100%; padding:8px;" />
+    </div>
+    <div style="margin-bottom:8px;">
+      <input id="password" type="password" placeholder="Password" style="width:100%; padding:8px;" />
+    </div>
     <button id="loginBtn">Login</button>
-    <button id="logoutBtn" style="display:none;">Logout</button>
+    <p id="authMsg" style="margin-top:10px;"></p>
   </div>
-
-  <p id="authMsg"></p>
-
-  <hr />
-
-  <div id="statusBox" style="display:none;">
-    <h2>Status</h2>
-    <p><strong>User:</strong> <span id="statusUser"></span></p>
-    <p><strong>Role:</strong> <span id="statusRole"></span></p>
-    <p><strong>Agent:</strong> <span id="statusAgent"></span></p>
-  </div>
-
-  <hr />
 
   <div id="appBox" style="display:none;">
-    <h2>Customers</h2>
+    <hr />
 
     <!-- Admin-only agent picker -->
-    <div id="adminAgentPicker" style="display:none; margin-bottom:10px;">
+    <div id="adminAgentPicker" style="display:none; margin: 10px 0;">
       <label for="agentSelect"><strong>Insert as agent:</strong></label>
       <select id="agentSelect"></select>
     </div>
+
+    <h2>Customers</h2>
 
     <div style="margin-bottom:10px;">
       <input id="firstName" placeholder="First name" />
@@ -54,10 +57,8 @@
     <ul id="customerList"></ul>
   </div>
 
-  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./app.js?v=12"></script>
+  <script src="./app.js?v=14"></script>
 </body>
-
 
 </html>
