@@ -1,8 +1,9 @@
-console.log("EXACT Agents Portal loaded (v12)");
+console.log("EXACT Agents Portal loaded (v15)");
 
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co/";
 const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
 
+// Supabase client (Edge-friendly settings)
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     storage: window.localStorage,
@@ -13,69 +14,80 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 });
 
 window.addEventListener("DOMContentLoaded", () => {
-  // Auth UI
+  // Helper: safe show/hide
+  function show(el, isVisible) {
+    if (!el) return;
+    el.style.display = isVisible ? "block" : "none";
+  }
+
+  // --- UI elements (match your index.html) ---
   const loginBox = document.getElementById("loginBox");
   const topBar = document.getElementById("topBar");
   const topBarTitle = document.getElementById("topBarTitle");
   const topBarSub = document.getElementById("topBarSub");
+
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
   const loginBtn = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
   const authMsg = document.getElementById("authMsg");
 
-  // App UI
   const appBox = document.getElementById("appBox");
+  const adminAgentPicker = document.getElementById("adminAgentPicker");
+  const agentSelect = document.getElementById("agentSelect");
+
   const customerList = document.getElementById("customerList");
   const custMsg = document.getElementById("custMsg");
   const addCustomerBtn = document.getElementById("addCustomerBtn");
+
   const firstNameInput = document.getElementById("firstName");
   const lastNameInput = document.getElementById("lastName");
   const custEmailInput = document.getElementById("custEmail");
   const custPhoneInput = document.getElementById("custPhone");
 
-  // Admin agent picker
-  const adminAgentPicker = document.getElementById("adminAgentPicker");
-  const agentSelect = document.getElementById("agentSelect");
-
-  let currentSession = null;          // session object when logged in
-  let currentProfile = null;          // agent_users row
-  let currentAgentIdForInsert = null; // agent inserts use own agent_id; admin picks
+  // --- State ---
+  let currentSession = null;
+  let currentProfile = null;
+  let currentAgentIdForInsert = null;
   let hydratedUserId = null;
 
-  const setAuthMsg = (t) => (authMsg.textContent = t || "");
-  const setCustMsg = (t) => (custMsg.textContent = t || "");
+  const setAuthMsg = (t) => {
+    if (!authMsg) return;
+    authMsg.textContent = t || "";
+  };
+
+  const setCustMsg = (t) => {
+    if (!custMsg) return;
+    custMsg.textContent = t || "";
+  };
 
   function setLoggedOutUI(message = "Not logged in") {
-    loginBtn.style.display = "inline-block";
-    logoutBtn.style.display = "none";
-    statusBox.style.display = "none";
-    appBox.style.display = "none";
-    adminAgentPicker.style.display = "none";
-    statusUser.textContent = "";
-    statusRole.textContent = "";
-    statusAgent.textContent = "";
-    customerList.innerHTML = "";
+    show(topBar, false);
+    show(loginBox, true);
+    show(appBox, false);
+    show(adminAgentPicker, false);
+
+    if (topBarTitle) topBarTitle.textContent = "";
+    if (topBarSub) topBarSub.textContent = "";
+
+    if (customerList) customerList.innerHTML = "";
+
     setAuthMsg(message);
     setCustMsg("");
+
     currentSession = null;
     currentProfile = null;
     currentAgentIdForInsert = null;
     hydratedUserId = null;
   }
 
-function setLoggedInShell(session) {
-  currentSession = session;
+  function setLoggedInShell(session) {
+    currentSession = session;
 
-  // Show / hide main UI blocks
-  loginBox.style.display = "none";
-  topBar.style.display = "block";
-  appBox.style.display = "block";
+    show(loginBox, false);
+    show(topBar, true);
+    show(appBox, true);
 
-  setAuthMsg("Logged in ✅");
-}
-
-    statusUser.textContent = session.user.email || "";
     setAuthMsg("Logged in ✅");
   }
 
@@ -98,11 +110,14 @@ function setLoggedInShell(session) {
       .select("name")
       .eq("id", agentId)
       .single();
+
     if (error) return "";
     return data?.name || "";
   }
 
   async function loadAgentsForAdminPicker() {
+    if (!agentSelect) return;
+
     agentSelect.innerHTML = "";
 
     const { data, error } = await supabaseClient
@@ -129,6 +144,8 @@ function setLoggedInShell(session) {
   }
 
   async function loadCustomers() {
+    if (!customerList) return;
+
     customerList.innerHTML = "";
     setCustMsg("");
 
@@ -149,12 +166,15 @@ function setLoggedInShell(session) {
     });
   }
 
-async function hydrateAfterLogin(session) {
-  if (hydratedUserId === session.user.id) return;
-  hydratedUserId = session.user.id;
+  async function hydrateAfterLogin(session) {
+    if (!session?.user?.id) return;
 
-  try {
-    setLoggedInShell(session);
+    // Prevent double hydration for same user
+    if (hydratedUserId === session.user.id) return;
+    hydratedUserId = session.user.id;
+
+    try {
+      setLoggedInShell(session);
 
       const profile = await loadProfileForUser(session.user.id);
       if (!profile) {
@@ -162,28 +182,18 @@ async function hydrateAfterLogin(session) {
         return;
       }
       currentProfile = profile;
-    
-    // Top bar text
-    if (profile.role === "admin") {
-    topBarTitle.textContent = "Logged in as Admin";
-    topBarSub.textContent = session.user.email || "";
-      } else {
-    const agentName = await loadAgentName(profile.agent_id);
-    topBarTitle.textContent = `Logged in as Agent — ${agentName || "Unknown Agent"}`;
-    topBarSub.textContent = session.user.email || "";
-}
 
-
-      statusRole.textContent = profile.role || "";
-
-      const agentName = await loadAgentName(profile.agent_id);
-      statusAgent.textContent = agentName || (profile.role === "admin" ? "(admin – all agents)" : "");
-
+      // Top bar display
       if (profile.role === "admin") {
-        adminAgentPicker.style.display = "block";
+        if (topBarTitle) topBarTitle.textContent = "Logged in as Admin";
+        if (topBarSub) topBarSub.textContent = session.user.email || "";
+        show(adminAgentPicker, true);
         await loadAgentsForAdminPicker();
       } else {
-        adminAgentPicker.style.display = "none";
+        const agentName = await loadAgentName(profile.agent_id);
+        if (topBarTitle) topBarTitle.textContent = `Logged in as Agent — ${agentName || "Unknown Agent"}`;
+        if (topBarSub) topBarSub.textContent = session.user.email || "";
+        show(adminAgentPicker, false);
         currentAgentIdForInsert = profile.agent_id;
       }
 
@@ -194,81 +204,86 @@ async function hydrateAfterLogin(session) {
     }
   }
 
-  // Login (NO getSession call here)
-  loginBtn.addEventListener("click", async () => {
-    setAuthMsg("Logging in…");
+  // --- Login ---
+  if (loginBtn) {
+    loginBtn.addEventListener("click", async () => {
+      setAuthMsg("Logging in…");
 
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
+      const email = (emailInput?.value || "").trim();
+      const password = passwordInput?.value || "";
 
-    if (!email || !password) {
-      setAuthMsg("Enter email + password.");
-      return;
-    }
+      if (!email || !password) {
+        setAuthMsg("Enter email + password.");
+        return;
+      }
 
-    try {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) {
+          setAuthMsg("Login failed: " + error.message);
+          return;
+        }
+
+        if (!data?.session) {
+          setAuthMsg("Login succeeded but session missing.");
+          return;
+        }
+
+        await hydrateAfterLogin(data.session);
+      } catch (e) {
+        console.error("Login crashed:", e);
+        setAuthMsg("Login crashed: " + (e?.message || "Unknown error"));
+      }
+    });
+  }
+
+  // --- Logout ---
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      await supabaseClient.auth.signOut();
+      setLoggedOutUI("Logged out");
+    });
+  }
+
+  // --- Add customer ---
+  if (addCustomerBtn) {
+    addCustomerBtn.addEventListener("click", async () => {
+      setCustMsg("");
+
+      if (!currentAgentIdForInsert) {
+        setCustMsg("No agent selected/available for insert.");
+        return;
+      }
+
+      const first_name = (firstNameInput?.value || "").trim();
+      const last_name = (lastNameInput?.value || "").trim();
+      const email = (custEmailInput?.value || "").trim() || null;
+      const phone = (custPhoneInput?.value || "").trim() || null;
+
+      if (!first_name || !last_name) {
+        setCustMsg("First and last name are required.");
+        return;
+      }
+
+      const { error } = await supabaseClient
+        .from("customers")
+        .insert([{ agent_id: currentAgentIdForInsert, first_name, last_name, email, phone }]);
+
       if (error) {
-        setAuthMsg("Login failed: " + error.message);
+        setCustMsg("Insert error: " + error.message);
         return;
       }
 
-      // Use the returned session (critical for Edge stability)
-      if (!data?.session) {
-        setAuthMsg("Login succeeded but session missing.");
-        return;
-      }
+      if (firstNameInput) firstNameInput.value = "";
+      if (lastNameInput) lastNameInput.value = "";
+      if (custEmailInput) custEmailInput.value = "";
+      if (custPhoneInput) custPhoneInput.value = "";
 
-      await hydrateAfterLogin(data.session);
-    } catch (e) {
-      console.error("Login crashed:", e);
-      setAuthMsg("Login crashed: " + (e?.message || "Unknown error"));
-    }
-  });
+      await loadCustomers();
+    });
+  }
 
-  // Logout
-  logoutBtn.addEventListener("click", async () => {
-    await supabaseClient.auth.signOut();
-    setLoggedOutUI("Logged out");
-  });
-
-  // Add customer
-  addCustomerBtn.addEventListener("click", async () => {
-    setCustMsg("");
-
-    if (!currentAgentIdForInsert) {
-      setCustMsg("No agent selected/available for insert.");
-      return;
-    }
-
-    const first_name = firstNameInput.value.trim();
-    const last_name = lastNameInput.value.trim();
-    const email = custEmailInput.value.trim() || null;
-    const phone = custPhoneInput.value.trim() || null;
-
-    if (!first_name || !last_name) {
-      setCustMsg("First and last name are required.");
-      return;
-    }
-
-    const { error } = await supabaseClient
-      .from("customers")
-      .insert([{ agent_id: currentAgentIdForInsert, first_name, last_name, email, phone }]);
-
-    if (error) {
-      setCustMsg("Insert error: " + error.message);
-      return;
-    }
-
-    firstNameInput.value = "";
-    lastNameInput.value = "";
-    custEmailInput.value = "";
-    custPhoneInput.value = "";
-
-    await loadCustomers();
-  });
-
-  // Initial restore (ONE call only)
+  // --- Initial restore (single call) ---
   (async () => {
     try {
       const { data, error } = await supabaseClient.auth.getSession();
@@ -287,10 +302,4 @@ async function hydrateAfterLogin(session) {
     }
   })();
 
-  // Auth events: update shell only (NO refresh loops)
-  supabaseClient.auth.onAuthStateChange((event, session) => {
-    console.log("Auth state change:", event);
-    if (event === "SIGNED_OUT") setLoggedOutUI("Logged out");
-    if (event === "SIGNED_IN" && session) hydrateAfterLogin(session);
-  });
-});
+  // --- Auth events
