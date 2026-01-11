@@ -1,4 +1,5 @@
 console.log("EXACT Agents Portal loaded (v4)");
+console.log("Using SUPABASE_URL:", SUPABASE_URL);
 
 // Supabase config
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co/";
