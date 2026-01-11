@@ -1,4 +1,4 @@
-console.log("EXACT Agents Portal loaded (v10)");
+console.log("EXACT Agents Portal loaded (v11)");
 
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co/";
 const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
@@ -40,19 +40,14 @@ window.addEventListener("DOMContentLoaded", () => {
   const adminAgentPicker = document.getElementById("adminAgentPicker");
   const agentSelect = document.getElementById("agentSelect");
 
-  let currentUser = null;
-  let currentProfile = null; // row from agent_users
-  let currentAgentIdForInsert = null; // agent inserts always use their agent_id; admin chooses
+  let currentSession = null;          // session object when logged in
+  let currentProfile = null;          // agent_users row
+  let currentAgentIdForInsert = null; // agent inserts use own agent_id; admin picks
 
-  function setAuthMsg(t) {
-    authMsg.textContent = t || "";
-  }
+  const setAuthMsg = (t) => (authMsg.textContent = t || "");
+  const setCustMsg = (t) => (custMsg.textContent = t || "");
 
-  function setCustMsg(t) {
-    custMsg.textContent = t || "";
-  }
-
-  function setLoggedOutUI() {
+  function setLoggedOutUI(message = "Not logged in") {
     loginBtn.style.display = "inline-block";
     logoutBtn.style.display = "none";
     statusBox.style.display = "none";
@@ -62,36 +57,34 @@ window.addEventListener("DOMContentLoaded", () => {
     statusRole.textContent = "";
     statusAgent.textContent = "";
     customerList.innerHTML = "";
-    setAuthMsg("Not logged in");
+    setAuthMsg(message);
     setCustMsg("");
-    currentUser = null;
+    currentSession = null;
     currentProfile = null;
     currentAgentIdForInsert = null;
   }
 
-  function setLoggedInUI() {
+  function setLoggedInShell(session) {
+    currentSession = session;
+
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
     statusBox.style.display = "block";
     appBox.style.display = "block";
-    setAuthMsg("");
+
+    statusUser.textContent = session.user.email || "";
+    setAuthMsg("Logged in ✅");
   }
 
-  async function loadProfile() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    currentUser = user || null;
-    if (!currentUser) return null;
-
+  async function loadProfileForUser(userId) {
     const { data, error } = await supabaseClient
       .from("agent_users")
       .select("agent_id, role, status, email, full_name")
-      .eq("auth_user_id", currentUser.id)
+      .eq("auth_user_id", userId)
       .single();
 
     if (error) throw error;
     if (!data || data.status !== "active") return null;
-
-    currentProfile = data;
     return data;
   }
 
@@ -102,7 +95,6 @@ window.addEventListener("DOMContentLoaded", () => {
       .select("name")
       .eq("id", agentId)
       .single();
-
     if (error) return "";
     return data?.name || "";
   }
@@ -117,21 +109,20 @@ window.addEventListener("DOMContentLoaded", () => {
 
     if (error) throw error;
 
-    data.forEach(a => {
+    data.forEach((a) => {
       const opt = document.createElement("option");
       opt.value = a.id;
       opt.textContent = a.name;
       agentSelect.appendChild(opt);
     });
 
-    // Default selection
     if (agentSelect.options.length > 0) {
       currentAgentIdForInsert = agentSelect.value;
     }
 
-    agentSelect.addEventListener("change", () => {
+    agentSelect.onchange = () => {
       currentAgentIdForInsert = agentSelect.value;
-    });
+    };
   }
 
   async function loadCustomers() {
@@ -140,7 +131,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     const { data, error } = await supabaseClient
       .from("customers")
-      .select("id, first_name, last_name, email, phone, agent_id, created_at")
+      .select("id, first_name, last_name, email, phone, created_at")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -148,58 +139,48 @@ window.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    data.forEach(c => {
+    data.forEach((c) => {
       const li = document.createElement("li");
       li.textContent = `${c.first_name} ${c.last_name} — ${c.email || ""} ${c.phone || ""}`;
       customerList.appendChild(li);
     });
   }
 
-  async function refreshApp() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session?.user) {
-      setLoggedOutUI();
-      return;
-    }
-
-    setLoggedInUI();
-
-    // Load profile (agent_users)
-    let profile;
+  async function hydrateAfterLogin(session) {
     try {
-      profile = await loadProfile();
+      setLoggedInShell(session);
+
+      const profile = await loadProfileForUser(session.user.id);
       if (!profile) {
         setAuthMsg("No active profile in agent_users for this login.");
         return;
       }
+      currentProfile = profile;
+
+      statusRole.textContent = profile.role || "";
+
+      const agentName = await loadAgentName(profile.agent_id);
+      statusAgent.textContent = agentName || (profile.role === "admin" ? "(admin – all agents)" : "");
+
+      if (profile.role === "admin") {
+        adminAgentPicker.style.display = "block";
+        await loadAgentsForAdminPicker();
+      } else {
+        adminAgentPicker.style.display = "none";
+        currentAgentIdForInsert = profile.agent_id;
+      }
+
+      await loadCustomers();
     } catch (e) {
-      setAuthMsg("Profile load error: " + e.message);
-      return;
+      console.error("hydrateAfterLogin error:", e);
+      setAuthMsg("Error after login: " + (e?.message || "Unknown error"));
     }
-
-    // Status
-    statusUser.textContent = session.user.email || "";
-    statusRole.textContent = profile.role || "";
-    const agentName = await loadAgentName(profile.agent_id);
-    statusAgent.textContent = agentName || (profile.role === "admin" ? "(admin – all agents)" : "");
-
-    // Insert agent_id logic
-    if (profile.role === "admin") {
-      adminAgentPicker.style.display = "block";
-      await loadAgentsForAdminPicker();
-      // currentAgentIdForInsert comes from picker
-    } else {
-      adminAgentPicker.style.display = "none";
-      currentAgentIdForInsert = profile.agent_id;
-    }
-
-    // Load customers (RLS will scope automatically for agents)
-    await loadCustomers();
   }
 
-  // Login
+  // Login (NO getSession call here)
   loginBtn.addEventListener("click", async () => {
     setAuthMsg("Logging in…");
+
     const email = emailInput.value.trim();
     const password = passwordInput.value;
 
@@ -208,19 +189,30 @@ window.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) {
-      setAuthMsg("Login failed: " + error.message);
-      return;
-    }
+    try {
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        setAuthMsg("Login failed: " + error.message);
+        return;
+      }
 
-    await refreshApp();
+      // Use the returned session (critical for Edge stability)
+      if (!data?.session) {
+        setAuthMsg("Login succeeded but session missing.");
+        return;
+      }
+
+      await hydrateAfterLogin(data.session);
+    } catch (e) {
+      console.error("Login crashed:", e);
+      setAuthMsg("Login crashed: " + (e?.message || "Unknown error"));
+    }
   });
 
   // Logout
   logoutBtn.addEventListener("click", async () => {
     await supabaseClient.auth.signOut();
-    setLoggedOutUI();
+    setLoggedOutUI("Logged out");
   });
 
   // Add customer
@@ -259,9 +251,29 @@ window.addEventListener("DOMContentLoaded", () => {
     await loadCustomers();
   });
 
-  // On load
-  refreshApp();
+  // Initial restore (ONE call only)
+  (async () => {
+    try {
+      const { data, error } = await supabaseClient.auth.getSession();
+      if (error) {
+        setLoggedOutUI("Session restore error: " + error.message);
+        return;
+      }
+      if (data?.session) {
+        await hydrateAfterLogin(data.session);
+      } else {
+        setLoggedOutUI("Not logged in");
+      }
+    } catch (e) {
+      console.error("Initial restore crashed:", e);
+      setLoggedOutUI("Session restore crashed: " + (e?.message || "Unknown error"));
+    }
+  })();
 
-  // Keep UI in sync with auth changes
-  supabaseClient.auth.onAuthStateChange(() => refreshApp());
+  // Auth events: update shell only (NO refresh loops)
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    console.log("Auth state change:", event);
+    if (event === "SIGNED_OUT") setLoggedOutUI("Logged out");
+    if (event === "SIGNED_IN" && session) hydrateAfterLogin(session);
+  });
 });
