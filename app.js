@@ -135,7 +135,37 @@ function isValidPhone(phone) {
   const digits = phone.replace(/[^\d]/g, "");
   return digits.length >= 7;
 }
-  
+
+  function markField(el, state) {
+  if (!el) return;
+  el.classList.remove("field-error", "field-ok");
+  if (state === "error") el.classList.add("field-error");
+  if (state === "ok") el.classList.add("field-ok");
+}
+
+function clearFieldMarks(...els) {
+  els.forEach(el => {
+    if (!el) return;
+    el.classList.remove("field-error", "field-ok");
+  });
+}
+
+function isValidEmail(email) {
+  if (!email) return true; // optional
+  const e = email.trim();
+  if (e.includes(" ")) return false;
+  const at = e.indexOf("@");
+  if (at < 1) return false;
+  const dot = e.lastIndexOf(".");
+  return dot > at + 1 && dot < e.length - 1;
+}
+
+function isValidPhone(phone) {
+  if (!phone) return true; // optional
+  const digits = phone.replace(/[^\d]/g, "");
+  return digits.length >= 7;
+}
+
   // --- UI elements ---
   const loginBox = document.getElementById("loginBox");
   const topBar = document.getElementById("topBar");
@@ -651,10 +681,39 @@ if (phone && !isValidPhone(phone)) {
 }
 
 
-      if (!first_name || !last_name) {
-        setCustMsg("First and last name are required.");
-        return;
-      }
+     // clear previous field states
+clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
+
+// Required fields
+if (!first_name) {
+  markField(firstNameInput, "error");
+  setCustMsg("First name is required.");
+  return;
+}
+markField(firstNameInput, "ok");
+
+if (!last_name) {
+  markField(lastNameInput, "error");
+  setCustMsg("Last name is required.");
+  return;
+}
+markField(lastNameInput, "ok");
+
+// Optional fields (validate only if entered)
+if (email && !isValidEmail(email)) {
+  markField(custEmailInput, "error");
+  setCustMsg("Please enter a valid email address.");
+  return;
+}
+if (email) markField(custEmailInput, "ok");
+
+if (phone && !isValidPhone(phone)) {
+  markField(custPhoneInput, "error");
+  setCustMsg("Please enter a valid phone number.");
+  return;
+}
+if (phone) markField(custPhoneInput, "ok");
+
 
       // EDIT MODE
       if (editingCustomerId) {
