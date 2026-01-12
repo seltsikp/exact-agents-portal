@@ -388,6 +388,96 @@
         gap:8px;
         margin-top: 12px;
       }
+      /* ===== Customer List (Premium Rows) — LIGHT THEME OVERRIDE ===== */
+.customer-list{
+  display: grid;
+  gap: 12px;
+  padding: 10px 0;   /* match your card padding */
+}
+
+.customer-row{
+  display: grid;
+  grid-template-columns: 1.6fr 1.1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 10px 22px rgba(15,20,25,.06);
+}
+
+.customer-row:hover{
+  border-color: rgba(184,154,91,.45);
+  box-shadow: 0 14px 28px rgba(15,20,25,.08);
+}
+
+.customer-main .name{
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .2px;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+.customer-main .meta{
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  line-height: 1.25;
+}
+
+.customer-dot{
+  opacity: .35;
+  color: var(--muted);
+}
+
+/* Pills for the new rows (kept separate from your existing .pill) */
+.pill-soft{
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(184,154,91,.35);
+  background: rgba(184,154,91,.08);
+  font-size: 12px;
+  color: var(--gold-dark);
+  white-space: nowrap;
+}
+
+.pill-soft-gold{
+  border-color: rgba(184,154,91,.55);
+  background: rgba(184,154,91,.14);
+  color: var(--gold-dark);
+}
+
+.customer-actions{
+  display: inline-flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* Buttons inside rows — use your existing button styles, just size nicely */
+.customer-actions .btn{
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+/* Mobile: stack */
+@media (max-width: 768px){
+  .customer-list{ padding: 0; }
+  .customer-row{
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .customer-actions{ justify-content: flex-start; }
+}
+
     </style>
   </head>
 
