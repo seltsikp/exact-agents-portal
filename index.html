@@ -73,14 +73,28 @@
 
       <h2>Customers</h2>
 
-      <div style="margin-bottom:10px;">
-        <input id="firstName" placeholder="First name" />
-        <input id="lastName" placeholder="Last name" />
-        <input id="custEmail" placeholder="Email (optional)" />
-        <input id="custPhone" placeholder="Phone (optional)" />
-        <button id="addCustomerBtn">Add customer</button>
-        <p id="custMsg"></p>
-      </div>
+     <div style="margin-bottom:10px;">
+  <button id="openAddCustomerBtn">Add customer</button>
+  <button id="cancelAddCustomerBtn" style="display:none;">Cancel</button>
+  <p id="custMsg"></p>
+</div>
+
+<div id="addCustomerPanel" style="display:none; margin-bottom:10px; padding:12px; border:1px solid #ddd; border-radius:6px; background:#f7f7f7;">
+  <div style="margin-bottom:8px;">
+    <input id="firstName" placeholder="First name" style="width:100%; padding:8px;" />
+  </div>
+  <div style="margin-bottom:8px;">
+    <input id="lastName" placeholder="Last name" style="width:100%; padding:8px;" />
+  </div>
+  <div style="margin-bottom:8px;">
+    <input id="custEmail" placeholder="Email (optional)" style="width:100%; padding:8px;" />
+  </div>
+  <div style="margin-bottom:8px;">
+    <input id="custPhone" placeholder="Phone (optional)" style="width:100%; padding:8px;" />
+  </div>
+  <button id="addCustomerBtn">Save customer</button>
+</div>
+
 
       <ul id="customerList"></ul>
     </div>
