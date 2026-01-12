@@ -1,4 +1,4 @@
-console.log("EXACT Agents Portal loaded (v20");
+console.log("EXACT Agents Portal loaded (v21");
 
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
@@ -227,26 +227,56 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     data.forEach((c) => {
-      const li = document.createElement("li");
+const li = document.createElement("li");
 
-      // label text
-      const label = document.createElement("span");
-      label.textContent = `${c.first_name} ${c.last_name} — ${c.email || ""} ${c.phone || ""}`;
+const label = document.createElement("span");
+label.textContent = `${c.first_name} ${c.last_name} — ${c.email || ""} ${c.phone || ""}`;
 
-      // edit button
-      const editBtn = document.createElement("button");
-      editBtn.textContent = "Edit";
-      editBtn.style.marginLeft = "10px";
-      editBtn.addEventListener("click", () => openEditCustomer(c));
+const editBtn = document.createElement("button");
+editBtn.textContent = "Edit";
+editBtn.style.marginLeft = "10px";
+editBtn.addEventListener("click", () => openEditCustomer(c));
 
-      li.appendChild(label);
-      li.appendChild(editBtn);
+const deleteBtn = document.createElement("button");
+deleteBtn.textContent = "Delete";
+deleteBtn.style.marginLeft = "6px";
+deleteBtn.addEventListener("click", async () => {
+  setCustMsg("");
 
-      // keep IDs hidden for future use
-      li.dataset.customerId = c.id;
-      li.dataset.agentId = c.agent_id;
+  const name = `${c.first_name || ""} ${c.last_name || ""}`.trim() || "this customer";
+  if (!confirm(`Delete ${name}? This cannot be undone.`)) return;
 
-      customerList.appendChild(li);
+  const { data, error } = await supabaseClient
+    .from("customers")
+    .delete()
+    .eq("id", c.id)
+    .select("id");
+
+  if (error) {
+    setCustMsg("Delete error: " + error.message);
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    setCustMsg("Delete blocked (RLS) — no rows deleted.");
+    return;
+  }
+
+  setCustMsg("Deleted ✅");
+
+  if (editingCustomerId === c.id) {
+    closeAddCustomer();
+  }
+
+  await loadCustomers();
+});
+
+li.appendChild(label);
+li.appendChild(editBtn);
+li.appendChild(deleteBtn);
+
+customerList.appendChild(li);
+
     });
   }
 
