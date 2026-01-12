@@ -184,22 +184,6 @@ function clearFieldMarks(...els) {
   });
 }
 
-function isValidEmail(email) {
-  if (!email) return true; // optional
-  const e = email.trim();
-  if (e.includes(" ")) return false;
-  const at = e.indexOf("@");
-  if (at < 1) return false;
-  const dot = e.lastIndexOf(".");
-  return dot > at + 1 && dot < e.length - 1;
-}
-
-function isValidPhone(phone) {
-  if (!phone) return true; // optional
-  const digits = phone.replace(/[^\d]/g, "");
-  return digits.length >= 7;
-}
-
   // --- UI elements ---
   const loginBox = document.getElementById("loginBox");
   const topBar = document.getElementById("topBar");
@@ -241,6 +225,40 @@ function isValidPhone(phone) {
   const lastNameInput = document.getElementById("lastName");
   const custEmailInput = document.getElementById("custEmail");
   const custPhoneInput = document.getElementById("custPhone");
+
+  function validateCustomerFieldsLive() {
+  const first = (firstNameInput?.value || "").trim();
+  const last  = (lastNameInput?.value || "").trim();
+  const email = (custEmailInput?.value || "").trim();
+  const phone = (custPhoneInput?.value || "").trim();
+
+  // Only validate if panel is open/visible (prevents errors when hidden)
+  if (addCustomerPanel && addCustomerPanel.style.display === "none") return;
+
+  // First name
+  if (!first) markField(firstNameInput, "error");
+  else markField(firstNameInput, "ok");
+
+  // Last name
+  if (!last) markField(lastNameInput, "error");
+  else markField(lastNameInput, "ok");
+
+  // Email optional
+  if (!email) markField(custEmailInput, null);
+  else if (!isValidEmail(email)) markField(custEmailInput, "error");
+  else markField(custEmailInput, "ok");
+
+  // Phone optional
+  if (!phone) markField(custPhoneInput, null);
+  else if (!isValidPhone(phone)) markField(custPhoneInput, "error");
+  else markField(custPhoneInput, "ok");
+}
+
+[firstNameInput, lastNameInput, custEmailInput, custPhoneInput].forEach((el) => {
+  if (!el) return;
+  el.addEventListener("input", validateCustomerFieldsLive);
+  el.addEventListener("blur", validateCustomerFieldsLive);
+});
 
   // --- Live field validation (inline highlighting) ---
 [firstNameInput, lastNameInput, custEmailInput, custPhoneInput].forEach((el) => {
@@ -301,6 +319,7 @@ function isValidPhone(phone) {
 
     editingCustomerId = null;
     if (addCustomerBtn) addCustomerBtn.textContent = "Save customer";
+    clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
   }
 
   function openEditCustomer(customer) {
@@ -712,17 +731,7 @@ function isValidPhone(phone) {
       const last_name = (lastNameInput?.value || "").trim();
       const email = (custEmailInput?.value || "").trim() || null;
       const phone = (custPhoneInput?.value || "").trim() || null;
-      if (email && !isValidEmail(email)) {
-  setCustMsg("Please enter a valid email address.");
-  return;
-}
-
-if (phone && !isValidPhone(phone)) {
-  setCustMsg("Please enter a valid phone number.");
-  return;
-}
-
-
+    
      // clear previous field states
 clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
 
