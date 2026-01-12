@@ -65,7 +65,7 @@
   flex-wrap: wrap;
 }
 
-.pill{
+.pill-soft{
   display: inline-flex;
   align-items: center;
   padding: 6px 10px;
@@ -77,11 +77,12 @@
   white-space: nowrap;
 }
 
-.pill-gold{
+.pill-soft-gold{
   border-color: rgba(201,162,74,.35);
   background: rgba(201,162,74,.10);
   color: rgba(255,255,255,.82);
 }
+
 
 .customer-actions{
   display: inline-flex;
@@ -476,7 +477,8 @@
                 <button id="addCustomerBtn" class="btn-primary">Save customer</button>
               </div>
 
-              <ul id="customerList"></ul>
+              <div id="customerList" class="customer-list"></div>
+
             </div>
 
             <!-- ADMIN: Lab Management (placeholder) -->
