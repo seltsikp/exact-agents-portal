@@ -56,6 +56,9 @@ window.addEventListener("DOMContentLoaded", () => {
   let currentAgentIdForInsert = null;
   let hydratedUserId = null;
 
+  // NEW: edit mode state
+  let editingCustomerId = null;
+
   const setAuthMsg = (t) => {
     if (!authMsg) return;
     authMsg.textContent = t || "";
@@ -73,6 +76,7 @@ window.addEventListener("DOMContentLoaded", () => {
     show(cancelAddCustomerBtn, true);
   }
 
+  // UPDATED: close panel also exits edit mode + resets button label
   function closeAddCustomer() {
     show(addCustomerPanel, false);
     show(openAddCustomerBtn, true);
@@ -82,9 +86,39 @@ window.addEventListener("DOMContentLoaded", () => {
     if (lastNameInput) lastNameInput.value = "";
     if (custEmailInput) custEmailInput.value = "";
     if (custPhoneInput) custPhoneInput.value = "";
+
+    // exit edit mode
+    editingCustomerId = null;
+
+    // reset save button label
+    if (addCustomerBtn) addCustomerBtn.textContent = "Save customer";
   }
 
-  if (openAddCustomerBtn) openAddCustomerBtn.addEventListener("click", openAddCustomer);
+  // NEW: enter edit mode (prefill + open panel)
+  function openEditCustomer(customer) {
+    if (!customer) return;
+
+    editingCustomerId = customer.id;
+
+    // prefill fields
+    if (firstNameInput) firstNameInput.value = customer.first_name || "";
+    if (lastNameInput) lastNameInput.value = customer.last_name || "";
+    if (custEmailInput) custEmailInput.value = customer.email || "";
+    if (custPhoneInput) custPhoneInput.value = customer.phone || "";
+
+    // change save label so it's obvious
+    if (addCustomerBtn) addCustomerBtn.textContent = "Save changes";
+
+    openAddCustomer();
+  }
+
+  if (openAddCustomerBtn) openAddCustomerBtn.addEventListener("click", () => {
+    // starting a new add should clear edit mode
+    editingCustomerId = null;
+    if (addCustomerBtn) addCustomerBtn.textContent = "Save customer";
+    openAddCustomer();
+  });
+
   if (cancelAddCustomerBtn) cancelAddCustomerBtn.addEventListener("click", closeAddCustomer);
 
   // --- UI state functions ---
@@ -194,7 +228,24 @@ window.addEventListener("DOMContentLoaded", () => {
 
     data.forEach((c) => {
       const li = document.createElement("li");
-      li.textContent = `${c.first_name} ${c.last_name} — ${c.email || ""} ${c.phone || ""}`;
+
+      // label text
+      const label = document.createElement("span");
+      label.textContent = `${c.first_name} ${c.last_name} — ${c.email || ""} ${c.phone || ""}`;
+
+      // edit button
+      const editBtn = document.createElement("button");
+      editBtn.textContent = "Edit";
+      editBtn.style.marginLeft = "10px";
+      editBtn.addEventListener("click", () => openEditCustomer(c));
+
+      li.appendChild(label);
+      li.appendChild(editBtn);
+
+      // keep IDs hidden for future use
+      li.dataset.customerId = c.id;
+      li.dataset.agentId = c.agent_id;
+
       customerList.appendChild(li);
     });
   }
@@ -278,15 +329,10 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Add customer ---
+  // --- Add / Edit customer ---
   if (addCustomerBtn) {
     addCustomerBtn.addEventListener("click", async () => {
       setCustMsg("");
-
-      if (!currentAgentIdForInsert) {
-        setCustMsg("No agent selected/available for insert.");
-        return;
-      }
 
       const first_name = (firstNameInput?.value || "").trim();
       const last_name = (lastNameInput?.value || "").trim();
@@ -295,6 +341,29 @@ window.addEventListener("DOMContentLoaded", () => {
 
       if (!first_name || !last_name) {
         setCustMsg("First and last name are required.");
+        return;
+      }
+
+      // EDIT MODE: update existing record
+      if (editingCustomerId) {
+        const { error } = await supabaseClient
+          .from("customers")
+          .update({ first_name, last_name, email, phone })
+          .eq("id", editingCustomerId);
+
+        if (error) {
+          setCustMsg("Update error: " + error.message);
+          return;
+        }
+
+        await loadCustomers();
+        closeAddCustomer();
+        return;
+      }
+
+      // ADD MODE: insert new record
+      if (!currentAgentIdForInsert) {
+        setCustMsg("No agent selected/available for insert.");
         return;
       }
 
@@ -338,3 +407,4 @@ window.addEventListener("DOMContentLoaded", () => {
     if (event === "SIGNED_IN" && session) hydrateAfterLogin(session);
   });
 });
+
