@@ -12,6 +12,116 @@
     <link rel="icon" href="data:," />
 
     <style>
+
+      /* ===== Customer List (Premium Rows) ===== */
+
+.customer-list {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.customer-row{
+  display: grid;
+  grid-template-columns: 1.6fr 1.1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 14px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: rgba(255,255,255,.03);
+}
+
+.customer-row:hover{
+  background: rgba(255,255,255,.045);
+  border-color: rgba(255,255,255,.12);
+}
+
+.customer-main .name{
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .2px;
+  line-height: 1.25;
+  color: rgba(255,255,255,.92);
+}
+
+.customer-main .meta{
+  margin-top: 4px;
+  font-size: 13px;
+  color: rgba(255,255,255,.62);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  line-height: 1.25;
+}
+
+.customer-dot{ opacity: .35; }
+
+.customer-context{
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.pill{
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.04);
+  font-size: 12px;
+  color: rgba(255,255,255,.62);
+  white-space: nowrap;
+}
+
+.pill-gold{
+  border-color: rgba(201,162,74,.35);
+  background: rgba(201,162,74,.10);
+  color: rgba(255,255,255,.82);
+}
+
+.customer-actions{
+  display: inline-flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn{
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.92);
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.btn:hover{ background: rgba(255,255,255,.06); }
+.btn:active{ transform: translateY(1px); }
+
+.btn-primary{
+  border-color: rgba(201,162,74,.35);
+  background: rgba(201,162,74,.12);
+}
+
+.btn-danger{
+  border-color: rgba(255,77,77,.35);
+  background: rgba(255,77,77,.10);
+}
+
+@media (max-width: 768px){
+  .customer-list { padding: 12px; }
+  .customer-row{
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .customer-actions{ justify-content: flex-start; }
+}
+
       :root{
         --bg: #fbfbfc;
         --card: #ffffff;
