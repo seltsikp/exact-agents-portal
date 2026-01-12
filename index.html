@@ -3,62 +3,89 @@
   <head>
     <meta charset="utf-8" />
     <title>EXACT Agents Portal</title>
+
+    <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+    </style>
   </head>
 
-<body>
-  <h1>EXACT Agents Portal</h1>
+  <body>
+    <h1>EXACT Agents Portal</h1>
 
-  <!-- Logged-in header -->
-  <div id="topBar" style="display:none; padding:10px 0; border-bottom:1px solid #ddd; margin-bottom:12px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-      <div>
-        <div><strong id="topBarTitle">Logged in</strong></div>
-        <div style="font-size:12px; opacity:0.8;" id="topBarSub"></div>
+    <!-- Logged-in header -->
+    <div id="topBar" style="display:none; padding:10px 0; border-bottom:1px solid #ddd; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <div>
+          <div><strong id="topBarTitle">Logged in</strong></div>
+          <div style="font-size:12px; opacity:0.8;" id="topBarSub"></div>
+        </div>
+        <div>
+          <button id="logoutBtn">Logout</button>
+        </div>
       </div>
-      <div>
-        <button id="logoutBtn">Logout</button>
+    </div>
+
+    <!-- Login box -->
+    <div
+      id="loginBox"
+      style="
+        max-width:420px;
+        padding:16px;
+        border:1px solid #ddd;
+        border-radius:6px;
+        background:#f7f7f7;
+      "
+    >
+      <h2 style="margin-top:0;">Login</h2>
+
+      <div style="margin-bottom:8px;">
+        <input
+          id="email"
+          placeholder="Email"
+          style="width:100%; padding:8px;"
+        />
       </div>
-    </div>
-  </div>
 
-  <!-- Login box -->
-  <div id="loginBox" style="max-width:420px; padding:12px; border:1px solid #ddd; border-radius:6px;">
-    <h2 style="margin-top:0;">Login</h2>
-    <div style="margin-bottom:8px;">
-      <input id="email" placeholder="Email" style="width:100%; padding:8px;" />
-    </div>
-    <div style="margin-bottom:8px;">
-      <input id="password" type="password" placeholder="Password" style="width:100%; padding:8px;" />
-    </div>
-    <button id="loginBtn">Login</button>
-    <p id="authMsg" style="margin-top:10px;"></p>
-  </div>
+      <div style="margin-bottom:8px;">
+        <input
+          id="password"
+          type="password"
+          placeholder="Password"
+          style="width:100%; padding:8px;"
+        />
+      </div>
 
-  <div id="appBox" style="display:none;">
-    <hr />
-
-    <!-- Admin-only agent picker -->
-    <div id="adminAgentPicker" style="display:none; margin: 10px 0;">
-      <label for="agentSelect"><strong>Insert as agent:</strong></label>
-      <select id="agentSelect"></select>
+      <button id="loginBtn">Login</button>
+      <p id="authMsg" style="margin-top:10px;"></p>
     </div>
 
-    <h2>Customers</h2>
+    <!-- Main app -->
+    <div id="appBox" style="display:none;">
+      <hr />
 
-    <div style="margin-bottom:10px;">
-      <input id="firstName" placeholder="First name" />
-      <input id="lastName" placeholder="Last name" />
-      <input id="custEmail" placeholder="Email (optional)" />
-      <input id="custPhone" placeholder="Phone (optional)" />
-      <button id="addCustomerBtn">Add customer</button>
-      <p id="custMsg"></p>
+      <!-- Admin-only agent picker -->
+      <div id="adminAgentPicker" style="display:none; margin: 10px 0;">
+        <label for="agentSelect"><strong>Insert as agent:</strong></label>
+        <select id="agentSelect"></select>
+      </div>
+
+      <h2>Customers</h2>
+
+      <div style="margin-bottom:10px;">
+        <input id="firstName" placeholder="First name" />
+        <input id="lastName" placeholder="Last name" />
+        <input id="custEmail" placeholder="Email (optional)" />
+        <input id="custPhone" placeholder="Phone (optional)" />
+        <button id="addCustomerBtn">Add customer</button>
+        <p id="custMsg"></p>
+      </div>
+
+      <ul id="customerList"></ul>
     </div>
 
-    <ul id="customerList"></ul>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./app.js?v=16"></script>
-</body>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./app.js?v=16"></script>
+  </body>
 </html>
