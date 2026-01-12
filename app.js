@@ -120,6 +120,22 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function isValidEmail(email) {
+  if (!email) return true; // optional
+  const e = email.trim();
+  if (e.includes(" ")) return false;
+  const at = e.indexOf("@");
+  if (at < 1) return false;
+  const dot = e.lastIndexOf(".");
+  return dot > at + 1 && dot < e.length - 1;
+}
+
+function isValidPhone(phone) {
+  if (!phone) return true; // optional
+  const digits = phone.replace(/[^\d]/g, "");
+  return digits.length >= 7;
+}
+  
   // --- UI elements ---
   const loginBox = document.getElementById("loginBox");
   const topBar = document.getElementById("topBar");
@@ -624,6 +640,16 @@ window.addEventListener("DOMContentLoaded", () => {
       const last_name = (lastNameInput?.value || "").trim();
       const email = (custEmailInput?.value || "").trim() || null;
       const phone = (custPhoneInput?.value || "").trim() || null;
+      if (email && !isValidEmail(email)) {
+  setCustMsg("Please enter a valid email address.");
+  return;
+}
+
+if (phone && !isValidPhone(phone)) {
+  setCustMsg("Please enter a valid phone number.");
+  return;
+}
+
 
       if (!first_name || !last_name) {
         setCustMsg("First and last name are required.");
