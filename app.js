@@ -1,4 +1,4 @@
-console.log("EXACT Agents Portal loaded (v18");
+console.log("EXACT Agents Portal loaded (v19");
 
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
