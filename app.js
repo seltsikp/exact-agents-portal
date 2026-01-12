@@ -1,4 +1,4 @@
-console.log("EXACT Agents Portal loaded (v27)");
+console.log("EXACT Agents Portal loaded (v28)");
 
 // NOTE: Supabase anon key is public by design. RLS protects data.
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
@@ -20,39 +20,6 @@ window.addEventListener("DOMContentLoaded", () => {
     if (!el) return;
     el.style.display = isVisible ? "block" : "none";
   }
-function validateCustomerFieldsLive() {
-  const first = (firstNameInput?.value || "").trim();
-  const last  = (lastNameInput?.value || "").trim();
-  const email = (custEmailInput?.value || "").trim();
-  const phone = (custPhoneInput?.value || "").trim();
-
-  // First name (required)
-  if (!first) markField(firstNameInput, "error");
-  else markField(firstNameInput, "ok");
-
-  // Last name (required)
-  if (!last) markField(lastNameInput, "error");
-  else markField(lastNameInput, "ok");
-
-  // Email (optional, validate only if present)
-  if (!email) {
-    // optional: clear styling if empty
-    markField(custEmailInput, null);
-  } else if (!isValidEmail(email)) {
-    markField(custEmailInput, "error");
-  } else {
-    markField(custEmailInput, "ok");
-  }
-
-  // Phone (optional, validate only if present)
-  if (!phone) {
-    markField(custPhoneInput, null);
-  } else if (!isValidPhone(phone)) {
-    markField(custPhoneInput, "error");
-  } else {
-    markField(custPhoneInput, "ok");
-  }
-}
 
   function escapeHtml(str) {
     return String(str ?? "")
@@ -71,54 +38,6 @@ function validateCustomerFieldsLive() {
     } catch {
       return "";
     }
-  }
-
-  // Build premium row HTML (customer list)
-  function buildCustomerRowHTML(c, { role, agentNameMap }) {
-    const id = escapeHtml(c.id);
-
-    const first = (c.first_name ?? "").trim();
-    const last = (c.last_name ?? "").trim();
-    const fullName = `${first} ${last}`.trim() || "Unnamed Customer";
-
-    const name = escapeHtml(fullName);
-    const email = escapeHtml((c.email || "").trim());
-    const phone = escapeHtml((c.phone || "").trim());
-    const created = formatDateShort(c.created_at);
-
-    let metaLine = "";
-    if (email && phone) metaLine = `<span>${email}</span><span class="customer-dot">•</span><span>${phone}</span>`;
-    else if (email) metaLine = `<span>${email}</span>`;
-    else if (phone) metaLine = `<span>${phone}</span>`;
-    else metaLine = `<span style="opacity:.65;">No contact details</span>`;
-
-    // Admin clinic pill
-    let clinicPill = "";
-    if (role === "admin") {
-      const clinicName = agentNameMap?.[c.agent_id] || "Unknown clinic";
-      clinicPill = `<span class="pill-soft pill-soft-gold">Clinic: ${escapeHtml(clinicName)}</span>`;
-    }
-
-    const createdPill = created ? `<span class="pill-soft">Created: ${escapeHtml(created)}</span>` : "";
-
-    return `
-      <div class="customer-row" data-customer-id="${id}">
-        <div class="customer-main">
-          <div class="name">${name}</div>
-          <div class="meta">${metaLine}</div>
-        </div>
-
-        <div class="customer-context">
-          ${clinicPill}
-          ${createdPill}
-        </div>
-
-     <div class="customer-actions">
-  <button class="btn-primary" data-action="edit" type="button">Edit</button>
-  <button class="btn-danger" data-action="delete" type="button">Delete</button>
-</div>
-
-    `.trim();
   }
 
   // Confirm dialog helper (custom <dialog> with fallback)
@@ -153,36 +72,37 @@ function validateCustomerFieldsLive() {
     });
   }
 
+  // Validators
   function isValidEmail(email) {
-  if (!email) return true; // optional
-  const e = email.trim();
-  if (e.includes(" ")) return false;
-  const at = e.indexOf("@");
-  if (at < 1) return false;
-  const dot = e.lastIndexOf(".");
-  return dot > at + 1 && dot < e.length - 1;
-}
+    if (!email) return true; // optional
+    const e = email.trim();
+    if (e.includes(" ")) return false;
+    const at = e.indexOf("@");
+    if (at < 1) return false;
+    const dot = e.lastIndexOf(".");
+    return dot > at + 1 && dot < e.length - 1;
+  }
 
-function isValidPhone(phone) {
-  if (!phone) return true; // optional
-  const digits = phone.replace(/[^\d]/g, "");
-  return digits.length >= 7;
-}
+  function isValidPhone(phone) {
+    if (!phone) return true; // optional
+    const digits = phone.replace(/[^\d]/g, "");
+    return digits.length >= 7;
+  }
 
-function markField(el, state) {
-  if (!el) return;
-  el.classList.remove("field-error", "field-ok");
-  if (state === "error") el.classList.add("field-error");
-  if (state === "ok") el.classList.add("field-ok");
-  // if state is null/undefined -> cleared
-}
-
-function clearFieldMarks(...els) {
-  els.forEach(el => {
+  function markField(el, state) {
     if (!el) return;
     el.classList.remove("field-error", "field-ok");
-  });
-}
+    if (state === "error") el.classList.add("field-error");
+    if (state === "ok") el.classList.add("field-ok");
+    // if state is null/undefined -> cleared
+  }
+
+  function clearFieldMarks(...els) {
+    els.forEach((el) => {
+      if (!el) return;
+      el.classList.remove("field-error", "field-ok");
+    });
+  }
 
   // --- UI elements ---
   const loginBox = document.getElementById("loginBox");
@@ -226,47 +146,40 @@ function clearFieldMarks(...els) {
   const custEmailInput = document.getElementById("custEmail");
   const custPhoneInput = document.getElementById("custPhone");
 
+  // Live validation (bind once)
   function validateCustomerFieldsLive() {
-  const first = (firstNameInput?.value || "").trim();
-  const last  = (lastNameInput?.value || "").trim();
-  const email = (custEmailInput?.value || "").trim();
-  const phone = (custPhoneInput?.value || "").trim();
+    // Only validate if panel is open/visible (prevents styling when hidden)
+    if (addCustomerPanel && addCustomerPanel.style.display === "none") return;
 
-  // Only validate if panel is open/visible (prevents errors when hidden)
-  if (addCustomerPanel && addCustomerPanel.style.display === "none") return;
+    const first = (firstNameInput?.value || "").trim();
+    const last  = (lastNameInput?.value || "").trim();
+    const email = (custEmailInput?.value || "").trim();
+    const phone = (custPhoneInput?.value || "").trim();
 
-  // First name
-  if (!first) markField(firstNameInput, "error");
-  else markField(firstNameInput, "ok");
+    // First name (required)
+    if (!first) markField(firstNameInput, "error");
+    else markField(firstNameInput, "ok");
 
-  // Last name
-  if (!last) markField(lastNameInput, "error");
-  else markField(lastNameInput, "ok");
+    // Last name (required)
+    if (!last) markField(lastNameInput, "error");
+    else markField(lastNameInput, "ok");
 
-  // Email optional
-  if (!email) markField(custEmailInput, null);
-  else if (!isValidEmail(email)) markField(custEmailInput, "error");
-  else markField(custEmailInput, "ok");
+    // Email (optional)
+    if (!email) markField(custEmailInput, null);
+    else if (!isValidEmail(email)) markField(custEmailInput, "error");
+    else markField(custEmailInput, "ok");
 
-  // Phone optional
-  if (!phone) markField(custPhoneInput, null);
-  else if (!isValidPhone(phone)) markField(custPhoneInput, "error");
-  else markField(custPhoneInput, "ok");
-}
+    // Phone (optional)
+    if (!phone) markField(custPhoneInput, null);
+    else if (!isValidPhone(phone)) markField(custPhoneInput, "error");
+    else markField(custPhoneInput, "ok");
+  }
 
-[firstNameInput, lastNameInput, custEmailInput, custPhoneInput].forEach((el) => {
-  if (!el) return;
-  el.addEventListener("input", validateCustomerFieldsLive);
-  el.addEventListener("blur", validateCustomerFieldsLive);
-});
-
-  // --- Live field validation (inline highlighting) ---
-[firstNameInput, lastNameInput, custEmailInput, custPhoneInput].forEach((el) => {
-  if (!el) return;
-  el.addEventListener("input", () => {
-    el.classList.remove("field-error");
+  [firstNameInput, lastNameInput, custEmailInput, custPhoneInput].forEach((el) => {
+    if (!el) return;
+    el.addEventListener("input", validateCustomerFieldsLive);
+    el.addEventListener("blur", validateCustomerFieldsLive);
   });
-});
 
   // --- State ---
   let currentSession = null;
@@ -305,6 +218,7 @@ function clearFieldMarks(...els) {
     show(addCustomerPanel, true);
     show(openAddCustomerBtn, false);
     show(cancelAddCustomerBtn, true);
+    validateCustomerFieldsLive(); // reflect current state when opening
   }
 
   function closeAddCustomer() {
@@ -319,6 +233,7 @@ function clearFieldMarks(...els) {
 
     editingCustomerId = null;
     if (addCustomerBtn) addCustomerBtn.textContent = "Save customer";
+
     clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
   }
 
@@ -498,6 +413,54 @@ function clearFieldMarks(...els) {
     });
   }
 
+  // Build premium row HTML (customer list) — FIXED (proper closing tags)
+  function buildCustomerRowHTML(c, { role, agentNameMap }) {
+    const id = escapeHtml(c.id);
+
+    const first = (c.first_name ?? "").trim();
+    const last = (c.last_name ?? "").trim();
+    const fullName = `${first} ${last}`.trim() || "Unnamed Customer";
+
+    const name = escapeHtml(fullName);
+    const email = escapeHtml((c.email || "").trim());
+    const phone = escapeHtml((c.phone || "").trim());
+    const created = formatDateShort(c.created_at);
+
+    let metaLine = "";
+    if (email && phone) metaLine = `<span>${email}</span><span class="customer-dot">•</span><span>${phone}</span>`;
+    else if (email) metaLine = `<span>${email}</span>`;
+    else if (phone) metaLine = `<span>${phone}</span>`;
+    else metaLine = `<span style="opacity:.65;">No contact details</span>`;
+
+    // Admin clinic pill
+    let clinicPill = "";
+    if (role === "admin") {
+      const clinicName = agentNameMap?.[c.agent_id] || "Unknown clinic";
+      clinicPill = `<span class="pill-soft pill-soft-gold">Clinic: ${escapeHtml(clinicName)}</span>`;
+    }
+
+    const createdPill = created ? `<span class="pill-soft">Created: ${escapeHtml(created)}</span>` : "";
+
+    return `
+      <div class="customer-row" data-customer-id="${id}">
+        <div class="customer-main">
+          <div class="name">${name}</div>
+          <div class="meta">${metaLine}</div>
+        </div>
+
+        <div class="customer-context">
+          ${clinicPill}
+          ${createdPill}
+        </div>
+
+        <div class="customer-actions">
+          <button class="btn-primary" data-action="edit" type="button">Edit</button>
+          <button class="btn-danger" data-action="delete" type="button">Delete</button>
+        </div>
+      </div>
+    `.trim();
+  }
+
   // Customer list actions (event delegation) — attach once
   function ensureCustomerListDelegation() {
     if (!customerList) return;
@@ -582,7 +545,6 @@ function clearFieldMarks(...els) {
       customersById[c.id] = c;
     });
 
-    // Render as premium rows (no <li>)
     customerList.innerHTML = (data || [])
       .map((c) => buildCustomerRowHTML(c, { role, agentNameMap }))
       .join("");
@@ -603,13 +565,8 @@ function clearFieldMarks(...els) {
     }
 
     // lazy-load per view
-    if (viewKey === "agents") {
-      loadAgentsList();
-    }
-    if (viewKey === "customers") {
-      loadCustomers();
-    }
-    // lab is placeholder for now
+    if (viewKey === "agents") loadAgentsList();
+    if (viewKey === "customers") loadCustomers();
   }
 
   function renderMenuForRole(role) {
@@ -629,11 +586,10 @@ function clearFieldMarks(...els) {
       addMenuBtn("Agent Management", "agents");
       addMenuBtn("Customer Management", "customers");
       addMenuBtn("Lab Management", "lab");
-      setActiveView("customers"); // default landing for admin
+      setActiveView("customers");
       return;
     }
 
-    // Agent role (for now)
     addMenuBtn("Customer Management", "customers");
     setActiveView("customers");
   }
@@ -641,7 +597,6 @@ function clearFieldMarks(...els) {
   // --- Hydration ---
   async function hydrateAfterLogin(session) {
     if (!session?.user?.id) return;
-
     if (hydratedUserId === session.user.id) return;
     hydratedUserId = session.user.id;
 
@@ -655,7 +610,6 @@ function clearFieldMarks(...els) {
       }
       currentProfile = profile;
 
-      // top bar
       if (profile.role === "admin") {
         if (topBarTitle) topBarTitle.textContent = "Admin";
         if (topBarSub) topBarSub.textContent = session.user.email || "";
@@ -679,6 +633,17 @@ function clearFieldMarks(...els) {
       console.error("hydrateAfterLogin error:", e);
       setAuthMsg("Error after login: " + (e?.message || "Unknown error"));
     }
+  }
+
+  function setLoggedInShell(session) {
+    currentSession = session;
+
+    show(loginBox, false);
+    show(topBar, true);
+    show(appBox, true);
+
+    closeAddCustomer();
+    setAuthMsg("Logged in ✅");
   }
 
   // --- Login ---
@@ -731,40 +696,39 @@ function clearFieldMarks(...els) {
       const last_name = (lastNameInput?.value || "").trim();
       const email = (custEmailInput?.value || "").trim() || null;
       const phone = (custPhoneInput?.value || "").trim() || null;
-    
-     // clear previous field states
-clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
 
-// Required fields
-if (!first_name) {
-  markField(firstNameInput, "error");
-  setCustMsg("First name is required.");
-  return;
-}
-markField(firstNameInput, "ok");
+      // clear previous field states
+      clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
 
-if (!last_name) {
-  markField(lastNameInput, "error");
-  setCustMsg("Last name is required.");
-  return;
-}
-markField(lastNameInput, "ok");
+      // Required fields
+      if (!first_name) {
+        markField(firstNameInput, "error");
+        setCustMsg("First name is required.");
+        return;
+      }
+      markField(firstNameInput, "ok");
 
-// Optional fields (validate only if entered)
-if (email && !isValidEmail(email)) {
-  markField(custEmailInput, "error");
-  setCustMsg("Please enter a valid email address.");
-  return;
-}
-if (email) markField(custEmailInput, "ok");
+      if (!last_name) {
+        markField(lastNameInput, "error");
+        setCustMsg("Last name is required.");
+        return;
+      }
+      markField(lastNameInput, "ok");
 
-if (phone && !isValidPhone(phone)) {
-  markField(custPhoneInput, "error");
-  setCustMsg("Please enter a valid phone number.");
-  return;
-}
-if (phone) markField(custPhoneInput, "ok");
+      // Optional fields (validate only if entered)
+      if (email && !isValidEmail(email)) {
+        markField(custEmailInput, "error");
+        setCustMsg("Please enter a valid email address.");
+        return;
+      }
+      if (email) markField(custEmailInput, "ok");
 
+      if (phone && !isValidPhone(phone)) {
+        markField(custPhoneInput, "error");
+        setCustMsg("Please enter a valid phone number.");
+        return;
+      }
+      if (phone) markField(custPhoneInput, "ok");
 
       // EDIT MODE
       if (editingCustomerId) {
