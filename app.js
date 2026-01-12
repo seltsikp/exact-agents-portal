@@ -1,4 +1,4 @@
-console.log("EXACT Agents Portal loaded (v22");
+console.log("EXACT Agents Portal loaded (v23");
 
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
@@ -21,36 +21,36 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   async function confirmExact(message) {
-  const dlg = document.getElementById("confirmDialog");
-  const txt = document.getElementById("confirmDialogText");
-  const okBtn = document.getElementById("confirmOkBtn");
-  const cancelBtn = document.getElementById("confirmCancelBtn");
+    const dlg = document.getElementById("confirmDialog");
+    const txt = document.getElementById("confirmDialogText");
+    const okBtn = document.getElementById("confirmOkBtn");
+    const cancelBtn = document.getElementById("confirmCancelBtn");
 
-  // Fallback if <dialog> not supported
-  if (!dlg || typeof dlg.showModal !== "function") {
-    return confirm(message);
+    // Fallback if <dialog> not supported
+    if (!dlg || typeof dlg.showModal !== "function") {
+      return confirm(message);
+    }
+
+    txt.textContent = message;
+
+    return await new Promise((resolve) => {
+      const cleanup = () => {
+        okBtn.removeEventListener("click", onOk);
+        cancelBtn.removeEventListener("click", onCancel);
+        dlg.removeEventListener("cancel", onCancel);
+        dlg.close();
+      };
+
+      const onOk = () => { cleanup(); resolve(true); };
+      const onCancel = () => { cleanup(); resolve(false); };
+
+      okBtn.addEventListener("click", onOk);
+      cancelBtn.addEventListener("click", onCancel);
+      dlg.addEventListener("cancel", onCancel); // Esc key / backdrop
+
+      dlg.showModal();
+    });
   }
-
-  txt.textContent = message;
-
-  return await new Promise((resolve) => {
-    const cleanup = () => {
-      okBtn.removeEventListener("click", onOk);
-      cancelBtn.removeEventListener("click", onCancel);
-      dlg.removeEventListener("cancel", onCancel);
-      dlg.close();
-    };
-
-    const onOk = () => { cleanup(); resolve(true); };
-    const onCancel = () => { cleanup(); resolve(false); };
-
-    okBtn.addEventListener("click", onOk);
-    cancelBtn.addEventListener("click", onCancel);
-    dlg.addEventListener("cancel", onCancel); // Esc key / backdrop
-
-    dlg.showModal();
-  });
-}
 
   // --- UI elements (match your index.html) ---
   const loginBox = document.getElementById("loginBox");
@@ -88,8 +88,11 @@ window.addEventListener("DOMContentLoaded", () => {
   let currentAgentIdForInsert = null;
   let hydratedUserId = null;
 
-  // NEW: edit mode state
+  // edit mode state
   let editingCustomerId = null;
+
+  // NEW: agent name map (id -> name) for admin customer list display
+  let agentNameMap = {};
 
   const setAuthMsg = (t) => {
     if (!authMsg) return;
@@ -108,7 +111,6 @@ window.addEventListener("DOMContentLoaded", () => {
     show(cancelAddCustomerBtn, true);
   }
 
-  // UPDATED: close panel also exits edit mode + resets button label
   function closeAddCustomer() {
     show(addCustomerPanel, false);
     show(openAddCustomerBtn, true);
@@ -126,7 +128,6 @@ window.addEventListener("DOMContentLoaded", () => {
     if (addCustomerBtn) addCustomerBtn.textContent = "Save customer";
   }
 
-  // NEW: enter edit mode (prefill + open panel)
   function openEditCustomer(customer) {
     if (!customer) return;
 
@@ -175,6 +176,7 @@ window.addEventListener("DOMContentLoaded", () => {
     currentProfile = null;
     currentAgentIdForInsert = null;
     hydratedUserId = null;
+    agentNameMap = {};
   }
 
   function setLoggedInShell(session) {
@@ -242,6 +244,24 @@ window.addEventListener("DOMContentLoaded", () => {
     };
   }
 
+  // NEW: load all agents into a map (id -> name) for admin customer list display
+  async function loadAgentNameMap() {
+    const { data, error } = await supabaseClient
+      .from("agents")
+      .select("id, name");
+
+    if (error) {
+      console.warn("Could not load agent map:", error.message);
+      agentNameMap = {};
+      return;
+    }
+
+    agentNameMap = {};
+    (data || []).forEach((a) => {
+      agentNameMap[a.id] = a.name;
+    });
+  }
+
   async function loadCustomers() {
     if (!customerList) return;
 
@@ -259,57 +279,65 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     data.forEach((c) => {
-const li = document.createElement("li");
+      const li = document.createElement("li");
 
-const label = document.createElement("span");
-label.textContent = `${c.first_name} ${c.last_name} — ${c.email || ""} ${c.phone || ""}`;
+      const label = document.createElement("span");
 
-const editBtn = document.createElement("button");
-editBtn.textContent = "Edit";
-editBtn.style.marginLeft = "10px";
-editBtn.addEventListener("click", () => openEditCustomer(c));
+      const baseText = `${c.first_name} ${c.last_name} — ${c.email || ""} ${c.phone || ""}`.trim();
 
-const deleteBtn = document.createElement("button");
-deleteBtn.textContent = "Delete";
-deleteBtn.style.marginLeft = "6px";
-deleteBtn.addEventListener("click", async () => {
-  setCustMsg("");
+      // NEW: for admin, append clinic name
+      if (currentProfile?.role === "admin") {
+        const clinicName = agentNameMap[c.agent_id] || "Unknown clinic";
+        label.textContent = `${baseText} — Clinic: ${clinicName}`;
+      } else {
+        label.textContent = baseText;
+      }
 
-  const name = `${c.first_name || ""} ${c.last_name || ""}`.trim() || "this customer";
-  const ok = await confirmExact(`Delete ${name}? This cannot be undone.`);
-if (!ok) return;
+      const editBtn = document.createElement("button");
+      editBtn.textContent = "Edit";
+      editBtn.style.marginLeft = "10px";
+      editBtn.addEventListener("click", () => openEditCustomer(c));
 
-  const { data, error } = await supabaseClient
-    .from("customers")
-    .delete()
-    .eq("id", c.id)
-    .select("id");
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "Delete";
+      deleteBtn.style.marginLeft = "6px";
+      deleteBtn.addEventListener("click", async () => {
+        setCustMsg("");
 
-  if (error) {
-    setCustMsg("Delete error: " + error.message);
-    return;
-  }
+        const name = `${c.first_name || ""} ${c.last_name || ""}`.trim() || "this customer";
+        const ok = await confirmExact(`Delete ${name}? This cannot be undone.`);
+        if (!ok) return;
 
-  if (!data || data.length === 0) {
-    setCustMsg("Delete blocked (RLS) — no rows deleted.");
-    return;
-  }
+        const { data, error } = await supabaseClient
+          .from("customers")
+          .delete()
+          .eq("id", c.id)
+          .select("id");
 
-  setCustMsg("Deleted ✅");
+        if (error) {
+          setCustMsg("Delete error: " + error.message);
+          return;
+        }
 
-  if (editingCustomerId === c.id) {
-    closeAddCustomer();
-  }
+        if (!data || data.length === 0) {
+          setCustMsg("Delete blocked (RLS) — no rows deleted.");
+          return;
+        }
 
-  await loadCustomers();
-});
+        setCustMsg("Deleted ✅");
 
-li.appendChild(label);
-li.appendChild(editBtn);
-li.appendChild(deleteBtn);
+        if (editingCustomerId === c.id) {
+          closeAddCustomer();
+        }
 
-customerList.appendChild(li);
+        await loadCustomers();
+      });
 
+      li.appendChild(label);
+      li.appendChild(editBtn);
+      li.appendChild(deleteBtn);
+
+      customerList.appendChild(li);
     });
   }
 
@@ -335,12 +363,18 @@ customerList.appendChild(li);
         if (topBarSub) topBarSub.textContent = session.user.email || "";
         show(adminAgentPicker, true);
         await loadAgentsForAdminPicker();
+
+        // NEW: load agent map so admin can see clinic names beside customers
+        await loadAgentNameMap();
       } else {
         const agentName = await loadAgentName(profile.agent_id);
         if (topBarTitle) topBarTitle.textContent = `Logged in as Agent — ${agentName || "Unknown Agent"}`;
         if (topBarSub) topBarSub.textContent = session.user.email || "";
         show(adminAgentPicker, false);
         currentAgentIdForInsert = profile.agent_id;
+
+        // not required for agents, but keep map empty
+        agentNameMap = {};
       }
 
       await loadCustomers();
@@ -407,29 +441,29 @@ customerList.appendChild(li);
         return;
       }
 
-     // EDIT MODE: update existing record
-if (editingCustomerId) {
-  const { data, error } = await supabaseClient
-    .from("customers")
-    .update({ first_name, last_name, email, phone })
-    .eq("id", editingCustomerId)
-    .select("id"); // <-- IMPORTANT: forces Supabase to tell us if a row was actually updated
+      // EDIT MODE: update existing record
+      if (editingCustomerId) {
+        const { data, error } = await supabaseClient
+          .from("customers")
+          .update({ first_name, last_name, email, phone })
+          .eq("id", editingCustomerId)
+          .select("id");
 
-  if (error) {
-    setCustMsg("Update error: " + error.message);
-    return;
-  }
+        if (error) {
+          setCustMsg("Update error: " + error.message);
+          return;
+        }
 
-  if (!data || data.length === 0) {
-    setCustMsg("Update blocked (RLS) — no rows updated.");
-    return;
-  }
+        if (!data || data.length === 0) {
+          setCustMsg("Update blocked (RLS) — no rows updated.");
+          return;
+        }
 
-  setCustMsg("Saved ✅");
-  await loadCustomers();
-  closeAddCustomer();
-  return;
-}
+        setCustMsg("Saved ✅");
+        await loadCustomers();
+        closeAddCustomer();
+        return;
+      }
 
       // ADD MODE: insert new record
       if (!currentAgentIdForInsert) {
@@ -477,4 +511,3 @@ if (editingCustomerId) {
     if (event === "SIGNED_IN" && session) hydrateAfterLogin(session);
   });
 });
-
