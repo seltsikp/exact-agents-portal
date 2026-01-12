@@ -1,4 +1,4 @@
-console.log("EXACT Agents Portal loaded (v24");
+console.log("EXACT Agents Portal loaded (v25");
 
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
@@ -27,7 +27,6 @@ window.addEventListener("DOMContentLoaded", () => {
     const okBtn = document.getElementById("confirmOkBtn");
     const cancelBtn = document.getElementById("confirmCancelBtn");
 
-    // Fallback if <dialog> not supported
     if (!dlg || typeof dlg.showModal !== "function") {
       return confirm(message);
     }
@@ -47,13 +46,13 @@ window.addEventListener("DOMContentLoaded", () => {
 
       okBtn.addEventListener("click", onOk);
       cancelBtn.addEventListener("click", onCancel);
-      dlg.addEventListener("cancel", onCancel); // Esc key / backdrop
+      dlg.addEventListener("cancel", onCancel);
 
       dlg.showModal();
     });
   }
 
-  // --- UI elements (match your index.html) ---
+  // --- UI elements ---
   const loginBox = document.getElementById("loginBox");
   const topBar = document.getElementById("topBar");
   const topBarTitle = document.getElementById("topBarTitle");
@@ -66,13 +65,25 @@ window.addEventListener("DOMContentLoaded", () => {
   const authMsg = document.getElementById("authMsg");
 
   const appBox = document.getElementById("appBox");
+
+  // Menu + Views
+  const menuItems = document.getElementById("menuItems");
+  const viewAgentMgmt = document.getElementById("viewAgentMgmt");
+  const viewCustomerMgmt = document.getElementById("viewCustomerMgmt");
+  const viewLabMgmt = document.getElementById("viewLabMgmt");
+
+  // Agents view
+  const agentList = document.getElementById("agentList");
+  const agentMsg = document.getElementById("agentMsg");
+
+  // Admin-only agent picker (inside customer view)
   const adminAgentPicker = document.getElementById("adminAgentPicker");
   const agentSelect = document.getElementById("agentSelect");
 
+  // Customers
   const customerList = document.getElementById("customerList");
   const custMsg = document.getElementById("custMsg");
 
-  // Add customer panel
   const openAddCustomerBtn = document.getElementById("openAddCustomerBtn");
   const cancelAddCustomerBtn = document.getElementById("cancelAddCustomerBtn");
   const addCustomerPanel = document.getElementById("addCustomerPanel");
@@ -89,11 +100,13 @@ window.addEventListener("DOMContentLoaded", () => {
   let currentAgentIdForInsert = null;
   let hydratedUserId = null;
 
-  // Edit mode state
   let editingCustomerId = null;
 
-  // Agent map (id -> name) used for admin display
+  // agent map (id -> name) for admin customer display
   let agentNameMap = {};
+
+  // UI state
+  let activeViewKey = null;
 
   const setAuthMsg = (t) => {
     if (!authMsg) return;
@@ -103,6 +116,11 @@ window.addEventListener("DOMContentLoaded", () => {
   const setCustMsg = (t) => {
     if (!custMsg) return;
     custMsg.textContent = t || "";
+  };
+
+  const setAgentMsg = (t) => {
+    if (!agentMsg) return;
+    agentMsg.textContent = t || "";
   };
 
   // --- Add customer toggle helpers ---
@@ -122,10 +140,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (custEmailInput) custEmailInput.value = "";
     if (custPhoneInput) custPhoneInput.value = "";
 
-    // exit edit mode
     editingCustomerId = null;
-
-    // reset save button label
     if (addCustomerBtn) addCustomerBtn.textContent = "Save customer";
   }
 
@@ -134,15 +149,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
     editingCustomerId = customer.id;
 
-    // prefill
     if (firstNameInput) firstNameInput.value = customer.first_name || "";
     if (lastNameInput) lastNameInput.value = customer.last_name || "";
     if (custEmailInput) custEmailInput.value = customer.email || "";
     if (custPhoneInput) custPhoneInput.value = customer.phone || "";
 
-    // label
     if (addCustomerBtn) addCustomerBtn.textContent = "Save changes";
-
     openAddCustomer();
   }
 
@@ -154,7 +166,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   if (cancelAddCustomerBtn) cancelAddCustomerBtn.addEventListener("click", closeAddCustomer);
 
-  // --- UI state functions ---
+  // --- UI: logged out ---
   function setLoggedOutUI(message = "Not logged in") {
     show(topBar, false);
     show(loginBox, true);
@@ -165,17 +177,25 @@ window.addEventListener("DOMContentLoaded", () => {
     if (topBarSub) topBarSub.textContent = "";
 
     if (customerList) customerList.innerHTML = "";
+    if (agentList) agentList.innerHTML = "";
+    if (menuItems) menuItems.innerHTML = "";
 
     closeAddCustomer();
 
     setAuthMsg(message);
     setCustMsg("");
+    setAgentMsg("");
 
     currentSession = null;
     currentProfile = null;
     currentAgentIdForInsert = null;
     hydratedUserId = null;
     agentNameMap = {};
+    activeViewKey = null;
+
+    show(viewAgentMgmt, false);
+    show(viewCustomerMgmt, false);
+    show(viewLabMgmt, false);
   }
 
   function setLoggedInShell(session) {
@@ -189,6 +209,7 @@ window.addEventListener("DOMContentLoaded", () => {
     setAuthMsg("Logged in ✅");
   }
 
+  // --- Data loaders ---
   async function loadProfileForUser(userId) {
     const { data, error } = await supabaseClient
       .from("agent_users")
@@ -258,6 +279,46 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  async function loadAgentsList() {
+    if (!agentList) return;
+
+    agentList.innerHTML = "";
+    setAgentMsg("");
+
+    const { data, error } = await supabaseClient
+      .from("agents")
+      .select("id, name, created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      setAgentMsg("Load agents error: " + error.message);
+      return;
+    }
+
+    (data || []).forEach((a) => {
+      const li = document.createElement("li");
+
+      const left = document.createElement("div");
+      left.style.display = "flex";
+      left.style.flexDirection = "column";
+      left.style.gap = "4px";
+
+      const name = document.createElement("div");
+      name.style.fontWeight = "600";
+      name.textContent = a.name || "(Unnamed agent)";
+
+      const sub = document.createElement("div");
+      sub.className = "subtle";
+      sub.textContent = a.id; // later we’ll replace with nicer metadata
+
+      left.appendChild(name);
+      left.appendChild(sub);
+
+      li.appendChild(left);
+      agentList.appendChild(li);
+    });
+  }
+
   // Premium customer row builder
   function buildCustomerRow(c) {
     const row = document.createElement("div");
@@ -279,7 +340,6 @@ window.addEventListener("DOMContentLoaded", () => {
     left.appendChild(nameEl);
     if (detailsEl.textContent) left.appendChild(detailsEl);
 
-    // Admin-only clinic pill
     if (currentProfile?.role === "admin") {
       const clinicName = agentNameMap[c.agent_id] || "Unknown clinic";
       const pill = document.createElement("div");
@@ -363,6 +423,57 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // --- Menu + views ---
+  function setActiveView(viewKey) {
+    activeViewKey = viewKey;
+
+    show(viewAgentMgmt, viewKey === "agents");
+    show(viewCustomerMgmt, viewKey === "customers");
+    show(viewLabMgmt, viewKey === "lab");
+
+    // highlight active button
+    if (menuItems) {
+      const btns = menuItems.querySelectorAll("button[data-view]");
+      btns.forEach((b) => b.classList.toggle("active", b.getAttribute("data-view") === viewKey));
+    }
+
+    // lazy-load per view
+    if (viewKey === "agents") {
+      loadAgentsList();
+    }
+    if (viewKey === "customers") {
+      loadCustomers();
+    }
+    // lab is placeholder for now
+  }
+
+  function renderMenuForRole(role) {
+    if (!menuItems) return;
+    menuItems.innerHTML = "";
+
+    const addMenuBtn = (label, viewKey) => {
+      const b = document.createElement("button");
+      b.className = "menuBtn";
+      b.textContent = label;
+      b.setAttribute("data-view", viewKey);
+      b.addEventListener("click", () => setActiveView(viewKey));
+      menuItems.appendChild(b);
+    };
+
+    if (role === "admin") {
+      addMenuBtn("Agent Management", "agents");
+      addMenuBtn("Customer Management", "customers");
+      addMenuBtn("Lab Management", "lab");
+      setActiveView("customers"); // default landing for admin
+      return;
+    }
+
+    // Agent role (for now)
+    addMenuBtn("Customer Management", "customers");
+    setActiveView("customers");
+  }
+
+  // --- Hydration ---
   async function hydrateAfterLogin(session) {
     if (!session?.user?.id) return;
 
@@ -379,22 +490,25 @@ window.addEventListener("DOMContentLoaded", () => {
       }
       currentProfile = profile;
 
+      // top bar
       if (profile.role === "admin") {
-        if (topBarTitle) topBarTitle.textContent = "Logged in as Admin";
+        if (topBarTitle) topBarTitle.textContent = "Admin";
         if (topBarSub) topBarSub.textContent = session.user.email || "";
+
         show(adminAgentPicker, true);
         await loadAgentsForAdminPicker();
         await loadAgentNameMap();
       } else {
         const agentName = await loadAgentName(profile.agent_id);
-        if (topBarTitle) topBarTitle.textContent = `Logged in as Agent — ${agentName || "Unknown Agent"}`;
+        if (topBarTitle) topBarTitle.textContent = `Agent — ${agentName || "Unknown clinic"}`;
         if (topBarSub) topBarSub.textContent = session.user.email || "";
+
         show(adminAgentPicker, false);
         currentAgentIdForInsert = profile.agent_id;
         agentNameMap = {};
       }
 
-      await loadCustomers();
+      renderMenuForRole(profile.role);
       closeAddCustomer();
     } catch (e) {
       console.error("hydrateAfterLogin error:", e);
