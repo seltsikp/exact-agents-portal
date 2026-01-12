@@ -1,5 +1,6 @@
-console.log("EXACT Agents Portal loaded (v25");
+console.log("EXACT Agents Portal loaded (v26)");
 
+// NOTE: Supabase anon key is public by design. RLS protects data.
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
 
@@ -18,6 +19,73 @@ window.addEventListener("DOMContentLoaded", () => {
   function show(el, isVisible) {
     if (!el) return;
     el.style.display = isVisible ? "block" : "none";
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function formatDateShort(iso) {
+    if (!iso) return "";
+    try {
+      const d = new Date(iso);
+      return d.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
+    } catch {
+      return "";
+    }
+  }
+
+  // Build premium row HTML (customer list)
+  function buildCustomerRowHTML(c, { role, agentNameMap }) {
+    const id = escapeHtml(c.id);
+
+    const first = (c.first_name ?? "").trim();
+    const last = (c.last_name ?? "").trim();
+    const fullName = `${first} ${last}`.trim() || "Unnamed Customer";
+
+    const name = escapeHtml(fullName);
+    const email = escapeHtml((c.email || "").trim());
+    const phone = escapeHtml((c.phone || "").trim());
+    const created = formatDateShort(c.created_at);
+
+    let metaLine = "";
+    if (email && phone) metaLine = `<span>${email}</span><span class="customer-dot">•</span><span>${phone}</span>`;
+    else if (email) metaLine = `<span>${email}</span>`;
+    else if (phone) metaLine = `<span>${phone}</span>`;
+    else metaLine = `<span style="opacity:.65;">No contact details</span>`;
+
+    // Admin clinic pill
+    let clinicPill = "";
+    if (role === "admin") {
+      const clinicName = agentNameMap?.[c.agent_id] || "Unknown clinic";
+      clinicPill = `<span class="pill-soft pill-soft-gold">Clinic: ${escapeHtml(clinicName)}</span>`;
+    }
+
+    const createdPill = created ? `<span class="pill-soft">Created: ${escapeHtml(created)}</span>` : "";
+
+    return `
+      <div class="customer-row" data-customer-id="${id}">
+        <div class="customer-main">
+          <div class="name">${name}</div>
+          <div class="meta">${metaLine}</div>
+        </div>
+
+        <div class="customer-context">
+          ${clinicPill}
+          ${createdPill}
+        </div>
+
+        <div class="customer-actions">
+          <button class="btn btn-primary" data-action="edit" type="button">Edit</button>
+          <button class="btn btn-danger" data-action="delete" type="button">Delete</button>
+        </div>
+      </div>
+    `.trim();
   }
 
   // Confirm dialog helper (custom <dialog> with fallback)
@@ -105,6 +173,9 @@ window.addEventListener("DOMContentLoaded", () => {
   // agent map (id -> name) for admin customer display
   let agentNameMap = {};
 
+  // customers cache for event delegation (id -> customer object)
+  let customersById = {};
+
   // UI state
   let activeViewKey = null;
 
@@ -191,6 +262,7 @@ window.addEventListener("DOMContentLoaded", () => {
     currentAgentIdForInsert = null;
     hydratedUserId = null;
     agentNameMap = {};
+    customersById = {};
     activeViewKey = null;
 
     show(viewAgentMgmt, false);
@@ -246,7 +318,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     if (error) throw error;
 
-    data.forEach((a) => {
+    (data || []).forEach((a) => {
       const opt = document.createElement("option");
       opt.value = a.id;
       opt.textContent = a.name;
@@ -319,91 +391,72 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Premium customer row builder
-  function buildCustomerRow(c) {
-    const row = document.createElement("div");
-    row.className = "cust-row";
+  // Customer list actions (event delegation) — attach once
+  function ensureCustomerListDelegation() {
+    if (!customerList) return;
+    if (customerList.dataset.bound === "1") return;
 
-    const left = document.createElement("div");
-    left.className = "cust-left";
+    customerList.addEventListener("click", async (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn) return;
 
-    const nameEl = document.createElement("div");
-    nameEl.className = "cust-name";
-    nameEl.textContent = `${c.first_name || ""} ${c.last_name || ""}`.trim();
+      const row = e.target.closest(".customer-row");
+      if (!row) return;
 
-    const detailsEl = document.createElement("div");
-    detailsEl.className = "cust-details";
-    const emailText = (c.email || "").trim();
-    const phoneText = (c.phone || "").trim();
-    detailsEl.textContent = [emailText, phoneText].filter(Boolean).join(" • ");
+      const customerId = row.getAttribute("data-customer-id");
+      const action = btn.getAttribute("data-action");
+      const c = customersById[customerId];
 
-    left.appendChild(nameEl);
-    if (detailsEl.textContent) left.appendChild(detailsEl);
+      if (!c) return;
 
-    if (currentProfile?.role === "admin") {
-      const clinicName = agentNameMap[c.agent_id] || "Unknown clinic";
-      const pill = document.createElement("div");
-      pill.className = "pill";
-      pill.textContent = `Clinic: ${clinicName}`;
-      left.appendChild(pill);
-    }
-
-    const actions = document.createElement("div");
-    actions.className = "actions";
-
-    const editBtn = document.createElement("button");
-    editBtn.textContent = "Edit";
-    editBtn.className = "btn-small";
-    editBtn.addEventListener("click", () => openEditCustomer(c));
-
-    const deleteBtn = document.createElement("button");
-    deleteBtn.textContent = "Delete";
-    deleteBtn.className = "btn-small btn-danger";
-    deleteBtn.addEventListener("click", async () => {
-      setCustMsg("");
-
-      const customerName = `${c.first_name || ""} ${c.last_name || ""}`.trim() || "this customer";
-      const ok = await confirmExact(`Delete ${customerName}? This cannot be undone.`);
-      if (!ok) return;
-
-      const { data, error } = await supabaseClient
-        .from("customers")
-        .delete()
-        .eq("id", c.id)
-        .select("id");
-
-      if (error) {
-        setCustMsg("Delete error: " + error.message);
+      if (action === "edit") {
+        openEditCustomer(c);
         return;
       }
 
-      if (!data || data.length === 0) {
-        setCustMsg("Delete blocked (RLS) — no rows deleted.");
-        return;
+      if (action === "delete") {
+        setCustMsg("");
+
+        const customerName = `${c.first_name || ""} ${c.last_name || ""}`.trim() || "this customer";
+        const ok = await confirmExact(`Delete ${customerName}? This cannot be undone.`);
+        if (!ok) return;
+
+        const { data, error } = await supabaseClient
+          .from("customers")
+          .delete()
+          .eq("id", c.id)
+          .select("id");
+
+        if (error) {
+          setCustMsg("Delete error: " + error.message);
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          setCustMsg("Delete blocked (RLS) — no rows deleted.");
+          return;
+        }
+
+        setCustMsg("Deleted ✅");
+
+        if (editingCustomerId === c.id) {
+          closeAddCustomer();
+        }
+
+        await loadCustomers();
       }
-
-      setCustMsg("Deleted ✅");
-
-      if (editingCustomerId === c.id) {
-        closeAddCustomer();
-      }
-
-      await loadCustomers();
     });
 
-    actions.appendChild(editBtn);
-    actions.appendChild(deleteBtn);
-
-    row.appendChild(left);
-    row.appendChild(actions);
-
-    return row;
+    customerList.dataset.bound = "1";
   }
 
   async function loadCustomers() {
     if (!customerList) return;
 
+    ensureCustomerListDelegation();
+
     customerList.innerHTML = "";
+    customersById = {};
     setCustMsg("");
 
     const { data, error } = await supabaseClient
@@ -416,11 +469,16 @@ window.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    const role = currentProfile?.role || "agent";
+
     (data || []).forEach((c) => {
-      const li = document.createElement("li");
-      li.appendChild(buildCustomerRow(c));
-      customerList.appendChild(li);
+      customersById[c.id] = c;
     });
+
+    // Render as premium rows (no <li>)
+    customerList.innerHTML = (data || [])
+      .map((c) => buildCustomerRowHTML(c, { role, agentNameMap }))
+      .join("");
   }
 
   // --- Menu + views ---
