@@ -113,11 +113,11 @@ function validateCustomerFieldsLive() {
           ${createdPill}
         </div>
 
-        <div class="customer-actions">
-          <button class="btn btn-primary" data-action="edit" type="button">Edit</button>
-          <button class="btn btn-danger" data-action="delete" type="button">Delete</button>
-        </div>
-      </div>
+     <div class="customer-actions">
+  <button class="btn-primary" data-action="edit" type="button">Edit</button>
+  <button class="btn-danger" data-action="delete" type="button">Delete</button>
+</div>
+
     `.trim();
   }
 
