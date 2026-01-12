@@ -1,6 +1,6 @@
-console.log("EXACT Agents Portal loaded (v16");
+console.log("EXACT Agents Portal loaded (v17");
 
-const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co/";
+const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
 
 // Supabase client (Edge-friendly settings)
@@ -38,6 +38,11 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const customerList = document.getElementById("customerList");
   const custMsg = document.getElementById("custMsg");
+
+  // Add customer panel (new UI)
+  const openAddCustomerBtn = document.getElementById("openAddCustomerBtn");
+  const cancelAddCustomerBtn = document.getElementById("cancelAddCustomerBtn");
+  const addCustomerPanel = document.getElementById("addCustomerPanel");
   const addCustomerBtn = document.getElementById("addCustomerBtn");
 
   const firstNameInput = document.getElementById("firstName");
@@ -61,6 +66,28 @@ window.addEventListener("DOMContentLoaded", () => {
     custMsg.textContent = t || "";
   };
 
+  // --- Add customer toggle helpers ---
+  function openAddCustomer() {
+    show(addCustomerPanel, true);
+    show(openAddCustomerBtn, false);
+    show(cancelAddCustomerBtn, true);
+  }
+
+  function closeAddCustomer() {
+    show(addCustomerPanel, false);
+    show(openAddCustomerBtn, true);
+    show(cancelAddCustomerBtn, false);
+
+    if (firstNameInput) firstNameInput.value = "";
+    if (lastNameInput) lastNameInput.value = "";
+    if (custEmailInput) custEmailInput.value = "";
+    if (custPhoneInput) custPhoneInput.value = "";
+  }
+
+  if (openAddCustomerBtn) openAddCustomerBtn.addEventListener("click", openAddCustomer);
+  if (cancelAddCustomerBtn) cancelAddCustomerBtn.addEventListener("click", closeAddCustomer);
+
+  // --- UI state functions ---
   function setLoggedOutUI(message = "Not logged in") {
     show(topBar, false);
     show(loginBox, true);
@@ -71,6 +98,9 @@ window.addEventListener("DOMContentLoaded", () => {
     if (topBarSub) topBarSub.textContent = "";
 
     if (customerList) customerList.innerHTML = "";
+
+    // reset add-customer UI
+    closeAddCustomer();
 
     setAuthMsg(message);
     setCustMsg("");
@@ -87,6 +117,9 @@ window.addEventListener("DOMContentLoaded", () => {
     show(loginBox, false);
     show(topBar, true);
     show(appBox, true);
+
+    // Default state: add panel closed
+    closeAddCustomer();
 
     setAuthMsg("Logged in ✅");
   }
@@ -151,7 +184,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     const { data, error } = await supabaseClient
       .from("customers")
-      .select("id, first_name, last_name, email, phone, created_at")
+      .select("id, agent_id, first_name, last_name, email, phone, created_at")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -161,7 +194,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     data.forEach((c) => {
       const li = document.createElement("li");
-      li.textContent = `${c.first_name} ${c.last_name} — ${c.email || ""} ${c.phone || ""}`;
+      li.textContent = `[${c.agent_id}] ${c.first_name} ${c.last_name} — ${c.email || ""} ${c.phone || ""}`;
       customerList.appendChild(li);
     });
   }
@@ -183,7 +216,6 @@ window.addEventListener("DOMContentLoaded", () => {
       }
       currentProfile = profile;
 
-      // Top bar display
       if (profile.role === "admin") {
         if (topBarTitle) topBarTitle.textContent = "Logged in as Admin";
         if (topBarSub) topBarSub.textContent = session.user.email || "";
@@ -198,6 +230,7 @@ window.addEventListener("DOMContentLoaded", () => {
       }
 
       await loadCustomers();
+      closeAddCustomer();
     } catch (e) {
       console.error("hydrateAfterLogin error:", e);
       setAuthMsg("Error after login: " + (e?.message || "Unknown error"));
@@ -274,12 +307,8 @@ window.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      if (firstNameInput) firstNameInput.value = "";
-      if (lastNameInput) lastNameInput.value = "";
-      if (custEmailInput) custEmailInput.value = "";
-      if (custPhoneInput) custPhoneInput.value = "";
-
       await loadCustomers();
+      closeAddCustomer();
     });
   }
 
@@ -302,7 +331,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   })();
 
- // --- Auth state events ---
+  // --- Auth state events ---
   supabaseClient.auth.onAuthStateChange((event, session) => {
     console.log("Auth state change:", event);
     if (event === "SIGNED_OUT") setLoggedOutUI("Logged out");
