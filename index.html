@@ -48,6 +48,19 @@
         margin: 0 0 18px;
       }
 
+      .page-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.exact-logo{
+  height: 42px;          /* adjust if needed */
+  width: auto;
+  object-fit: contain;
+}
+
       h2{
         font-size: 13px;
         font-weight: 600;
@@ -273,7 +286,11 @@
 
   <body>
     <div class="container">
-      <h1>EXACT Portal</h1>
+      <div class="page-header">
+  <h1>EXACT Portal</h1>
+  <img src="assets/logo.png" alt="EXACT Cosmetics" class="exact-logo">
+</div>
+
 
       <div id="topBar" class="topbar" style="display:none;">
         <div class="row">
