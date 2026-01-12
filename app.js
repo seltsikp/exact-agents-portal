@@ -344,17 +344,30 @@ window.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // EDIT MODE: update existing record
-      if (editingCustomerId) {
-        const { error } = await supabaseClient
-          .from("customers")
-          .update({ first_name, last_name, email, phone })
-          .eq("id", editingCustomerId);
+     // EDIT MODE: update existing record
+if (editingCustomerId) {
+  const { data, error } = await supabaseClient
+    .from("customers")
+    .update({ first_name, last_name, email, phone })
+    .eq("id", editingCustomerId)
+    .select("id"); // <-- IMPORTANT: forces Supabase to tell us if a row was actually updated
 
-        if (error) {
-          setCustMsg("Update error: " + error.message);
-          return;
-        }
+  if (error) {
+    setCustMsg("Update error: " + error.message);
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    setCustMsg("Update blocked (RLS) — no rows updated.");
+    return;
+  }
+
+  setCustMsg("Saved ✅");
+  await loadCustomers();
+  closeAddCustomer();
+  return;
+}
+
 
         await loadCustomers();
         closeAddCustomer();
