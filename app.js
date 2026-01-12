@@ -194,7 +194,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     data.forEach((c) => {
       const li = document.createElement("li");
-      li.textContent = `[${c.agent_id}] ${c.first_name} ${c.last_name} — ${c.email || ""} ${c.phone || ""}`;
+      li.textContent = `${c.first_name} ${c.last_name} — ${c.email || ""} ${c.phone || ""}`;
       customerList.appendChild(li);
     });
   }
