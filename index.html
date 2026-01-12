@@ -4,11 +4,10 @@
     <meta charset="utf-8" />
     <title>EXACT Agents Portal</title>
 
-    <!-- Premium fonts -->
-   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <!-- Brand font: Montserrat -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Optional: suppress favicon 404 -->
     <link rel="icon" href="data:," />
@@ -23,7 +22,7 @@
         --shadow: 0 12px 30px rgba(15,20,25,.08);
         --radius: 14px;
 
-        /* EXACT accent (tweak later if you want) */
+        /* EXACT accent */
         --gold: #b89a5b;
         --gold-dark: #9e8247;
         --danger: #b42318;
@@ -44,19 +43,29 @@
         padding: 0 18px 60px;
       }
 
+      h1{
+        font-size: 40px;
+        font-weight: 700;
+        letter-spacing: .6px;
+        margin: 0 0 22px;
+      }
+
+      /* ONE h2 rule only */
       h2{
-        font-size: 14px;
-        letter-spacing: .7px;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 1.4px;
         text-transform: uppercase;
         margin: 0 0 12px;
         color: var(--muted);
       }
 
+      /* Refined top bar */
       .topbar{
-        background: var(--card);
+        background: #fafafa;
         border: 1px solid var(--line);
         border-radius: var(--radius);
-        box-shadow: var(--shadow);
+        box-shadow: none;
         padding: 14px 16px;
         margin-bottom: 18px;
       }
@@ -141,6 +150,17 @@
         border-color: rgba(180,35,24,.6);
       }
 
+      /* Make logout subtle */
+      #logoutBtn{
+        font-size: 13px;
+        font-weight: 500;
+        padding: 6px 10px;
+        opacity: 0.75;
+      }
+      #logoutBtn:hover{
+        opacity: 1;
+      }
+
       /* Customer list */
       ul{
         list-style: none;
@@ -179,7 +199,7 @@
         font-family: Montserrat, sans-serif;
         font-weight: 600;
         letter-spacing: .4px;
-
+        margin: 0 0 6px 0;
       }
       .dialog-actions{
         display:flex;
@@ -198,7 +218,7 @@
       <div id="topBar" class="topbar" style="display:none;">
         <div class="row">
           <div>
-            <div><strong id="topBarTitle">Logged in</strong></div>
+            <div id="topBarTitle" style="font-weight:600;">Logged in</div>
             <div class="subtle" id="topBarSub"></div>
           </div>
           <div>
