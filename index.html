@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <title>EXACT Portal</title>
 
-    <!-- Brand font: Montserrat -->
+    <!-- Brand font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -12,116 +12,6 @@
     <link rel="icon" href="data:," />
 
     <style>
-
-.customer-row{
-  display: grid;
-  grid-template-columns: 1.6fr 1.1fr auto;
-  gap: 14px;
-  align-items: center;
-  padding: 14px 14px;
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 14px;
-  background: rgba(255,255,255,.03);
-}
-
-.customer-row:hover{
-  background: rgba(255,255,255,.045);
-  border-color: rgba(255,255,255,.12);
-}
-
-.customer-main .name{
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: .2px;
-  line-height: 1.25;
-  color: rgba(255,255,255,.92);
-}
-
-.customer-main .meta{
-  margin-top: 4px;
-  font-size: 13px;
-  color: rgba(255,255,255,.62);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  line-height: 1.25;
-}
-
-.customer-dot{ opacity: .35; }
-
-.customer-context{
-  display: flex;
-  gap: 8px;
-  justify-content: flex-start;
-  flex-wrap: wrap;
-}
-
-.customer-actions button{
-  padding: 8px 12px;
-  border-radius: 12px;
-  font-size: 13px;
-}
-
-
-.pill-soft{
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.08);
-  background: rgba(255,255,255,.04);
-  font-size: 12px;
-  color: rgba(255,255,255,.62);
-  white-space: nowrap;
-}
-
-.pill-soft-gold{
-  border-color: rgba(201,162,74,.35);
-  background: rgba(201,162,74,.10);
-  color: rgba(255,255,255,.82);
-}
-
-
-.customer-actions{
-  display: inline-flex;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.btn{
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.04);
-  color: rgba(255,255,255,.92);
-  padding: 10px 12px;
-  font-size: 13px;
-  font-weight: 650;
-  cursor: pointer;
-}
-
-.btn:hover{ background: rgba(255,255,255,.06); }
-.btn:active{ transform: translateY(1px); }
-
-.btn-primary{
-  border-color: rgba(201,162,74,.35);
-  background: rgba(201,162,74,.12);
-}
-
-.btn-danger{
-  border-color: rgba(255,77,77,.35);
-  background: rgba(255,77,77,.10);
-}
-
-@media (max-width: 768px){
-  .customer-list { padding: 12px; }
-  .customer-row{
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  .customer-actions{ justify-content: flex-start; }
-}
-
       :root{
         --bg: #fbfbfc;
         --card: #ffffff;
@@ -171,7 +61,6 @@
         background: #fafafa;
         border: 1px solid var(--line);
         border-radius: var(--radius);
-        box-shadow: none;
         padding: 14px 16px;
         margin-bottom: 18px;
       }
@@ -186,7 +75,6 @@
       .subtle{
         color: var(--muted);
         font-size: 12px;
-        margin-top: 2px;
       }
 
       .card{
@@ -198,25 +86,18 @@
         margin: 14px 0;
       }
 
-      /* App layout: sidebar + content */
       .appLayout{
         display: grid;
         grid-template-columns: 260px 1fr;
         gap: 14px;
-        align-items: start;
       }
 
       @media (max-width: 840px){
-        .appLayout{
-          grid-template-columns: 1fr;
-        }
+        .appLayout{ grid-template-columns: 1fr; }
       }
 
       /* Menu */
-      .menu{
-        position: sticky;
-        top: 14px;
-      }
+      .menu{ position: sticky; top: 14px; }
 
       .menuBtn{
         width: 100%;
@@ -228,49 +109,36 @@
         font-weight: 600;
         cursor: pointer;
         margin-bottom: 8px;
-        transition: box-shadow .15s ease, border-color .15s ease, transform .05s ease;
       }
-      .menuBtn:hover{
-        border-color: rgba(184,154,91,.45);
-        box-shadow: 0 10px 22px rgba(15,20,25,.08);
-      }
-      .menuBtn:active{ transform: translateY(1px); }
 
       .menuBtn.active{
         border-color: rgba(184,154,91,.75);
         box-shadow: 0 16px 30px rgba(15,20,25,.10);
       }
 
-      /* Controls */
+      /* Inputs */
       input, select{
         width: 100%;
         padding: 10px 12px;
         border-radius: 12px;
         border: 1px solid var(--line);
-        outline: none;
         background: #fff;
         font-size: 14px;
       }
+
       input:focus, select:focus{
         border-color: rgba(184,154,91,.55);
         box-shadow: 0 0 0 4px rgba(184,154,91,.18);
       }
 
       button{
-        appearance:none;
         border: 1px solid var(--line);
         background: #fff;
         padding: 9px 12px;
         border-radius: 12px;
         font-weight: 600;
         cursor:pointer;
-        transition: transform .05s ease, box-shadow .15s ease, border-color .15s ease;
       }
-      button:hover{
-        border-color: rgba(184,154,91,.45);
-        box-shadow: 0 10px 22px rgba(15,20,25,.08);
-      }
-      button:active{ transform: translateY(1px); }
 
       .btn-primary{
         background: var(--text);
@@ -283,7 +151,6 @@
         color: #fff;
         border-color: transparent;
       }
-      .btn-gold:hover{ background: var(--gold-dark); }
 
       .btn-danger{
         background: #fff;
@@ -291,34 +158,104 @@
         color: var(--danger);
       }
 
-      #logoutBtn{
-        font-size: 13px;
-        font-weight: 500;
-        padding: 6px 10px;
-        opacity: 0.75;
-      }
-      #logoutBtn:hover{ opacity: 1; }
+      /* ===== CUSTOMER LIST ===== */
 
-      /* Lists */
-      ul{
-        list-style: none;
-        padding: 0;
-        margin: 10px 0 0;
-      }
-      li{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
+      .customer-list{
+        display: grid;
         gap: 12px;
-        padding: 12px 10px;
-        border-top: 1px solid var(--line);
+        padding: 10px 0;
       }
-      li:first-child{ border-top: 0; }
 
-      #authMsg, #custMsg, #agentMsg, #labMsg{
-        margin: 10px 0 0;
-        font-size: 12px;
+      .customer-row{
+        display: grid;
+        grid-template-columns: 1.6fr 1.1fr auto;
+        gap: 14px;
+        align-items: center;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 10px 22px rgba(15,20,25,.06);
+      }
+
+      .customer-row:hover{
+        border-color: rgba(184,154,91,.45);
+        box-shadow: 0 14px 28px rgba(15,20,25,.08);
+      }
+
+      .customer-main .name{
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .customer-main .meta{
+        margin-top: 4px;
+        font-size: 13px;
         color: var(--muted);
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .customer-dot{ opacity: .35; }
+
+      .customer-context{
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .pill-soft{
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(184,154,91,.35);
+        background: rgba(184,154,91,.08);
+        font-size: 12px;
+        color: var(--gold-dark);
+      }
+
+      .pill-soft-gold{
+        border-color: rgba(184,154,91,.55);
+        background: rgba(184,154,91,.14);
+      }
+
+      .customer-actions{
+        display: inline-flex;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+
+      .customer-actions .btn-primary,
+      .customer-actions .btn-danger{
+        padding: 8px 12px;
+        border-radius: 12px;
+        font-size: 13px;
+      }
+
+      @media (max-width: 768px){
+        .customer-row{
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+        .customer-actions{ justify-content: flex-start; }
+      }
+
+      /* ===== VALIDATION (ACCESSIBLE) ===== */
+
+      .field-error{
+        border-color: #c9a24a !important;
+        box-shadow: 0 0 0 1px #c9a24a, inset 4px 0 0 #c9a24a;
+        background: rgba(201,162,74,.08) !important;
+        background-image: linear-gradient(to right, #c9a24a 4px, transparent 4px);
+        background-repeat: no-repeat;
+      }
+
+      .field-ok{
+        border-color: #5b7c99 !important;
+        box-shadow: 0 0 0 1px #5b7c99, inset 4px 0 0 #5b7c99;
+        background: rgba(91,124,153,.05) !important;
+        background-image: linear-gradient(to right, #5b7c99 4px, transparent 4px);
+        background-repeat: no-repeat;
       }
 
       /* Dialog */
@@ -329,139 +266,8 @@
         padding: 16px;
         width: min(520px, calc(100vw - 26px));
       }
-      dialog::backdrop{
-        background: rgba(10,10,12,.55);
-      }
-      .dialog-title{
-        font-family: Montserrat, sans-serif;
-        font-weight: 600;
-        letter-spacing: .4px;
-        margin: 0 0 6px 0;
-      }
-      .dialog-actions{
-        display:flex;
-        justify-content:flex-end;
-        gap:8px;
-        margin-top: 12px;
-      }
-      /* ===== Customer List (Premium Rows) — LIGHT THEME OVERRIDE ===== */
-.customer-list{
-  display: grid;
-  gap: 12px;
-  padding: 10px 0;   /* match your card padding */
-}
 
-.customer-row{
-  display: grid;
-  grid-template-columns: 1.6fr 1.1fr auto;
-  gap: 14px;
-  align-items: center;
-  padding: 14px 14px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: #fff;
-  box-shadow: 0 10px 22px rgba(15,20,25,.06);
-}
-
-.customer-row:hover{
-  border-color: rgba(184,154,91,.45);
-  box-shadow: 0 14px 28px rgba(15,20,25,.08);
-}
-
-.customer-main .name{
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: .2px;
-  line-height: 1.25;
-  color: var(--text);
-}
-
-.customer-main .meta{
-  margin-top: 4px;
-  font-size: 13px;
-  color: var(--muted);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  line-height: 1.25;
-}
-
-.customer-dot{
-  opacity: .35;
-  color: var(--muted);
-}
-
-/* Pills for the new rows (kept separate from your existing .pill) */
-.pill-soft{
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(184,154,91,.35);
-  background: rgba(184,154,91,.08);
-  font-size: 12px;
-  color: var(--gold-dark);
-  white-space: nowrap;
-}
-
-.pill-soft-gold{
-  border-color: rgba(184,154,91,.55);
-  background: rgba(184,154,91,.14);
-  color: var(--gold-dark);
-}
-
-.customer-actions{
-  display: inline-flex;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-/* Buttons inside rows — use your existing button styles, just size nicely */
-.customer-actions .btn{
-  padding: 8px 12px;
-  border-radius: 12px;
-  font-size: 13px;
-}
-
-/* Mobile: stack */
-@media (max-width: 768px){
-  .customer-list{ padding: 0; }
-  .customer-row{
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  .customer-actions{ justify-content: flex-start; }
-}
-
-/* Accessible inline validation (color-blind safe) */
-
-.field-error{
-  border-color: #c9a24a !important;   /* muted amber */
-  box-shadow:
-    0 0 0 1px #c9a24a,
-    inset 4px 0 0 #c9a24a;
-  background: rgba(201,162,74,.08) !important;
-
-  /* structural cue */
-  background-image: linear-gradient(to right, #c9a24a 4px, transparent 4px);
-  background-repeat: no-repeat;
-}
-
-
-.field-ok{
-  border-color: #5b7c99 !important;
-  box-shadow:
-    0 0 0 1px #5b7c99,
-    inset 4px 0 0 #5b7c99;
-  background: rgba(91,124,153,.05) !important;
-
-  /* micro-upgrade: structural cue */
-  background-image: linear-gradient(to right, #5b7c99 4px, transparent 4px);
-  background-repeat: no-repeat;
-}
-
-
+      dialog::backdrop{ background: rgba(10,10,12,.55); }
     </style>
   </head>
 
@@ -469,112 +275,62 @@
     <div class="container">
       <h1>EXACT Agents Portal</h1>
 
-      <!-- Logged-in header -->
       <div id="topBar" class="topbar" style="display:none;">
         <div class="row">
           <div>
-            <div id="topBarTitle" style="font-weight:600;">Logged in</div>
+            <div id="topBarTitle" style="font-weight:600;"></div>
             <div class="subtle" id="topBarSub"></div>
           </div>
-          <div>
-            <button id="logoutBtn">Logout</button>
-          </div>
+          <button id="logoutBtn">Logout</button>
         </div>
       </div>
 
-      <!-- Login -->
       <div id="loginBox" class="card" style="max-width:480px;">
-        <h2 style="margin-top:0; color:var(--text);">Login</h2>
-
-        <div style="margin-bottom:10px;">
-          <input id="email" placeholder="Email" />
-        </div>
-
-        <div style="margin-bottom:10px;">
-          <input id="password" type="password" placeholder="Password" />
-        </div>
-
-        <button id="loginBtn" class="btn-primary">Login</button>
+        <h2>Login</h2>
+        <input id="email" placeholder="Email" />
+        <input id="password" type="password" placeholder="Password" style="margin-top:10px;" />
+        <button id="loginBtn" class="btn-primary" style="margin-top:10px;">Login</button>
         <p id="authMsg"></p>
       </div>
 
-      <!-- Main app -->
       <div id="appBox" style="display:none;">
         <div class="appLayout">
-          <!-- Role menu -->
-          <div class="card menu" style="margin:0;">
-            <h2 style="margin-top:0;">Menu</h2>
+          <div class="card menu">
+            <h2>Menu</h2>
             <div id="menuItems"></div>
           </div>
 
-          <!-- Content -->
           <div>
-            <!-- ADMIN: Agent Management -->
-            <div id="viewAgentMgmt" class="card" style="display:none;">
-              <h2>Agent Management</h2>
-              <p class="subtle" style="margin:0 0 10px 0;">
-                (For now: view only. We’ll add create/edit/deactivate next.)
-              </p>
-              <p id="agentMsg"></p>
-              <ul id="agentList"></ul>
-            </div>
-
-            <!-- CUSTOMER MANAGEMENT (admin + agent) -->
             <div id="viewCustomerMgmt" class="card" style="display:none;">
-              <!-- Admin-only agent picker for inserts -->
               <div id="adminAgentPicker" style="display:none; margin-bottom:14px;">
-                <label for="agentSelect" style="display:block; margin-bottom:6px; font-weight:600;">
-                  Insert as clinic
-                </label>
+                <label>Insert as clinic</label>
                 <select id="agentSelect"></select>
               </div>
 
               <h2>Customer Management</h2>
 
-              <div style="margin-bottom:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                <button id="openAddCustomerBtn" class="btn-gold">Add customer</button>
-                <button id="cancelAddCustomerBtn" style="display:none;">Cancel</button>
-                <p id="custMsg" style="margin:0;"></p>
-              </div>
+              <button id="openAddCustomerBtn" class="btn-gold">Add customer</button>
+              <button id="cancelAddCustomerBtn" style="display:none;">Cancel</button>
+              <p id="custMsg"></p>
 
-              <div id="addCustomerPanel" style="display:none; margin-bottom:10px;">
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                  <input id="firstName" placeholder="First name" />
-                  <input id="lastName" placeholder="Last name" />
-                </div>
-
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                  <input id="custEmail" placeholder="Email (optional)" />
-                  <input id="custPhone" placeholder="Phone (optional)" />
-                </div>
-
-                <button id="addCustomerBtn" class="btn-primary">Save customer</button>
+              <div id="addCustomerPanel" style="display:none;">
+                <input id="firstName" placeholder="First name" />
+                <input id="lastName" placeholder="Last name" style="margin-top:10px;" />
+                <input id="custEmail" placeholder="Email (optional)" style="margin-top:10px;" />
+                <input id="custPhone" placeholder="Phone (optional)" style="margin-top:10px;" />
+                <button id="addCustomerBtn" class="btn-primary" style="margin-top:10px;">Save customer</button>
               </div>
 
               <div id="customerList" class="customer-list"></div>
-
-            </div>
-
-            <!-- ADMIN: Lab Management (placeholder) -->
-            <div id="viewLabMgmt" class="card" style="display:none;">
-              <h2>Lab Management</h2>
-              <p class="subtle" style="margin:0 0 10px 0;">
-                Placeholder for lab workflow (submissions, statuses, batches, etc.)
-              </p>
-              <p id="labMsg">Coming next.</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Confirm dialog (used by confirmExact) -->
       <dialog id="confirmDialog">
-        <h3 class="dialog-title">EXACT Agents Portal</h3>
-        <p id="confirmDialogText" style="margin:0; color: var(--muted);"></p>
-        <div class="dialog-actions">
-          <button id="confirmCancelBtn" type="button">Cancel</button>
-          <button id="confirmOkBtn" type="button" class="btn-danger">Delete</button>
-        </div>
+        <p id="confirmDialogText"></p>
+        <button id="confirmCancelBtn">Cancel</button>
+        <button id="confirmOkBtn" class="btn-danger">Delete</button>
       </dialog>
 
       <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
