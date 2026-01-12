@@ -99,7 +99,17 @@
       <ul id="customerList"></ul>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@21"></script>
+    <dialog id="confirmDialog" style="padding:16px; border:1px solid #ddd; border-radius:8px; max-width:420px;">
+  <h3 style="margin:0 0 8px 0;">EXACT Agents Portal</h3>
+  <p id="confirmDialogText" style="margin:0 0 12px 0;"></p>
+  <div style="display:flex; justify-content:flex-end; gap:8px;">
+    <button id="confirmCancelBtn" type="button">Cancel</button>
+    <button id="confirmOkBtn" type="button">Delete</button>
+  </div>
+</dialog>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@22"></script>
     <script src="./app.js?v=21"></script>
+
   </body>
 </html>
