@@ -437,16 +437,17 @@
 /* Accessible inline validation (color-blind safe) */
 
 .field-error{
-  border-color: #2f2f33 !important;
+  border-color: #c9a24a !important;   /* muted amber */
   box-shadow:
-    0 0 0 1px #2f2f33,
-    inset 4px 0 0 #2f2f33;
-  background: rgba(47,47,51,.04) !important;
+    0 0 0 1px #c9a24a,
+    inset 4px 0 0 #c9a24a;
+  background: rgba(201,162,74,.08) !important;
 
-  /* micro-upgrade: structural cue */
-  background-image: linear-gradient(to right, #2f2f33 4px, transparent 4px);
+  /* structural cue */
+  background-image: linear-gradient(to right, #c9a24a 4px, transparent 4px);
   background-repeat: no-repeat;
 }
+
 
 .field-ok{
   border-color: #5b7c99 !important;
