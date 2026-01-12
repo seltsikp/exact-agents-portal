@@ -1,4 +1,4 @@
-console.log("EXACT Agents Portal loaded (v23");
+console.log("EXACT Agents Portal loaded (v24");
 
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
@@ -20,6 +20,7 @@ window.addEventListener("DOMContentLoaded", () => {
     el.style.display = isVisible ? "block" : "none";
   }
 
+  // Confirm dialog helper (custom <dialog> with fallback)
   async function confirmExact(message) {
     const dlg = document.getElementById("confirmDialog");
     const txt = document.getElementById("confirmDialogText");
@@ -71,7 +72,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const customerList = document.getElementById("customerList");
   const custMsg = document.getElementById("custMsg");
 
-  // Add customer panel (new UI)
+  // Add customer panel
   const openAddCustomerBtn = document.getElementById("openAddCustomerBtn");
   const cancelAddCustomerBtn = document.getElementById("cancelAddCustomerBtn");
   const addCustomerPanel = document.getElementById("addCustomerPanel");
@@ -88,10 +89,10 @@ window.addEventListener("DOMContentLoaded", () => {
   let currentAgentIdForInsert = null;
   let hydratedUserId = null;
 
-  // edit mode state
+  // Edit mode state
   let editingCustomerId = null;
 
-  // NEW: agent name map (id -> name) for admin customer list display
+  // Agent map (id -> name) used for admin display
   let agentNameMap = {};
 
   const setAuthMsg = (t) => {
@@ -133,20 +134,19 @@ window.addEventListener("DOMContentLoaded", () => {
 
     editingCustomerId = customer.id;
 
-    // prefill fields
+    // prefill
     if (firstNameInput) firstNameInput.value = customer.first_name || "";
     if (lastNameInput) lastNameInput.value = customer.last_name || "";
     if (custEmailInput) custEmailInput.value = customer.email || "";
     if (custPhoneInput) custPhoneInput.value = customer.phone || "";
 
-    // change save label so it's obvious
+    // label
     if (addCustomerBtn) addCustomerBtn.textContent = "Save changes";
 
     openAddCustomer();
   }
 
   if (openAddCustomerBtn) openAddCustomerBtn.addEventListener("click", () => {
-    // starting a new add should clear edit mode
     editingCustomerId = null;
     if (addCustomerBtn) addCustomerBtn.textContent = "Save customer";
     openAddCustomer();
@@ -166,7 +166,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
     if (customerList) customerList.innerHTML = "";
 
-    // reset add-customer UI
     closeAddCustomer();
 
     setAuthMsg(message);
@@ -186,9 +185,7 @@ window.addEventListener("DOMContentLoaded", () => {
     show(topBar, true);
     show(appBox, true);
 
-    // Default state: add panel closed
     closeAddCustomer();
-
     setAuthMsg("Logged in ✅");
   }
 
@@ -244,7 +241,6 @@ window.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  // NEW: load all agents into a map (id -> name) for admin customer list display
   async function loadAgentNameMap() {
     const { data, error } = await supabaseClient
       .from("agents")
@@ -260,6 +256,88 @@ window.addEventListener("DOMContentLoaded", () => {
     (data || []).forEach((a) => {
       agentNameMap[a.id] = a.name;
     });
+  }
+
+  // Premium customer row builder
+  function buildCustomerRow(c) {
+    const row = document.createElement("div");
+    row.className = "cust-row";
+
+    const left = document.createElement("div");
+    left.className = "cust-left";
+
+    const nameEl = document.createElement("div");
+    nameEl.className = "cust-name";
+    nameEl.textContent = `${c.first_name || ""} ${c.last_name || ""}`.trim();
+
+    const detailsEl = document.createElement("div");
+    detailsEl.className = "cust-details";
+    const emailText = (c.email || "").trim();
+    const phoneText = (c.phone || "").trim();
+    detailsEl.textContent = [emailText, phoneText].filter(Boolean).join(" • ");
+
+    left.appendChild(nameEl);
+    if (detailsEl.textContent) left.appendChild(detailsEl);
+
+    // Admin-only clinic pill
+    if (currentProfile?.role === "admin") {
+      const clinicName = agentNameMap[c.agent_id] || "Unknown clinic";
+      const pill = document.createElement("div");
+      pill.className = "pill";
+      pill.textContent = `Clinic: ${clinicName}`;
+      left.appendChild(pill);
+    }
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "Edit";
+    editBtn.className = "btn-small";
+    editBtn.addEventListener("click", () => openEditCustomer(c));
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "Delete";
+    deleteBtn.className = "btn-small btn-danger";
+    deleteBtn.addEventListener("click", async () => {
+      setCustMsg("");
+
+      const customerName = `${c.first_name || ""} ${c.last_name || ""}`.trim() || "this customer";
+      const ok = await confirmExact(`Delete ${customerName}? This cannot be undone.`);
+      if (!ok) return;
+
+      const { data, error } = await supabaseClient
+        .from("customers")
+        .delete()
+        .eq("id", c.id)
+        .select("id");
+
+      if (error) {
+        setCustMsg("Delete error: " + error.message);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        setCustMsg("Delete blocked (RLS) — no rows deleted.");
+        return;
+      }
+
+      setCustMsg("Deleted ✅");
+
+      if (editingCustomerId === c.id) {
+        closeAddCustomer();
+      }
+
+      await loadCustomers();
+    });
+
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
+
+    row.appendChild(left);
+    row.appendChild(actions);
+
+    return row;
   }
 
   async function loadCustomers() {
@@ -278,65 +356,9 @@ window.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    data.forEach((c) => {
+    (data || []).forEach((c) => {
       const li = document.createElement("li");
-
-      const label = document.createElement("span");
-
-      const baseText = `${c.first_name} ${c.last_name} — ${c.email || ""} ${c.phone || ""}`.trim();
-
-      // NEW: for admin, append clinic name
-      if (currentProfile?.role === "admin") {
-        const clinicName = agentNameMap[c.agent_id] || "Unknown clinic";
-        label.textContent = `${baseText} — Clinic: ${clinicName}`;
-      } else {
-        label.textContent = baseText;
-      }
-
-      const editBtn = document.createElement("button");
-      editBtn.textContent = "Edit";
-      editBtn.style.marginLeft = "10px";
-      editBtn.addEventListener("click", () => openEditCustomer(c));
-
-      const deleteBtn = document.createElement("button");
-      deleteBtn.textContent = "Delete";
-      deleteBtn.style.marginLeft = "6px";
-      deleteBtn.addEventListener("click", async () => {
-        setCustMsg("");
-
-        const name = `${c.first_name || ""} ${c.last_name || ""}`.trim() || "this customer";
-        const ok = await confirmExact(`Delete ${name}? This cannot be undone.`);
-        if (!ok) return;
-
-        const { data, error } = await supabaseClient
-          .from("customers")
-          .delete()
-          .eq("id", c.id)
-          .select("id");
-
-        if (error) {
-          setCustMsg("Delete error: " + error.message);
-          return;
-        }
-
-        if (!data || data.length === 0) {
-          setCustMsg("Delete blocked (RLS) — no rows deleted.");
-          return;
-        }
-
-        setCustMsg("Deleted ✅");
-
-        if (editingCustomerId === c.id) {
-          closeAddCustomer();
-        }
-
-        await loadCustomers();
-      });
-
-      li.appendChild(label);
-      li.appendChild(editBtn);
-      li.appendChild(deleteBtn);
-
+      li.appendChild(buildCustomerRow(c));
       customerList.appendChild(li);
     });
   }
@@ -344,7 +366,6 @@ window.addEventListener("DOMContentLoaded", () => {
   async function hydrateAfterLogin(session) {
     if (!session?.user?.id) return;
 
-    // Prevent double hydration for same user
     if (hydratedUserId === session.user.id) return;
     hydratedUserId = session.user.id;
 
@@ -363,8 +384,6 @@ window.addEventListener("DOMContentLoaded", () => {
         if (topBarSub) topBarSub.textContent = session.user.email || "";
         show(adminAgentPicker, true);
         await loadAgentsForAdminPicker();
-
-        // NEW: load agent map so admin can see clinic names beside customers
         await loadAgentNameMap();
       } else {
         const agentName = await loadAgentName(profile.agent_id);
@@ -372,8 +391,6 @@ window.addEventListener("DOMContentLoaded", () => {
         if (topBarSub) topBarSub.textContent = session.user.email || "";
         show(adminAgentPicker, false);
         currentAgentIdForInsert = profile.agent_id;
-
-        // not required for agents, but keep map empty
         agentNameMap = {};
       }
 
@@ -441,7 +458,7 @@ window.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // EDIT MODE: update existing record
+      // EDIT MODE
       if (editingCustomerId) {
         const { data, error } = await supabaseClient
           .from("customers")
@@ -465,7 +482,7 @@ window.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // ADD MODE: insert new record
+      // ADD MODE
       if (!currentAgentIdForInsert) {
         setCustMsg("No agent selected/available for insert.");
         return;
@@ -485,7 +502,7 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Initial restore (single call) ---
+  // --- Initial restore ---
   (async () => {
     try {
       const { data, error } = await supabaseClient.auth.getSession();
