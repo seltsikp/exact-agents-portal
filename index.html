@@ -478,17 +478,32 @@
   .customer-actions{ justify-content: flex-start; }
 }
 
-      /* Inline validation */
+/* Accessible inline validation (color-blind safe) */
+
 .field-error{
-  border-color: rgba(180,35,24,.65) !important;
-  box-shadow: 0 0 0 4px rgba(180,35,24,.12) !important;
-  background: rgba(180,35,24,.03) !important;
+  border-color: #2f2f33 !important;
+  box-shadow:
+    0 0 0 1px #2f2f33,
+    inset 4px 0 0 #2f2f33;
+  background: rgba(47,47,51,.04) !important;
+
+  /* micro-upgrade: structural cue */
+  background-image: linear-gradient(to right, #2f2f33 4px, transparent 4px);
+  background-repeat: no-repeat;
 }
 
 .field-ok{
-  border-color: rgba(184,154,91,.55) !important;
-  box-shadow: 0 0 0 4px rgba(184,154,91,.12) !important;
+  border-color: #5b7c99 !important;
+  box-shadow:
+    0 0 0 1px #5b7c99,
+    inset 4px 0 0 #5b7c99;
+  background: rgba(91,124,153,.05) !important;
+
+  /* micro-upgrade: structural cue */
+  background-image: linear-gradient(to right, #5b7c99 4px, transparent 4px);
+  background-repeat: no-repeat;
 }
+
 
     </style>
   </head>
