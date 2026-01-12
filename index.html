@@ -4,112 +4,279 @@
     <meta charset="utf-8" />
     <title>EXACT Agents Portal</title>
 
+    <!-- Premium fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+    <!-- Optional: suppress favicon 404 -->
+    <link rel="icon" href="data:," />
+
     <style>
-      *, *::before, *::after {
-        box-sizing: border-box;
+      :root{
+        --bg: #fbfbfc;
+        --card: #ffffff;
+        --text: #0b0b0c;
+        --muted: #6b6f76;
+        --line: rgba(15, 20, 25, .10);
+        --shadow: 0 12px 30px rgba(15,20,25,.08);
+        --radius: 14px;
+
+        /* EXACT accent (tweak later if you want) */
+        --gold: #b89a5b;
+        --gold-dark: #9e8247;
+        --danger: #b42318;
+      }
+
+      *, *::before, *::after { box-sizing: border-box; }
+
+      body{
+        margin:0;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .container{
+        max-width: 980px;
+        margin: 36px auto;
+        padding: 0 18px 60px;
+      }
+
+      h1{
+        font-family: "Playfair Display", serif;
+        font-size: 44px;
+        letter-spacing: .2px;
+        margin: 0 0 22px;
+      }
+
+      h2{
+        font-size: 14px;
+        letter-spacing: .7px;
+        text-transform: uppercase;
+        margin: 0 0 12px;
+        color: var(--muted);
+      }
+
+      .topbar{
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 14px 16px;
+        margin-bottom: 18px;
+      }
+
+      .card{
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 16px;
+        margin: 14px 0;
+      }
+
+      .row{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap: 12px;
+      }
+
+      .subtle{
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 2px;
+      }
+
+      /* Controls */
+      input, select{
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        outline: none;
+        background: #fff;
+        font-size: 14px;
+      }
+      input:focus, select:focus{
+        border-color: rgba(184,154,91,.55);
+        box-shadow: 0 0 0 4px rgba(184,154,91,.18);
+      }
+
+      button{
+        appearance:none;
+        border: 1px solid var(--line);
+        background: #fff;
+        padding: 9px 12px;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor:pointer;
+        transition: transform .05s ease, box-shadow .15s ease, border-color .15s ease;
+      }
+      button:hover{
+        border-color: rgba(184,154,91,.45);
+        box-shadow: 0 10px 22px rgba(15,20,25,.08);
+      }
+      button:active{
+        transform: translateY(1px);
+      }
+
+      .btn-primary{
+        background: var(--text);
+        color: #fff;
+        border-color: transparent;
+      }
+      .btn-primary:hover{
+        box-shadow: 0 14px 28px rgba(15,20,25,.15);
+      }
+
+      .btn-gold{
+        background: var(--gold);
+        color: #fff;
+        border-color: transparent;
+      }
+      .btn-gold:hover{ background: var(--gold-dark); }
+
+      .btn-danger{
+        background: #fff;
+        border-color: rgba(180,35,24,.35);
+        color: var(--danger);
+      }
+      .btn-danger:hover{
+        border-color: rgba(180,35,24,.6);
+      }
+
+      /* Customer list */
+      ul{
+        list-style: none;
+        padding: 0;
+        margin: 10px 0 0;
+      }
+      li{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap: 12px;
+        padding: 12px 10px;
+        border-top: 1px solid var(--line);
+      }
+      li:first-child{ border-top: 0; }
+
+      /* Messages */
+      #authMsg, #custMsg{
+        margin: 10px 0 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      /* Dialog */
+      dialog{
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: 0 28px 70px rgba(15,20,25,.22);
+        padding: 16px;
+        width: min(520px, calc(100vw - 26px));
+      }
+      dialog::backdrop{
+        background: rgba(10,10,12,.55);
+      }
+      .dialog-title{
+        font-family: "Playfair Display", serif;
+        font-size: 20px;
+        margin: 0 0 6px 0;
+      }
+      .dialog-actions{
+        display:flex;
+        justify-content:flex-end;
+        gap:8px;
+        margin-top: 12px;
       }
     </style>
   </head>
 
   <body>
-    <h1>EXACT Agents Portal</h1>
+    <div class="container">
+      <h1>EXACT Agents Portal</h1>
 
-    <!-- Logged-in header -->
-    <div id="topBar" style="display:none; padding:10px 0; border-bottom:1px solid #ddd; margin-bottom:12px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-        <div>
-          <div><strong id="topBarTitle">Logged in</strong></div>
-          <div style="font-size:12px; opacity:0.8;" id="topBarSub"></div>
+      <!-- Logged-in header -->
+      <div id="topBar" class="topbar" style="display:none;">
+        <div class="row">
+          <div>
+            <div><strong id="topBarTitle">Logged in</strong></div>
+            <div class="subtle" id="topBarSub"></div>
+          </div>
+          <div>
+            <button id="logoutBtn">Logout</button>
+          </div>
         </div>
-        <div>
-          <button id="logoutBtn">Logout</button>
+      </div>
+
+      <!-- Login box -->
+      <div id="loginBox" class="card" style="max-width:480px;">
+        <h2 style="margin-top:0; color:var(--text);">Login</h2>
+
+        <div style="margin-bottom:10px;">
+          <input id="email" placeholder="Email" />
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <input id="password" type="password" placeholder="Password" />
+        </div>
+
+        <button id="loginBtn" class="btn-primary">Login</button>
+        <p id="authMsg"></p>
+      </div>
+
+      <!-- Main app -->
+      <div id="appBox" style="display:none;">
+        <div class="card">
+          <!-- Admin-only agent picker -->
+          <div id="adminAgentPicker" style="display:none; margin-bottom:14px;">
+            <label for="agentSelect" style="display:block; margin-bottom:6px; font-weight:600;">
+              Insert as clinic
+            </label>
+            <select id="agentSelect"></select>
+          </div>
+
+          <h2>Customers</h2>
+
+          <div style="margin-bottom:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <button id="openAddCustomerBtn" class="btn-gold">Add customer</button>
+            <button id="cancelAddCustomerBtn" style="display:none;">Cancel</button>
+            <p id="custMsg" style="margin:0;"></p>
+          </div>
+
+          <div id="addCustomerPanel" style="display:none; margin-bottom:10px;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+              <input id="firstName" placeholder="First name" />
+              <input id="lastName" placeholder="Last name" />
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+              <input id="custEmail" placeholder="Email (optional)" />
+              <input id="custPhone" placeholder="Phone (optional)" />
+            </div>
+
+            <button id="addCustomerBtn" class="btn-primary">Save customer</button>
+          </div>
+
+          <ul id="customerList"></ul>
         </div>
       </div>
+
+      <!-- Confirm dialog (used by confirmExact) -->
+      <dialog id="confirmDialog">
+        <h3 class="dialog-title">EXACT Agents Portal</h3>
+        <p id="confirmDialogText" style="margin:0; color: var(--muted);"></p>
+        <div class="dialog-actions">
+          <button id="confirmCancelBtn" type="button">Cancel</button>
+          <button id="confirmOkBtn" type="button" class="btn-danger">Delete</button>
+        </div>
+      </dialog>
+
+      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+      <script src="./app.js?v=23"></script>
     </div>
-
-    <!-- Login box -->
-    <div
-      id="loginBox"
-      style="
-        max-width:420px;
-        padding:16px;
-        border:1px solid #ddd;
-        border-radius:6px;
-        background:#f7f7f7;
-      "
-    >
-      <h2 style="margin-top:0;">Login</h2>
-
-      <div style="margin-bottom:8px;">
-        <input
-          id="email"
-          placeholder="Email"
-          style="width:100%; padding:8px;"
-        />
-      </div>
-
-      <div style="margin-bottom:8px;">
-        <input
-          id="password"
-          type="password"
-          placeholder="Password"
-          style="width:100%; padding:8px;"
-        />
-      </div>
-
-      <button id="loginBtn">Login</button>
-      <p id="authMsg" style="margin-top:10px;"></p>
-    </div>
-
-    <!-- Main app -->
-    <div id="appBox" style="display:none;">
-      <hr />
-
-      <!-- Admin-only agent picker -->
-      <div id="adminAgentPicker" style="display:none; margin: 10px 0;">
-        <label for="agentSelect"><strong>Insert as agent:</strong></label>
-        <select id="agentSelect"></select>
-      </div>
-
-      <h2>Customers</h2>
-
-     <div style="margin-bottom:10px;">
-  <button id="openAddCustomerBtn">Add customer</button>
-  <button id="cancelAddCustomerBtn" style="display:none;">Cancel</button>
-  <p id="custMsg"></p>
-</div>
-
-<div id="addCustomerPanel" style="display:none; margin-bottom:10px; padding:12px; border:1px solid #ddd; border-radius:6px; background:#f7f7f7;">
-  <div style="margin-bottom:8px;">
-    <input id="firstName" placeholder="First name" style="width:100%; padding:8px;" />
-  </div>
-  <div style="margin-bottom:8px;">
-    <input id="lastName" placeholder="Last name" style="width:100%; padding:8px;" />
-  </div>
-  <div style="margin-bottom:8px;">
-    <input id="custEmail" placeholder="Email (optional)" style="width:100%; padding:8px;" />
-  </div>
-  <div style="margin-bottom:8px;">
-    <input id="custPhone" placeholder="Phone (optional)" style="width:100%; padding:8px;" />
-  </div>
-  <button id="addCustomerBtn">Save customer</button>
-</div>
-
-
-      <ul id="customerList"></ul>
-    </div>
-
-    <dialog id="confirmDialog" style="padding:16px; border:1px solid #ddd; border-radius:8px; max-width:420px;">
-  <h3 style="margin:0 0 8px 0;">EXACT Agents Portal</h3>
-  <p id="confirmDialogText" style="margin:0 0 12px 0;"></p>
-  <div style="display:flex; justify-content:flex-end; gap:8px;">
-    <button id="confirmCancelBtn" type="button">Cancel</button>
-    <button id="confirmOkBtn" type="button">Delete</button>
-  </div>
-</dialog>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./app.js?v=23"></script>
-
   </body>
 </html>
