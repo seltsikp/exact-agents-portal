@@ -20,6 +20,39 @@ window.addEventListener("DOMContentLoaded", () => {
     if (!el) return;
     el.style.display = isVisible ? "block" : "none";
   }
+function validateCustomerFieldsLive() {
+  const first = (firstNameInput?.value || "").trim();
+  const last  = (lastNameInput?.value || "").trim();
+  const email = (custEmailInput?.value || "").trim();
+  const phone = (custPhoneInput?.value || "").trim();
+
+  // First name (required)
+  if (!first) markField(firstNameInput, "error");
+  else markField(firstNameInput, "ok");
+
+  // Last name (required)
+  if (!last) markField(lastNameInput, "error");
+  else markField(lastNameInput, "ok");
+
+  // Email (optional, validate only if present)
+  if (!email) {
+    // optional: clear styling if empty
+    markField(custEmailInput, null);
+  } else if (!isValidEmail(email)) {
+    markField(custEmailInput, "error");
+  } else {
+    markField(custEmailInput, "ok");
+  }
+
+  // Phone (optional, validate only if present)
+  if (!phone) {
+    markField(custPhoneInput, null);
+  } else if (!isValidPhone(phone)) {
+    markField(custPhoneInput, "error");
+  } else {
+    markField(custPhoneInput, "ok");
+  }
+}
 
   function escapeHtml(str) {
     return String(str ?? "")
@@ -136,11 +169,12 @@ function isValidPhone(phone) {
   return digits.length >= 7;
 }
 
-  function markField(el, state) {
+function markField(el, state) {
   if (!el) return;
   el.classList.remove("field-error", "field-ok");
   if (state === "error") el.classList.add("field-error");
   if (state === "ok") el.classList.add("field-ok");
+  // if state is null/undefined -> cleared
 }
 
 function clearFieldMarks(...els) {
@@ -207,6 +241,14 @@ function isValidPhone(phone) {
   const lastNameInput = document.getElementById("lastName");
   const custEmailInput = document.getElementById("custEmail");
   const custPhoneInput = document.getElementById("custPhone");
+
+  // --- Live field validation (inline highlighting) ---
+[firstNameInput, lastNameInput, custEmailInput, custPhoneInput].forEach((el) => {
+  if (!el) return;
+  el.addEventListener("input", () => {
+    el.classList.remove("field-error");
+  });
+});
 
   // --- State ---
   let currentSession = null;
