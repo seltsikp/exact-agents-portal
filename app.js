@@ -20,6 +20,38 @@ window.addEventListener("DOMContentLoaded", () => {
     el.style.display = isVisible ? "block" : "none";
   }
 
+  async function confirmExact(message) {
+  const dlg = document.getElementById("confirmDialog");
+  const txt = document.getElementById("confirmDialogText");
+  const okBtn = document.getElementById("confirmOkBtn");
+  const cancelBtn = document.getElementById("confirmCancelBtn");
+
+  // Fallback if <dialog> not supported
+  if (!dlg || typeof dlg.showModal !== "function") {
+    return confirm(message);
+  }
+
+  txt.textContent = message;
+
+  return await new Promise((resolve) => {
+    const cleanup = () => {
+      okBtn.removeEventListener("click", onOk);
+      cancelBtn.removeEventListener("click", onCancel);
+      dlg.removeEventListener("cancel", onCancel);
+      dlg.close();
+    };
+
+    const onOk = () => { cleanup(); resolve(true); };
+    const onCancel = () => { cleanup(); resolve(false); };
+
+    okBtn.addEventListener("click", onOk);
+    cancelBtn.addEventListener("click", onCancel);
+    dlg.addEventListener("cancel", onCancel); // Esc key / backdrop
+
+    dlg.showModal();
+  });
+}
+
   // --- UI elements (match your index.html) ---
   const loginBox = document.getElementById("loginBox");
   const topBar = document.getElementById("topBar");
@@ -244,7 +276,8 @@ deleteBtn.addEventListener("click", async () => {
   setCustMsg("");
 
   const name = `${c.first_name || ""} ${c.last_name || ""}`.trim() || "this customer";
-  if (!confirm(`Delete ${name}? This cannot be undone.`)) return;
+  const ok = await confirmExact(`Delete ${name}? This cannot be undone.`);
+if (!ok) return;
 
   const { data, error } = await supabaseClient
     .from("customers")
