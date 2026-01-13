@@ -1,5 +1,5 @@
 import { showWelcomePanel } from "./modules/welcome.js";
-console.log("EXACT Agents Portal loaded (v38)");
+console.log("EXACT Agents Portal loaded (v39)");
 
 // =========================================================
 // BLOCK: SUPABASE CLIENT
