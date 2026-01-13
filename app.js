@@ -320,34 +320,18 @@ window.addEventListener("DOMContentLoaded", () => {
     `.trim();
   }
 
-  // ---------- INGREDIENT row renderer ----------
+  // ---------- INGREDIENT row renderer (simple row: PSI | INCI | Description) ----------
   function buildIngredientRowHTML(i) {
     const id = escapeHtml(i.id);
     const psi = escapeHtml((i.psi_number || "").trim());
     const inci = escapeHtml((i.inci_name || "").trim());
     const desc = escapeHtml((i.short_description || "").trim());
-    const created = formatDateShort(i.created_at);
-
-    const createdPill = created ? `<span class="pill-soft">Created: ${escapeHtml(created)}</span>` : "";
-    const psiPill = psi ? `<span class="pill-soft pill-soft-gold">${psi}</span>` : "";
-    const descLine = desc ? `<div class="meta"><span>${desc}</span></div>` : `<div class="meta"><span style="opacity:.65;">No description</span></div>`;
 
     return `
-      <div class="customer-row" data-ingredient-id="${id}">
-        <div class="customer-main">
-          <div class="name">${inci || "Unnamed ingredient"}</div>
-          <div class="meta">${psiPill}</div>
-          ${descLine}
-        </div>
-
-        <div class="customer-context">
-          ${createdPill}
-        </div>
-
-        <div class="customer-actions">
-          <button class="btn btn-soft action-pill edit-pill" data-action="edit" type="button">Edit</button>
-          <button class="btn action-pill delete-pill" data-action="delete" type="button">Delete</button>
-        </div>
+      <div class="ingredient-row" data-ingredient-id="${id}">
+        <div class="ingredient-cell ingredient-psi">${psi}</div>
+        <div class="ingredient-cell ingredient-inci">${inci}</div>
+        <div class="ingredient-cell ingredient-desc">${desc}</div>
       </div>
     `.trim();
   }
@@ -676,12 +660,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // ---------- FORMULARY: tab + screen states ----------
   function setActiveFormularyTab(tabKey) {
-    // buttons
     fxTabIngredients?.classList.toggle("active", tabKey === "ingredients");
     fxTabBases?.classList.toggle("active", tabKey === "bases");
     fxTabBoosters?.classList.toggle("active", tabKey === "boosters");
 
-    // sections
     show(fxSectionIngredients, tabKey === "ingredients");
     show(fxSectionBases, tabKey === "bases");
     show(fxSectionBoosters, tabKey === "boosters");
@@ -693,6 +675,8 @@ window.addEventListener("DOMContentLoaded", () => {
     show(fxIngClearBtn, false);
 
     if (fxIngList) fxIngList.innerHTML = "";
+    if (fxIngList) fxIngList.className = "ingredient-list";
+
     ingredientsById = {};
     editingIngredientId = null;
 
@@ -708,8 +692,12 @@ window.addEventListener("DOMContentLoaded", () => {
     show(fxIngAddPanel, false);
     show(fxIngClearBtn, true);
 
+    if (fxIngList) fxIngList.className = "ingredient-list";
+
     if (fxIngSearch) fxIngSearch.focus();
-    setFxIngMsg("Enter a search term or click “Show all”.");
+
+    // ✅ Load immediately so “View ingredients” is never a blank state
+    runIngredientSearch("");
   }
 
   function showAddIngredientPanel() {
@@ -721,77 +709,27 @@ window.addEventListener("DOMContentLoaded", () => {
     if (fxIngPsi) fxIngPsi.focus();
   }
 
-  function ensureIngredientListDelegation() {
-    if (!fxIngList) return;
-    if (fxIngList.dataset.bound === "1") return;
-
-    fxIngList.addEventListener("click", async (e) => {
-      const btn = e.target.closest("button[data-action]");
-      if (!btn) return;
-
-      const row = e.target.closest(".customer-row");
-      if (!row) return;
-
-      const ingId = row.getAttribute("data-ingredient-id");
-      const action = btn.getAttribute("data-action");
-      const i = ingredientsById[ingId];
-      if (!i) return;
-
-      if (action === "edit") {
-        editingIngredientId = i.id;
-        if (fxIngPsi) fxIngPsi.value = i.psi_number || "";
-        if (fxIngInci) fxIngInci.value = i.inci_name || "";
-        if (fxIngDesc) fxIngDesc.value = i.short_description || "";
-
-        showAddIngredientPanel();
-        setFxIngMsg("Editing ingredient — click Save ingredient to update.");
-        return;
-      }
-
-      if (action === "delete") {
-        setFxIngMsg("");
-
-        const label = (i.inci_name || "").trim() || (i.psi_number || "").trim() || "this ingredient";
-        const ok = await confirmExact(`Delete ${label}? This cannot be undone.`);
-        if (!ok) return;
-
-        const { data, error } = await supabaseClient
-          .from("ingredients")
-          .delete()
-          .eq("id", i.id)
-          .select("id");
-
-        if (error) { setFxIngMsg("Delete error: " + error.message); return; }
-        if (!data || data.length === 0) { setFxIngMsg("Delete blocked (RLS) — no rows deleted."); return; }
-
-        setFxIngMsg("Deleted ✅");
-        await runIngredientSearch(fxIngSearch?.value || "");
-      }
-    });
-
-    fxIngList.dataset.bound = "1";
-  }
-
+  // ✅ Ingredients list: no click delegation / no row actions
   async function runIngredientSearch(term) {
     if (!fxIngList) return;
 
-    ensureIngredientListDelegation();
-
+    fxIngList.className = "ingredient-list";
     fxIngList.innerHTML = "";
     ingredientsById = {};
     setFxIngMsg("Searching…");
 
     let q = supabaseClient
       .from("ingredients")
-      .select("id, psi_number, inci_name, short_description, created_at")
-      .order("created_at", { ascending: false });
+      .select("id, psi_number, inci_name, short_description")
+      .order("psi_number", { ascending: true });
 
     const t = (term || "").trim();
     if (t) {
       const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
       q = q.or([
         `psi_number.ilike.%${esc}%`,
-        `inci_name.ilike.%${esc}%`
+        `inci_name.ilike.%${esc}%`,
+        `short_description.ilike.%${esc}%`
       ].join(","));
     }
 
@@ -827,9 +765,8 @@ window.addEventListener("DOMContentLoaded", () => {
     if (viewKey === "agents") resetAgentScreen();
 
     if (viewKey === "formulary") {
-      // default to Ingredients tab, but do NOT auto-open view/add panel
       setActiveFormularyTab("ingredients");
-      resetIngredientsScreen();
+      resetIngredientsScreen(); // neutral until user clicks buttons
     }
   }
 
@@ -850,10 +787,10 @@ window.addEventListener("DOMContentLoaded", () => {
       addMenuBtn("Agent Management", "agents");
       addMenuBtn("Customer Management", "customers");
       addMenuBtn("EXACT Formulary", "formulary");
-      setActiveView("agents"); // unchanged default behaviour
+      setActiveView("agents");
     } else {
       addMenuBtn("Customer Management", "customers");
-      setActiveView("customers"); // unchanged default behaviour
+      setActiveView("customers");
     }
   }
 
@@ -956,7 +893,13 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // ---------- bind ingredients buttons ----------
   if (fxIngViewBtn) fxIngViewBtn.addEventListener("click", () => showViewIngredientsPanel());
-  if (fxIngAddBtn) fxIngAddBtn.addEventListener("click", () => { editingIngredientId = null; if (fxIngPsi) fxIngPsi.value = ""; if (fxIngInci) fxIngInci.value = ""; if (fxIngDesc) fxIngDesc.value = ""; showAddIngredientPanel(); });
+  if (fxIngAddBtn) fxIngAddBtn.addEventListener("click", () => {
+    editingIngredientId = null;
+    if (fxIngPsi) fxIngPsi.value = "";
+    if (fxIngInci) fxIngInci.value = "";
+    if (fxIngDesc) fxIngDesc.value = "";
+    showAddIngredientPanel();
+  });
   if (fxIngClearBtn) fxIngClearBtn.addEventListener("click", () => resetIngredientsScreen());
   if (fxIngSearchBtn) fxIngSearchBtn.addEventListener("click", async () => { await runIngredientSearch(fxIngSearch?.value || ""); });
   if (fxIngShowAllBtn) fxIngShowAllBtn.addEventListener("click", async () => { await runIngredientSearch(""); });
@@ -971,7 +914,6 @@ window.addEventListener("DOMContentLoaded", () => {
       const inci_name = (fxIngInci?.value || "").trim();
       const short_description = (fxIngDesc?.value || "").trim() || null;
 
-      // minimal validation
       if (!psi_number) { setFxIngMsg("PSI number is required."); return; }
       if (!inci_name) { setFxIngMsg("INCI name is required."); return; }
 
@@ -993,7 +935,6 @@ window.addEventListener("DOMContentLoaded", () => {
         if (fxIngDesc) fxIngDesc.value = "";
 
         showViewIngredientsPanel();
-        await runIngredientSearch(fxIngSearch?.value || "");
         return;
       }
 
