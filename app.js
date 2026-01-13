@@ -822,29 +822,32 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function renderMenuForRole(role) {
-    if (!menuItems) return;
-    menuItems.innerHTML = "";
+ function renderMenuForRole(role) {
+  if (!menuItems) return;
+  menuItems.innerHTML = "";
 
-    const addMenuBtn = (label, viewKey) => {
-      const b = document.createElement("button");
-      b.className = "menuBtn";
-      b.textContent = label;
-      b.setAttribute("data-view", viewKey);
-      b.addEventListener("click", () => setActiveView(viewKey));
-      menuItems.appendChild(b);
-    };
+  const addMenuBtn = (label, viewKey) => {
+    const b = document.createElement("button");
+    b.className = "menuBtn";
+    b.textContent = label;
+    b.setAttribute("data-view", viewKey);
+    b.addEventListener("click", () => setActiveView(viewKey));
+    menuItems.appendChild(b);
+  };
 
-    if (role === "admin") {
-      addMenuBtn("Agent Management", "agents");
-      addMenuBtn("Customer Management", "customers");
-      addMenuBtn("EXACT Formulary", "formulary");
-      setActiveView("agents");
-    } else {
-      addMenuBtn("Customer Management", "customers");
-      setActiveView("customers");
-    }
+  // Menu items
+  if (role === "admin") {
+    addMenuBtn("Agent Management", "agents");
+    addMenuBtn("Customer Management", "customers");
+    addMenuBtn("EXACT Formulary", "formulary");
+  } else {
+    addMenuBtn("Customer Management", "customers");
   }
+
+  // ✅ DEFAULT VIEW AFTER LOGIN
+  setActiveView("welcome");
+}
+
 
   // ---------- logged in/out shell ----------
   function setLoggedOutUI(message = "Not logged in") {
