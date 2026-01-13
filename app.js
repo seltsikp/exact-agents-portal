@@ -1,8 +1,11 @@
-console.log("EXACT Agents Portal loaded (v35)");
+console.log("EXACT Agents Portal loaded (v36)");
 
-// NOTE: Supabase anon key is public by design. RLS protects data.
+// =========================================================
+// BLOCK: SUPABASE CLIENT
+// =========================================================
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
+
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     storage: window.localStorage,
@@ -14,7 +17,9 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 
 window.addEventListener("DOMContentLoaded", () => {
 
-  // ---------- helpers ----------
+  // =========================================================
+  // BLOCK: HELPERS
+  // =========================================================
   function show(el, isVisible) {
     if (!el) return;
     el.style.display = isVisible ? "block" : "none";
@@ -39,7 +44,9 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ---------- confirm dialog ----------
+  // =========================================================
+  // BLOCK: CONFIRM DIALOG
+  // =========================================================
   async function confirmExact(message) {
     const dlg = document.getElementById("confirmDialog");
     const txt = document.getElementById("confirmDialogText");
@@ -70,7 +77,9 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---------- validation ----------
+  // =========================================================
+  // BLOCK: VALIDATION
+  // =========================================================
   function isValidEmail(email) {
     if (!email) return true;
     const e = email.trim();
@@ -121,7 +130,9 @@ window.addEventListener("DOMContentLoaded", () => {
     else markField(custPhoneInput, "ok");
   }
 
-  // ---------- UI elements ----------
+  // =========================================================
+  // BLOCK: UI ELEMENTS (DOM REFERENCES)
+  // =========================================================
   const loginBox = document.getElementById("loginBox");
   const topBar = document.getElementById("topBar");
   const topBarTitle = document.getElementById("topBarTitle");
@@ -136,6 +147,8 @@ window.addEventListener("DOMContentLoaded", () => {
   const appBox = document.getElementById("appBox");
   const menuItems = document.getElementById("menuItems");
 
+  // ✅ Views (IMPORTANT: include Welcome)
+  const viewWelcome = document.getElementById("viewWelcome");
   const viewCustomerMgmt = document.getElementById("viewCustomerMgmt");
   const viewAgentMgmt = document.getElementById("viewAgentMgmt");
   const viewFormulary = document.getElementById("viewFormulary");
@@ -186,7 +199,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const agentClinicRow = document.getElementById("agentClinicRow");
   const agentClinicName = document.getElementById("agentClinicName");
 
-  // ---------- FORMULARY UI ----------
+  // Formulary tabs
   const fxTabIngredients = document.getElementById("fxTabIngredients");
   const fxTabBases = document.getElementById("fxTabBases");
   const fxTabBoosters = document.getElementById("fxTabBoosters");
@@ -195,7 +208,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const fxSectionBases = document.getElementById("fxSectionBases");
   const fxSectionBoosters = document.getElementById("fxSectionBoosters");
 
-  // Ingredients buttons/panels
+  // Ingredients UI
   const fxIngViewBtn = document.getElementById("fxIngViewBtn");
   const fxIngAddBtn = document.getElementById("fxIngAddBtn");
   const fxIngClearBtn = document.getElementById("fxIngClearBtn");
@@ -215,7 +228,9 @@ window.addEventListener("DOMContentLoaded", () => {
   const fxIngDesc = document.getElementById("fxIngDesc");
   const fxIngSaveBtn = document.getElementById("fxIngSaveBtn");
 
-  // ---------- state ----------
+  // =========================================================
+  // BLOCK: STATE
+  // =========================================================
   let currentSession = null;
   let currentProfile = null;
   let hydratedUserId = null;
@@ -237,7 +252,9 @@ window.addEventListener("DOMContentLoaded", () => {
   const setCustMsg = (t) => { if (custMsg) custMsg.textContent = t || ""; };
   const setFxIngMsg = (t) => { if (fxIngMsg) fxIngMsg.textContent = t || ""; };
 
-  // ---------- customer row renderer ----------
+  // =========================================================
+  // BLOCK: ROW RENDERERS
+  // =========================================================
   function buildCustomerRowHTML(c, { role, agentNameMap }) {
     const id = escapeHtml(c.id);
     const code = escapeHtml(c.customer_code || "");
@@ -287,13 +304,11 @@ window.addEventListener("DOMContentLoaded", () => {
     `.trim();
   }
 
-  // ---------- agent row renderer ----------
   function buildAgentRowHTML(a) {
     const id = escapeHtml(a.id);
     const code = escapeHtml(a.agent_code || "");
     const name = escapeHtml((a.name || "").trim() || "Unnamed agent");
     const created = formatDateShort(a.created_at);
-
     const createdPill = created ? `<span class="pill-soft">Created: ${escapeHtml(created)}</span>` : "";
 
     return `
@@ -315,7 +330,6 @@ window.addEventListener("DOMContentLoaded", () => {
     `.trim();
   }
 
-  // ---------- INGREDIENT row renderer ----------
   function buildIngredientRowHTML(i) {
     const id = escapeHtml(i.id);
     const psi = escapeHtml((i.psi_number || "").trim());
@@ -336,7 +350,9 @@ window.addEventListener("DOMContentLoaded", () => {
     `.trim();
   }
 
-  // ---------- ingredients click delegation (FIXED: correct scope + selector) ----------
+  // =========================================================
+  // BLOCK: INGREDIENT LIST DELEGATION
+  // =========================================================
   function ensureIngredientListDelegation() {
     if (!fxIngList) return;
     if (fxIngList.dataset.bound === "1") return;
@@ -389,7 +405,9 @@ window.addEventListener("DOMContentLoaded", () => {
     fxIngList.dataset.bound = "1";
   }
 
-  // ---------- agent mgmt screen states ----------
+  // =========================================================
+  // BLOCK: SCREEN STATE HELPERS (AGENTS / CUSTOMERS / INGREDIENTS)
+  // =========================================================
   function resetAgentScreen() {
     show(amViewPanel, false);
     show(amAddPanel, false);
@@ -421,6 +439,97 @@ window.addEventListener("DOMContentLoaded", () => {
     if (agentNameInput) agentNameInput.focus();
   }
 
+  function resetCustomerScreen() {
+    show(cmViewPanel, false);
+    show(cmAddPanel, false);
+    show(cmClearBtn, false);
+
+    if (customerList) customerList.innerHTML = "";
+    customersById = {};
+    editingCustomerId = null;
+
+    clearAddForm();
+    setCustMsg("");
+  }
+
+  function showViewCustomersPanel() {
+    show(cmViewPanel, true);
+    show(cmAddPanel, false);
+    show(cmClearBtn, true);
+
+    if (cmSearch) cmSearch.focus();
+    setCustMsg("Enter a search term or click “Show all”.");
+  }
+
+  function showAddCustomerPanel() {
+    show(cmViewPanel, false);
+    show(cmAddPanel, true);
+    show(cmClearBtn, true);
+
+    setCustMsg("");
+
+    if (currentProfile?.role === "admin") {
+      show(assignClinicRow, true);
+      show(agentClinicRow, false);
+    } else {
+      show(assignClinicRow, false);
+      show(agentClinicRow, true);
+    }
+
+    validateCustomerFieldsLive();
+    if (firstNameInput) firstNameInput.focus();
+  }
+
+  function clearAddForm() {
+    if (firstNameInput) firstNameInput.value = "";
+    if (lastNameInput) lastNameInput.value = "";
+    if (custEmailInput) custEmailInput.value = "";
+    if (custPhoneInput) custPhoneInput.value = "";
+    editingCustomerId = null;
+    clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
+  }
+
+  function resetIngredientsScreen() {
+    show(fxIngViewPanel, false);
+    show(fxIngAddPanel, false);
+    show(fxIngClearBtn, false);
+
+    if (fxIngList) fxIngList.innerHTML = "";
+    if (fxIngList) fxIngList.className = "ingredient-list";
+
+    ingredientsById = {};
+    editingIngredientId = null;
+
+    if (fxIngPsi) fxIngPsi.value = "";
+    if (fxIngInci) fxIngInci.value = "";
+    if (fxIngDesc) fxIngDesc.value = "";
+
+    setFxIngMsg("");
+  }
+
+  function showViewIngredientsPanel() {
+    show(fxIngViewPanel, true);
+    show(fxIngAddPanel, false);
+    show(fxIngClearBtn, true);
+
+    if (fxIngList) fxIngList.className = "ingredient-list";
+    if (fxIngSearch) fxIngSearch.focus();
+
+    runIngredientSearch("");
+  }
+
+  function showAddIngredientPanel() {
+    show(fxIngViewPanel, false);
+    show(fxIngAddPanel, true);
+    show(fxIngClearBtn, true);
+
+    setFxIngMsg("");
+    if (fxIngPsi) fxIngPsi.focus();
+  }
+
+  // =========================================================
+  // BLOCK: LIST DELEGATIONS (AGENTS / CUSTOMERS)
+  // =========================================================
   function ensureAgentListDelegation() {
     if (!agentList) return;
     if (agentList.dataset.bound === "1") return;
@@ -472,6 +581,61 @@ window.addEventListener("DOMContentLoaded", () => {
     agentList.dataset.bound = "1";
   }
 
+  function ensureCustomerListDelegation() {
+    if (!customerList) return;
+    if (customerList.dataset.bound === "1") return;
+
+    customerList.addEventListener("click", async (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn) return;
+
+      const row = e.target.closest(".customer-row");
+      if (!row) return;
+
+      const customerId = row.getAttribute("data-customer-id");
+      const action = btn.getAttribute("data-action");
+      const c = customersById[customerId];
+      if (!c) return;
+
+      if (action === "edit") {
+        editingCustomerId = c.id;
+        if (firstNameInput) firstNameInput.value = c.first_name || "";
+        if (lastNameInput) lastNameInput.value = c.last_name || "";
+        if (custEmailInput) custEmailInput.value = c.email || "";
+        if (custPhoneInput) custPhoneInput.value = c.phone || "";
+
+        showAddCustomerPanel();
+        setCustMsg("Editing customer — click Save customer to update.");
+        return;
+      }
+
+      if (action === "delete") {
+        setCustMsg("");
+
+        const customerName = `${c.first_name || ""} ${c.last_name || ""}`.trim() || "this customer";
+        const ok = await confirmExact(`Delete ${customerName}? This cannot be undone.`);
+        if (!ok) return;
+
+        const { data, error } = await supabaseClient
+          .from("customers")
+          .delete()
+          .eq("id", c.id)
+          .select("id");
+
+        if (error) { setCustMsg("Delete error: " + error.message); return; }
+        if (!data || data.length === 0) { setCustMsg("Delete blocked (RLS) — no rows deleted."); return; }
+
+        setCustMsg("Deleted ✅");
+        await runCustomerSearch(cmSearch?.value || "");
+      }
+    });
+
+    customerList.dataset.bound = "1";
+  }
+
+  // =========================================================
+  // BLOCK: QUERIES (AGENTS / CUSTOMERS / INGREDIENTS)
+  // =========================================================
   async function runAgentSearch(term) {
     if (!agentList) return;
 
@@ -508,7 +672,89 @@ window.addEventListener("DOMContentLoaded", () => {
     else setAgentMsg(`Found ${rows.length} agent${rows.length === 1 ? "" : "s"}.`);
   }
 
-  // ---------- auth + profile ----------
+  async function runCustomerSearch(term) {
+    if (!customerList) return;
+
+    ensureCustomerListDelegation();
+
+    customerList.innerHTML = "";
+    customersById = {};
+    setCustMsg("Searching…");
+
+    const role = currentProfile?.role || "agent";
+
+    let q = supabaseClient
+      .from("customers")
+      .select("id, customer_code, agent_id, first_name, last_name, email, phone, created_at")
+      .order("created_at", { ascending: false });
+
+    const t = (term || "").trim();
+    if (t) {
+      const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
+      q = q.or([
+        `first_name.ilike.%${esc}%`,
+        `last_name.ilike.%${esc}%`,
+        `email.ilike.%${esc}%`,
+        `phone.ilike.%${esc}%`
+      ].join(","));
+    }
+
+    const { data, error } = await q;
+
+    if (error) { setCustMsg("Search error: " + error.message); return; }
+
+    const rows = data || [];
+    rows.forEach(c => { customersById[c.id] = c; });
+
+    customerList.innerHTML = rows
+      .map(c => buildCustomerRowHTML(c, { role, agentNameMap }))
+      .join("");
+
+    if (rows.length === 0) setCustMsg("No matches found.");
+    else setCustMsg(`Found ${rows.length} customer${rows.length === 1 ? "" : "s"}.`);
+  }
+
+  async function runIngredientSearch(term) {
+    if (!fxIngList) return;
+
+    ensureIngredientListDelegation();
+
+    fxIngList.className = "ingredient-list";
+    fxIngList.innerHTML = "";
+    ingredientsById = {};
+    setFxIngMsg("Searching…");
+
+    let q = supabaseClient
+      .from("ingredients")
+      .select("id, psi_number, inci_name, short_description")
+      .order("psi_number", { ascending: true });
+
+    const t = (term || "").trim();
+    if (t) {
+      const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
+      q = q.or([
+        `psi_number.ilike.%${esc}%`,
+        `inci_name.ilike.%${esc}%`,
+        `short_description.ilike.%${esc}%`
+      ].join(","));
+    }
+
+    const { data, error } = await q;
+
+    if (error) { setFxIngMsg("Search error: " + error.message); return; }
+
+    const rows = data || [];
+    rows.forEach(i => { ingredientsById[i.id] = i; });
+
+    fxIngList.innerHTML = rows.map(buildIngredientRowHTML).join("");
+
+    if (rows.length === 0) setFxIngMsg("No matches found.");
+    else setFxIngMsg(`Found ${rows.length} ingredient${rows.length === 1 ? "" : "s"}.`);
+  }
+
+  // =========================================================
+  // BLOCK: AUTH + PROFILE LOOKUPS
+  // =========================================================
   async function loadProfileForUser(userId) {
     const { data, error } = await supabaseClient
       .from("agent_users")
@@ -566,152 +812,9 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---------- customer mgmt screen states ----------
-  function resetCustomerScreen() {
-    show(cmViewPanel, false);
-    show(cmAddPanel, false);
-    show(cmClearBtn, false);
-
-    if (customerList) customerList.innerHTML = "";
-    customersById = {};
-    editingCustomerId = null;
-
-    clearAddForm();
-    setCustMsg("");
-  }
-
-  function showViewCustomersPanel() {
-    show(cmViewPanel, true);
-    show(cmAddPanel, false);
-    show(cmClearBtn, true);
-
-    if (cmSearch) cmSearch.focus();
-    setCustMsg("Enter a search term or click “Show all”.");
-  }
-
-  function showAddCustomerPanel() {
-    show(cmViewPanel, false);
-    show(cmAddPanel, true);
-    show(cmClearBtn, true);
-
-    setCustMsg("");
-
-    if (currentProfile?.role === "admin") {
-      show(assignClinicRow, true);
-      show(agentClinicRow, false);
-    } else {
-      show(assignClinicRow, false);
-      show(agentClinicRow, true);
-    }
-
-    validateCustomerFieldsLive();
-    if (firstNameInput) firstNameInput.focus();
-  }
-
-  function clearAddForm() {
-    if (firstNameInput) firstNameInput.value = "";
-    if (lastNameInput) lastNameInput.value = "";
-    if (custEmailInput) custEmailInput.value = "";
-    if (custPhoneInput) custPhoneInput.value = "";
-    editingCustomerId = null;
-    clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
-  }
-
-  function ensureCustomerListDelegation() {
-    if (!customerList) return;
-    if (customerList.dataset.bound === "1") return;
-
-    customerList.addEventListener("click", async (e) => {
-      const btn = e.target.closest("button[data-action]");
-      if (!btn) return;
-
-      const row = e.target.closest(".customer-row");
-      if (!row) return;
-
-      const customerId = row.getAttribute("data-customer-id");
-      const action = btn.getAttribute("data-action");
-      const c = customersById[customerId];
-      if (!c) return;
-
-      if (action === "edit") {
-        editingCustomerId = c.id;
-        if (firstNameInput) firstNameInput.value = c.first_name || "";
-        if (lastNameInput) lastNameInput.value = c.last_name || "";
-        if (custEmailInput) custEmailInput.value = c.email || "";
-        if (custPhoneInput) custPhoneInput.value = c.phone || "";
-
-        showAddCustomerPanel();
-        setCustMsg("Editing customer — click Save customer to update.");
-        return;
-      }
-
-      if (action === "delete") {
-        setCustMsg("");
-
-        const customerName = `${c.first_name || ""} ${c.last_name || ""}`.trim() || "this customer";
-        const ok = await confirmExact(`Delete ${customerName}? This cannot be undone.`);
-        if (!ok) return;
-
-        const { data, error } = await supabaseClient
-          .from("customers")
-          .delete()
-          .eq("id", c.id)
-          .select("id");
-
-        if (error) { setCustMsg("Delete error: " + error.message); return; }
-        if (!data || data.length === 0) { setCustMsg("Delete blocked (RLS) — no rows deleted."); return; }
-
-        setCustMsg("Deleted ✅");
-        await runCustomerSearch(cmSearch?.value || "");
-      }
-    });
-
-    customerList.dataset.bound = "1";
-  }
-
-  async function runCustomerSearch(term) {
-    if (!customerList) return;
-
-    ensureCustomerListDelegation();
-
-    customerList.innerHTML = "";
-    customersById = {};
-    setCustMsg("Searching…");
-
-    const role = currentProfile?.role || "agent";
-
-    let q = supabaseClient
-      .from("customers")
-      .select("id, customer_code, agent_id, first_name, last_name, email, phone, created_at")
-      .order("created_at", { ascending: false });
-
-    const t = (term || "").trim();
-    if (t) {
-      const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
-      q = q.or([
-        `first_name.ilike.%${esc}%`,
-        `last_name.ilike.%${esc}%`,
-        `email.ilike.%${esc}%`,
-        `phone.ilike.%${esc}%`
-      ].join(","));
-    }
-
-    const { data, error } = await q;
-
-    if (error) { setCustMsg("Search error: " + error.message); return; }
-
-    const rows = data || [];
-    rows.forEach(c => { customersById[c.id] = c; });
-
-    customerList.innerHTML = rows
-      .map(c => buildCustomerRowHTML(c, { role, agentNameMap }))
-      .join("");
-
-    if (rows.length === 0) setCustMsg("No matches found.");
-    else setCustMsg(`Found ${rows.length} customer${rows.length === 1 ? "" : "s"}.`);
-  }
-
-  // ---------- FORMULARY: tab + screen states ----------
+  // =========================================================
+  // BLOCK: FORMULARY TABS
+  // =========================================================
   function setActiveFormularyTab(tabKey) {
     fxTabIngredients?.classList.toggle("active", tabKey === "ingredients");
     fxTabBases?.classList.toggle("active", tabKey === "bases");
@@ -722,97 +825,29 @@ window.addEventListener("DOMContentLoaded", () => {
     show(fxSectionBoosters, tabKey === "boosters");
   }
 
-  function resetIngredientsScreen() {
-    show(fxIngViewPanel, false);
-    show(fxIngAddPanel, false);
-    show(fxIngClearBtn, false);
-
-    if (fxIngList) fxIngList.innerHTML = "";
-    if (fxIngList) fxIngList.className = "ingredient-list";
-
-    ingredientsById = {};
-    editingIngredientId = null;
-
-    if (fxIngPsi) fxIngPsi.value = "";
-    if (fxIngInci) fxIngInci.value = "";
-    if (fxIngDesc) fxIngDesc.value = "";
-
-    setFxIngMsg("");
-  }
-
-  function showViewIngredientsPanel() {
-    show(fxIngViewPanel, true);
-    show(fxIngAddPanel, false);
-    show(fxIngClearBtn, true);
-
-    if (fxIngList) fxIngList.className = "ingredient-list";
-    if (fxIngSearch) fxIngSearch.focus();
-
-    runIngredientSearch("");
-  }
-
-  function showAddIngredientPanel() {
-    show(fxIngViewPanel, false);
-    show(fxIngAddPanel, true);
-    show(fxIngClearBtn, true);
-
-    setFxIngMsg("");
-    if (fxIngPsi) fxIngPsi.focus();
-  }
-
-  async function runIngredientSearch(term) {
-    if (!fxIngList) return;
-
-    ensureIngredientListDelegation();
-
-    fxIngList.className = "ingredient-list";
-    fxIngList.innerHTML = "";
-    ingredientsById = {};
-    setFxIngMsg("Searching…");
-
-    let q = supabaseClient
-      .from("ingredients")
-      .select("id, psi_number, inci_name, short_description")
-      .order("psi_number", { ascending: true });
-
-    const t = (term || "").trim();
-    if (t) {
-      const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
-      q = q.or([
-        `psi_number.ilike.%${esc}%`,
-        `inci_name.ilike.%${esc}%`,
-        `short_description.ilike.%${esc}%`
-      ].join(","));
-    }
-
-    const { data, error } = await q;
-
-    if (error) { setFxIngMsg("Search error: " + error.message); return; }
-
-    const rows = data || [];
-    rows.forEach(i => { ingredientsById[i.id] = i; });
-
-    fxIngList.innerHTML = rows.map(buildIngredientRowHTML).join("");
-
-    if (rows.length === 0) setFxIngMsg("No matches found.");
-    else setFxIngMsg(`Found ${rows.length} ingredient${rows.length === 1 ? "" : "s"}.`);
-  }
-
-  // ---------- menu + views ----------
+  // =========================================================
+  // BLOCK: VIEWS + MENU  ✅ FIXED WELCOME SUPPORT
+  // =========================================================
   function setActiveView(viewKey) {
     activeViewKey = viewKey;
+
+    // permissions
     if (viewKey === "agents" && currentProfile?.role !== "admin") return;
     if (viewKey === "formulary" && currentProfile?.role !== "admin") return;
 
+    // ✅ show/hide views
+    show(viewWelcome, viewKey === "welcome");
     show(viewCustomerMgmt, viewKey === "customers");
     show(viewAgentMgmt, viewKey === "agents");
     show(viewFormulary, viewKey === "formulary");
 
+    // ✅ menu highlight
     if (menuItems) {
       const btns = menuItems.querySelectorAll("button[data-view]");
       btns.forEach(b => b.classList.toggle("active", b.getAttribute("data-view") === viewKey));
     }
 
+    // reset screens only when entering those views
     if (viewKey === "customers") resetCustomerScreen();
     if (viewKey === "agents") resetAgentScreen();
 
@@ -822,34 +857,37 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
- function renderMenuForRole(role) {
-  if (!menuItems) return;
-  menuItems.innerHTML = "";
+  function renderMenuForRole(role) {
+    if (!menuItems) return;
+    menuItems.innerHTML = "";
 
-  const addMenuBtn = (label, viewKey) => {
-    const b = document.createElement("button");
-    b.className = "menuBtn";
-    b.textContent = label;
-    b.setAttribute("data-view", viewKey);
-    b.addEventListener("click", () => setActiveView(viewKey));
-    menuItems.appendChild(b);
-  };
+    const addMenuBtn = (label, viewKey) => {
+      const b = document.createElement("button");
+      b.className = "menuBtn";
+      b.textContent = label;
+      b.setAttribute("data-view", viewKey);
+      b.addEventListener("click", () => setActiveView(viewKey));
+      menuItems.appendChild(b);
+    };
 
-  // Menu items
-  if (role === "admin") {
-    addMenuBtn("Agent Management", "agents");
-    addMenuBtn("Customer Management", "customers");
-    addMenuBtn("EXACT Formulary", "formulary");
-  } else {
-    addMenuBtn("Customer Management", "customers");
+    // ✅ Always show Welcome first
+    addMenuBtn("Welcome", "welcome");
+
+    if (role === "admin") {
+      addMenuBtn("Agent Management", "agents");
+      addMenuBtn("Customer Management", "customers");
+      addMenuBtn("EXACT Formulary", "formulary");
+    } else {
+      addMenuBtn("Customer Management", "customers");
+    }
+
+    // ✅ Default view after login
+    setActiveView("welcome");
   }
 
-  // ✅ DEFAULT VIEW AFTER LOGIN
-  setActiveView("welcome");
-}
-
-
-  // ---------- logged in/out shell ----------
+  // =========================================================
+  // BLOCK: LOGIN/LOGOUT SHELL
+  // =========================================================
   function setLoggedOutUI(message = "Not logged in") {
     show(topBar, false);
     show(loginBox, true);
@@ -869,12 +907,18 @@ window.addEventListener("DOMContentLoaded", () => {
     agentNameMap = {};
     customersById = {};
     agentsById = {};
+    ingredientsById = {};
     editingAgentId = null;
+    editingCustomerId = null;
+    editingIngredientId = null;
     activeViewKey = null;
 
     resetCustomerScreen();
     resetAgentScreen();
     resetIngredientsScreen();
+
+    // ensure welcome not shown while logged out
+    show(viewWelcome, false);
   }
 
   function setLoggedInShell(session) {
@@ -885,7 +929,9 @@ window.addEventListener("DOMContentLoaded", () => {
     setAuthMsg("Logged in ✅");
   }
 
-  // ---------- hydration ----------
+  // =========================================================
+  // BLOCK: HYDRATION (AFTER LOGIN)
+  // =========================================================
   async function hydrateAfterLogin(session) {
     if (!session?.user?.id) return;
 
@@ -896,23 +942,21 @@ window.addEventListener("DOMContentLoaded", () => {
       setLoggedInShell(session);
 
       let profile = null;
-try {
-  profile = await loadProfileForUser(session.user.id);
-} catch (e) {
-  console.error("loadProfileForUser failed:", e);
-}
+      try {
+        profile = await loadProfileForUser(session.user.id);
+      } catch (e) {
+        console.error("loadProfileForUser failed:", e);
+      }
 
-if (!profile) {
-  // ✅ Fallback: keep the UI usable even if profile lookup fails
-  if (topBarTitle) topBarTitle.textContent = "Logged in";
-  if (topBarSub) topBarSub.textContent = "Profile lookup failed (agent_users). Check RLS / row exists.";
-  renderMenuForRole("agent");     // shows at least Customer Management
-  setActiveView("customers");
-  return;
-}
+      if (!profile) {
+        if (topBarTitle) topBarTitle.textContent = "Logged in";
+        if (topBarSub) topBarSub.textContent = "Profile lookup failed (agent_users). Check RLS / row exists.";
+        renderMenuForRole("agent");
+        setActiveView("welcome");
+        return;
+      }
 
-currentProfile = profile;
-
+      currentProfile = profile;
 
       if (profile.role === "admin") {
         if (topBarTitle) topBarTitle.textContent = "Admin";
@@ -927,6 +971,8 @@ currentProfile = profile;
       }
 
       renderMenuForRole(profile.role);
+
+      // keep screens neutral until user chooses
       resetCustomerScreen();
       resetAgentScreen();
       resetIngredientsScreen();
@@ -937,7 +983,9 @@ currentProfile = profile;
     }
   }
 
-  // ---------- bind customer mgmt buttons ----------
+  // =========================================================
+  // BLOCK: BIND BUTTONS (CUSTOMERS / AGENTS / FORMULARY / ING)
+  // =========================================================
   if (cmViewBtn) cmViewBtn.addEventListener("click", () => showViewCustomersPanel());
   if (cmAddBtn) cmAddBtn.addEventListener("click", () => { clearAddForm(); showAddCustomerPanel(); });
   if (cmClearBtn) cmClearBtn.addEventListener("click", () => resetCustomerScreen());
@@ -945,7 +993,6 @@ currentProfile = profile;
   if (cmShowAllBtn) cmShowAllBtn.addEventListener("click", async () => { await runCustomerSearch(""); });
   if (cmSearch) cmSearch.addEventListener("keydown", async (e) => { if (e.key === "Enter") await runCustomerSearch(cmSearch.value || ""); });
 
-  // ---------- bind agent mgmt buttons ----------
   if (amViewBtn) amViewBtn.addEventListener("click", () => showViewAgentsPanel());
   if (amAddBtn) amAddBtn.addEventListener("click", () => { editingAgentId = null; if (agentNameInput) agentNameInput.value = ""; showAddAgentPanel(); });
   if (amClearBtn) amClearBtn.addEventListener("click", () => resetAgentScreen());
@@ -953,12 +1000,10 @@ currentProfile = profile;
   if (amShowAllBtn) amShowAllBtn.addEventListener("click", async () => { await runAgentSearch(""); });
   if (amSearch) amSearch.addEventListener("keydown", async (e) => { if (e.key === "Enter") await runAgentSearch(amSearch.value || ""); });
 
-  // ---------- bind formulary tabs ----------
   if (fxTabIngredients) fxTabIngredients.addEventListener("click", () => setActiveFormularyTab("ingredients"));
   if (fxTabBases) fxTabBases.addEventListener("click", () => setActiveFormularyTab("bases"));
   if (fxTabBoosters) fxTabBoosters.addEventListener("click", () => setActiveFormularyTab("boosters"));
 
-  // ---------- bind ingredients buttons ----------
   if (fxIngViewBtn) fxIngViewBtn.addEventListener("click", () => showViewIngredientsPanel());
   if (fxIngAddBtn) fxIngAddBtn.addEventListener("click", () => {
     editingIngredientId = null;
@@ -972,7 +1017,9 @@ currentProfile = profile;
   if (fxIngShowAllBtn) fxIngShowAllBtn.addEventListener("click", async () => { await runIngredientSearch(""); });
   if (fxIngSearch) fxIngSearch.addEventListener("keydown", async (e) => { if (e.key === "Enter") await runIngredientSearch(fxIngSearch.value || ""); });
 
-  // ---------- save ingredient ----------
+  // =========================================================
+  // BLOCK: SAVE INGREDIENT (ADD/EDIT)
+  // =========================================================
   if (fxIngSaveBtn) {
     fxIngSaveBtn.addEventListener("click", async () => {
       setFxIngMsg("");
@@ -997,6 +1044,7 @@ currentProfile = profile;
 
         setFxIngMsg("Saved ✅");
         editingIngredientId = null;
+
         if (fxIngPsi) fxIngPsi.value = "";
         if (fxIngInci) fxIngInci.value = "";
         if (fxIngDesc) fxIngDesc.value = "";
@@ -1022,14 +1070,15 @@ currentProfile = profile;
     });
   }
 
-  // live validation listeners (once)
+  // =========================================================
+  // BLOCK: SAVE CUSTOMER (ADD/EDIT)
+  // =========================================================
   [firstNameInput, lastNameInput, custEmailInput, custPhoneInput].forEach((el) => {
     if (!el) return;
     el.addEventListener("input", validateCustomerFieldsLive);
     el.addEventListener("blur", validateCustomerFieldsLive);
   });
 
-  // ---------- add/edit customer ----------
   if (addCustomerBtn) {
     addCustomerBtn.addEventListener("click", async () => {
       setCustMsg("");
@@ -1092,7 +1141,9 @@ currentProfile = profile;
     });
   }
 
-  // ---------- add/edit agent ----------
+  // =========================================================
+  // BLOCK: SAVE AGENT (ADD/EDIT)
+  // =========================================================
   if (addAgentBtn) {
     addAgentBtn.addEventListener("click", async () => {
       setAgentMsg("");
@@ -1138,7 +1189,9 @@ currentProfile = profile;
     });
   }
 
-  // ---------- login ----------
+  // =========================================================
+  // BLOCK: LOGIN / LOGOUT
+  // =========================================================
   if (loginBtn) {
     loginBtn.addEventListener("click", async () => {
       setAuthMsg("Logging in…");
@@ -1161,7 +1214,6 @@ currentProfile = profile;
     });
   }
 
-  // ---------- logout ----------
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
       await supabaseClient.auth.signOut();
@@ -1169,7 +1221,9 @@ currentProfile = profile;
     });
   }
 
-  // ---------- initial restore ----------
+  // =========================================================
+  // BLOCK: INITIAL RESTORE + AUTH EVENTS
+  // =========================================================
   (async () => {
     try {
       const { data, error } = await supabaseClient.auth.getSession();
@@ -1182,7 +1236,6 @@ currentProfile = profile;
     }
   })();
 
-  // ---------- auth state events ----------
   supabaseClient.auth.onAuthStateChange((event, session) => {
     console.log("Auth state change:", event);
     if (event === "SIGNED_OUT") setLoggedOutUI("Logged out");
