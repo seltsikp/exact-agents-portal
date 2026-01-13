@@ -1,4 +1,4 @@
-console.log("EXACT Agents Portal loaded (v29)");
+console.log("EXACT Agents Portal loaded (v30)");
 
 // NOTE: Supabase anon key is public by design. RLS protects data.
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
@@ -397,15 +397,16 @@ window.addEventListener("DOMContentLoaded", () => {
         }
 
         setCustMsg("Deleted ✅");
-        // remove from cache + DOM by re-searching last state:
-        await runCustomerSearch(cmSearch?.value || "", false);
+        // re-run the current search term (empty term returns all)
+        await runCustomerSearch(cmSearch?.value || "");
       }
     });
 
     customerList.dataset.bound = "1";
   }
 
-  async function runCustomerSearch(term, showAll) {
+  // ✅ FIXED: removed duplicated/invalid search block that was breaking JS (and blocking login)
+  async function runCustomerSearch(term) {
     if (!customerList) return;
 
     ensureCustomerListDelegation();
@@ -421,21 +422,9 @@ window.addEventListener("DOMContentLoaded", () => {
       .select("id, agent_id, first_name, last_name, email, phone, created_at")
       .order("created_at", { ascending: false });
 
-  // If search term is empty, return ALL rows
-const t = (term || "").trim();
-if (t) {
-  const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
-  q = q.or([
-    `first_name.ilike.%${esc}%`,
-    `last_name.ilike.%${esc}%`,
-    `email.ilike.%${esc}%`,
-    `phone.ilike.%${esc}%`
-  ].join(","));
-}
-
-
-      // ilike works for text fields. We search first_name/last_name/email/phone.
-      // RLS will still restrict agent users.
+    // If search term is empty -> return ALL rows (RLS still applies)
+    const t = (term || "").trim();
+    if (t) {
       const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
       q = q.or([
         `first_name.ilike.%${esc}%`,
@@ -563,7 +552,7 @@ if (t) {
         if (topBarTitle) topBarTitle.textContent = `Agent — ${agentName || "Unknown clinic"}`;
         if (topBarSub) topBarSub.textContent = session.user.email || "";
 
-        // show agent clinic name in Add screen
+        // show agent clinic name in Add screen (if it's an <input>)
         if (agentClinicName) agentClinicName.value = agentName || "Unknown clinic";
       }
 
@@ -591,16 +580,16 @@ if (t) {
   });
 
   if (cmSearchBtn) cmSearchBtn.addEventListener("click", async () => {
-    await runCustomerSearch(cmSearch?.value || "", false);
+    await runCustomerSearch(cmSearch?.value || "");
   });
 
   if (cmShowAllBtn) cmShowAllBtn.addEventListener("click", async () => {
-    await runCustomerSearch("", true);
+    await runCustomerSearch("");
   });
 
   if (cmSearch) cmSearch.addEventListener("keydown", async (e) => {
     if (e.key === "Enter") {
-      await runCustomerSearch(cmSearch.value || "", false);
+      await runCustomerSearch(cmSearch.value || "");
     }
   });
 
