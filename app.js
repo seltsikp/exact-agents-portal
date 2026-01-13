@@ -1,4 +1,3 @@
-import { showWelcomePanel } from "./modules/welcome.js";
 console.log("EXACT Agents Portal loaded (v39)");
 
 // =========================================================
