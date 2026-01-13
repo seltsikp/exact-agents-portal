@@ -399,32 +399,32 @@ function ensureIngredientListDelegation() {
   if (!fxIngList) return;
   if (fxIngList.dataset.bound === "1") return;
 
-  const doEdit = (i) => {
-    editingIngredientId = i.id;
-    if (fxIngPsi) fxIngPsi.value = i.psi_number || "";
-    if (fxIngInci) fxIngInci.value = i.inci_name || "";
-    if (fxIngDesc) fxIngDesc.value = i.short_description || "";
-    showAddIngredientPanel();
-    setFxIngMsg("Editing ingredient — click Save ingredient to update.");
-  };
-
   fxIngList.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+
     const row = e.target.closest(".ingredient-row");
     if (!row) return;
 
     const ingId = row.getAttribute("data-ingredient-id");
+    const action = btn.getAttribute("data-action");
     const i = ingredientsById[ingId];
     if (!i) return;
 
-    const btn = e.target.closest("button[data-action]");
-    const action = btn?.getAttribute("data-action") || null;
+    if (action === "edit") {
+      editingIngredientId = i.id;
+      if (fxIngPsi) fxIngPsi.value = i.psi_number || "";
+      if (fxIngInci) fxIngInci.value = i.inci_name || "";
+      if (fxIngDesc) fxIngDesc.value = i.short_description || "";
 
-    // Delete button
+      showAddIngredientPanel();
+      setFxIngMsg("Editing ingredient — click Save ingredient to update.");
+      return;
+    }
+
     if (action === "delete") {
-      e.preventDefault();
-      e.stopPropagation();
-
       setFxIngMsg("");
+
       const label = (i.inci_name || "").trim() || (i.psi_number || "").trim() || "this ingredient";
       const ok = await confirmExact(`Delete ${label}? This cannot be undone.`);
       if (!ok) return;
@@ -440,34 +440,12 @@ function ensureIngredientListDelegation() {
 
       setFxIngMsg("Deleted ✅");
       await runIngredientSearch(fxIngSearch?.value || "");
-      return;
     }
-
-    // Edit button OR click row
-    doEdit(i);
-  });
-
-  // Keyboard: Enter/Space edits
-  fxIngList.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter" && e.key !== " ") return;
-    const row = e.target.closest(".ingredient-row");
-    if (!row) return;
-
-    e.preventDefault();
-    const ingId = row.getAttribute("data-ingredient-id");
-    const i = ingredientsById[ingId];
-    if (!i) return;
-
-    editingIngredientId = i.id;
-    if (fxIngPsi) fxIngPsi.value = i.psi_number || "";
-    if (fxIngInci) fxIngInci.value = i.inci_name || "";
-    if (fxIngDesc) fxIngDesc.value = i.short_description || "";
-    showAddIngredientPanel();
-    setFxIngMsg("Editing ingredient — click Save ingredient to update.");
   });
 
   fxIngList.dataset.bound = "1";
 }
+
 
       if (action === "delete") {
         setAgentMsg("");
@@ -1030,6 +1008,8 @@ function ensureIngredientListDelegation() {
       if (fxIngDesc) fxIngDesc.value = "";
 
       showViewIngredientsPanel();
+      await runIngredientSearch("");
+
     });
   }
 
