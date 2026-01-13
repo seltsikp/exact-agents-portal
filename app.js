@@ -320,7 +320,7 @@ window.addEventListener("DOMContentLoaded", () => {
     `.trim();
   }
 
- // ---------- INGREDIENT row renderer (row: PSI | INCI | Description | Actions) ----------
+ // ---------- INGREDIENT row renderer ----------
 function buildIngredientRowHTML(i) {
   const id = escapeHtml(i.id);
   const psi = escapeHtml((i.psi_number || "").trim());
@@ -328,17 +328,19 @@ function buildIngredientRowHTML(i) {
   const desc = escapeHtml((i.short_description || "").trim());
 
   return `
-    <div class="ingredient-row" data-ingredient-id="${id}" role="button" tabindex="0" aria-label="Edit ingredient ${psi}">
+    <div class="ingredient-row" data-ingredient-id="${id}">
       <div class="ingredient-cell ingredient-psi">${psi}</div>
       <div class="ingredient-cell ingredient-inci">${inci}</div>
       <div class="ingredient-cell ingredient-desc">${desc}</div>
-      <div class="ingredient-cell ingredient-actions">
-        <button class="ing-link" type="button" data-action="edit">Edit</button>
-        <button class="ing-link ing-delete" type="button" data-action="delete">Delete</button>
+
+      <div class="ingredient-actions">
+        <button class="ing-link" data-action="edit" type="button">Edit</button>
+        <button class="ing-link ing-delete" data-action="delete" type="button">Delete</button>
       </div>
     </div>
   `.trim();
 }
+
 
   // ---------- agent mgmt screen states ----------
   function resetAgentScreen() {
@@ -403,7 +405,7 @@ function ensureIngredientListDelegation() {
     const btn = e.target.closest("button[data-action]");
     if (!btn) return;
 
-    const row = e.target.closest(".ingredient-row");
+    const row = e.target.closest(".ingredient-row"); // ✅ correct selector
     if (!row) return;
 
     const ingId = row.getAttribute("data-ingredient-id");
@@ -425,7 +427,11 @@ function ensureIngredientListDelegation() {
     if (action === "delete") {
       setFxIngMsg("");
 
-      const label = (i.inci_name || "").trim() || (i.psi_number || "").trim() || "this ingredient";
+      const label =
+        (i.inci_name || "").trim() ||
+        (i.psi_number || "").trim() ||
+        "this ingredient";
+
       const ok = await confirmExact(`Delete ${label}? This cannot be undone.`);
       if (!ok) return;
 
@@ -445,6 +451,7 @@ function ensureIngredientListDelegation() {
 
   fxIngList.dataset.bound = "1";
 }
+
 
 
       if (action === "delete") {
