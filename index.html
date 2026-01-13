@@ -165,6 +165,13 @@
         padding: 6px 10px;
         opacity: 0.8;
       }
+      /* Soft (non-black) button */
+.btn-soft{
+  background: #fff;
+  color: var(--text);
+  border-color: rgba(15, 20, 25, .18);
+  font-weight: 500;            /* NOT bold */
+}
 
       /* Customer screen header actions */
       .cm-actions{
@@ -254,8 +261,8 @@
       .customer-actions .btn{
         padding: 8px 12px;
         border-radius: 12px;
-        font-size: 13px;
       }
+
 
       @media (max-width: 768px){
         .customer-row{ grid-template-columns: 1fr; gap:10px; }
