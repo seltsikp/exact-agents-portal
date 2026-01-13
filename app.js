@@ -884,7 +884,9 @@ if (amSearch) amSearch.addEventListener("keydown", async (e) => {
         setCustMsg("Saved ✅");
         clearAddForm();
         showViewCustomersPanel();
+        await runCustomerSearch(cmSearch?.value || "");
         return;
+
       }
 
       // ADD mode
@@ -927,12 +929,14 @@ if (addAgentBtn) {
       setAgentMsg("Saved ✅");
       editingAgentId = null;
       if (agentNameInput) agentNameInput.value = "";
-
+      
       await loadAgentNameMap();
       await loadAgentsForAssignDropdown();
-
+      
       showViewAgentsPanel();
+      await runAgentSearch(amSearch?.value || "");
       return;
+
     }
 
     // ADD mode
