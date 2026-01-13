@@ -1,4 +1,5 @@
-console.log("EXACT Agents Portal loaded (v40)");
+import { showWelcomePanel } from "./modules/welcome.js";
+console.log("EXACT Agents Portal loaded (v41)");
 
 // =========================================================
 // BLOCK: SUPABASE CLIENT
@@ -841,6 +842,11 @@ window.addEventListener("DOMContentLoaded", () => {
     show(viewCustomerMgmt, viewKey === "customers");
     show(viewAgentMgmt, viewKey === "agents");
     show(viewFormulary, viewKey === "formulary");
+
+    if (viewKey === "welcome") {
+  showWelcomePanel({ containerEl: welcomeContent });
+}
+
 
     // ✅ menu highlight
     if (menuItems) {
