@@ -214,6 +214,7 @@ const setAgentMsg = (t) => { if (agentMsg) agentMsg.textContent = t || ""; };
   // ---------- premium row renderer ----------
   function buildCustomerRowHTML(c, { role, agentNameMap }) {
     const id = escapeHtml(c.id);
+    const code = escapeHtml(c.customer_code || "");
 
     const first = (c.first_name ?? "").trim();
     const last = (c.last_name ?? "").trim();
@@ -224,11 +225,18 @@ const setAgentMsg = (t) => { if (agentMsg) agentMsg.textContent = t || ""; };
     const phone = escapeHtml((c.phone || "").trim());
     const created = formatDateShort(c.created_at);
 
-    let metaLine = "";
-    if (email && phone) metaLine = `<span>${email}</span><span class="customer-dot">•</span><span>${phone}</span>`;
-    else if (email) metaLine = `<span>${email}</span>`;
-    else if (phone) metaLine = `<span>${phone}</span>`;
-    else metaLine = `<span style="opacity:.65;">No contact details</span>`;
+let metaLine = "";
+
+const codePart = code
+  ? `<span>${code}</span><span class="customer-dot">•</span>`
+  : "";
+
+if (email && phone) metaLine = `${codePart}<span>${email}</span><span class="customer-dot">•</span><span>${phone}</span>`;
+else if (email) metaLine = `${codePart}<span>${email}</span>`;
+else if (phone) metaLine = `${codePart}<span>${phone}</span>`;
+else metaLine = codePart || `<span style="opacity:.65;">No contact details</span>`;
+
+
 
     let clinicPill = "";
     if (role === "admin") {
@@ -260,6 +268,7 @@ const setAgentMsg = (t) => { if (agentMsg) agentMsg.textContent = t || ""; };
 // ---------- agent mgmt: premium row renderer ----------
 function buildAgentRowHTML(a) {
   const id = escapeHtml(a.id);
+  const code = escapeHtml(a.agent_code || "");
   const name = escapeHtml((a.name || "").trim() || "Unnamed agent");
   const created = formatDateShort(a.created_at);
 
@@ -269,7 +278,7 @@ function buildAgentRowHTML(a) {
     <div class="customer-row" data-agent-id="${id}">
       <div class="customer-main">
         <div class="name">${name}</div>
-        <div class="meta"><span style="opacity:.75;">Agent ID: ${id}</span></div>
+        <div class="meta"><span style="opacity:.75;">${code}</span></div>
       </div>
 
       <div class="customer-context">
@@ -382,7 +391,7 @@ async function runAgentSearch(term) {
   // NOTE: using only columns we already know exist: id, name, created_at
   let q = supabaseClient
     .from("agents")
-    .select("id, name, created_at")
+    .select("id, agent_code, name, created_at")
     .order("created_at", { ascending: false });
 
   // empty term -> ALL rows (RLS still applies)
@@ -595,7 +604,7 @@ async function runAgentSearch(term) {
 
     let q = supabaseClient
       .from("customers")
-      .select("id, agent_id, first_name, last_name, email, phone, created_at")
+      .select("id, customer_code, agent_id, first_name, last_name, email, phone, created_at")
       .order("created_at", { ascending: false });
 
     // If search term is empty -> return ALL rows (RLS still applies)
@@ -623,6 +632,7 @@ async function runAgentSearch(term) {
     customerList.innerHTML = rows
       .map(c => buildCustomerRowHTML(c, { role, agentNameMap }))
       .join("");
+
 
     if (rows.length === 0) {
       setCustMsg("No matches found.");
