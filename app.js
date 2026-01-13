@@ -260,7 +260,7 @@ else metaLine = codePart || `<span style="opacity:.65;">No contact details</span
 
         <div class="customer-actions">
           <button class="btn btn-soft action-pill edit-pill" data-action="edit" type="button">Edit</button>
-          <button class="btn btn-danger action-pill" data-action="delete" type="button">Delete</button>
+        <button class="btn action-pill delete-pill" data-action="delete" type="button">Delete</button>
 
         </div>
       </div>
@@ -288,7 +288,7 @@ function buildAgentRowHTML(a) {
 
      <div class="customer-actions">
   <button class="btn btn-soft action-pill edit-pill" data-action="edit" type="button">Edit</button>
-  <button class="btn btn-danger action-pill" data-action="delete" type="button">Delete</button>
+<button class="btn action-pill delete-pill" data-action="delete" type="button">Delete</button>
 </div>
 
     </div>
