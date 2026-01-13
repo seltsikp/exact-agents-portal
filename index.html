@@ -120,7 +120,7 @@
       }
 
       /* Controls */
-      input, select{
+      input, select, textarea{
         width: 100%;
         padding: 10px 12px;
         border-radius: 12px;
@@ -128,8 +128,11 @@
         outline: none;
         background: #fff;
         font-size: 14px;
+        font-family: inherit;
       }
-      input:focus, select:focus{
+      textarea{ min-height: 90px; resize: vertical; }
+
+      input:focus, select:focus, textarea:focus{
         border-color: rgba(184,154,91,.55);
         box-shadow: 0 0 0 4px rgba(184,154,91,.18);
       }
@@ -165,23 +168,25 @@
         padding: 6px 10px;
         opacity: 0.8;
       }
+
       /* Soft (non-black) button */
       .btn-soft{
         background: #fff;
         color: var(--text);
         border-color: rgba(15, 20, 25, .18);
-        font-weight: 500;            /* NOT bold */
+        font-weight: 500;
       }
 
-      /* Customer screen header actions */
+      /* Screen header actions */
       .cm-actions{
         display:flex;
         gap:10px;
         flex-wrap:wrap;
         margin: 6px 0 12px;
+        align-items: center;
       }
 
-      /* Customer list rows */
+      /* List rows */
       .customer-list{
         display: grid;
         gap: 12px;
@@ -239,9 +244,6 @@
         font-size: 12px;
         color: var(--gold-dark);
         white-space: nowrap;
-      }
-      /* Equal-size pills */
-      .pill-soft{
         min-width: 140px;
         justify-content: center;
         text-align: center;
@@ -268,7 +270,7 @@
         .customer-actions{ justify-content:flex-start; }
       }
 
-      /* Validation (accessible) */
+      /* Validation */
       .field-error{
         border-color: #c9a24a !important;
         box-shadow: 0 0 0 1px #c9a24a, inset 4px 0 0 #c9a24a;
@@ -276,7 +278,6 @@
         background-image: linear-gradient(to right, #c9a24a 4px, transparent 4px);
         background-repeat: no-repeat;
       }
-
       .field-ok{
         border-color: #5b7c99 !important;
         box-shadow: 0 0 0 1px #5b7c99, inset 4px 0 0 #5b7c99;
@@ -296,10 +297,7 @@
       dialog::backdrop{ background: rgba(10,10,12,.55); }
       .dialog-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
 
-      /* ======================================================
-         GLOBAL ACTION PILL SYSTEM (DO NOT OVERRIDE PER SCREEN)
-         ====================================================== */
-
+      /* GLOBAL ACTION PILL SYSTEM */
       .action-pills {
         display: flex;
         gap: 10px;
@@ -313,26 +311,21 @@
         align-items: center;
         justify-content: center;
         text-align: center;
-
         border-radius: 999px;
         font-weight: 600;
         font-size: 13px;
         white-space: nowrap;
       }
 
-      button.action-pill {
-        appearance: none;
-      }
+      button.action-pill { appearance: none; }
 
       .action-pill.edit-pill {
         min-width: 84px;
         height: 32px;
         font-weight: 500;
         font-size: 12px;
-
         background: #fff;
         color: var(--text);
-
         border: 1px solid rgba(15, 20, 25, 0.28);
       }
 
@@ -341,19 +334,39 @@
         height: 32px;
         font-weight: 500;
         font-size: 12px;
-
         background: #fff;
         color: var(--danger);
-
         border: 1px solid rgba(180, 35, 24, 0.45);
       }
+
+      /* Formulary tabs */
+      .tab-row{
+        display:flex;
+        gap:12px;
+        flex-wrap:wrap;
+        margin: 6px 0 14px;
+      }
+      .tabBtn{
+        min-width: 180px;
+        height: 44px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background:#fff;
+        font-weight: 700;
+      }
+      .tabBtn.active{
+        background: var(--gold);
+        border-color: transparent;
+        color:#fff;
+      }
+      .tabSection{ display:none; }
     </style>
   </head>
 
   <body>
     <div class="container">
 
-      <!-- TOP BAR (logo + user) -->
+      <!-- TOP BAR -->
       <div id="topBar" class="topbar" style="display:none;">
         <div class="topbar-inner">
           <a href="./" class="logo-link" aria-label="EXACT Portal home">
@@ -391,121 +404,42 @@
             <div id="menuItems"></div>
           </div>
 
-          <!-- AGENT MANAGEMENT -->
-          <div id="viewAgentMgmt" class="card" style="display:none;">
-            <h2>Agent Management</h2>
-
-            <div class="cm-actions action-pills">
-              <button id="amViewBtn" class="btn-gold action-pill" type="button">View agents</button>
-              <button id="amAddBtn" class="action-pill" type="button">Add agent</button>
-              <button id="amClearBtn" class="action-pill" type="button" style="display:none;">Clear</button>
-              <p id="agentMsg" class="subtle" style="margin:0;"></p>
-            </div>
-
-            <div id="amViewPanel" style="display:none; margin-top:6px;">
-              <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-                <div style="flex:1; min-width:240px;">
-                  <label class="subtle" for="amSearch" style="display:block; margin-bottom:6px;">Search (name)</label>
-                  <input id="amSearch" placeholder="Agent / clinic name…" />
-                </div>
-                <div style="display:flex; gap:10px;">
-                  <button id="amSearchBtn" class="btn-primary action-pill" type="button">Search</button>
-                  <button id="amShowAllBtn" class="action-pill" type="button">Show all</button>
-                </div>
-              </div>
-
-              <div id="agentList" class="customer-list"></div>
-            </div>
-
-            <div id="amAddPanel" style="display:none; margin-top:6px;">
-              <div style="margin-bottom:10px;">
-                <label class="subtle" for="agentName" style="display:block; margin-bottom:6px;">Agent / clinic name</label>
-                <input id="agentName" placeholder="e.g. Dubai Aesthetics Clinic" />
-              </div>
-
-              <button id="addAgentBtn" class="btn-primary action-pill" type="button">Save agent</button>
-            </div>
-          </div>
-
           <!-- CONTENT -->
           <div>
 
-            <!-- WELCOME / INTRO -->
-            <div id="viewWelcome" class="card" style="display:none;">
-              <h2 style="margin-top:0;">Welcome to the EXACT Cosmetics Portal.</h2>
-              <p style="margin:0; color: var(--muted); line-height:1.55;">
-                If you encounter any issues whatsoever, please contact us at<br>
-                <a href="mailto:portalsupport@exactcosmetics.com">portalsupport@exactcosmetics.com</a>
-              </p>
-            </div>
+            <!-- AGENT MANAGEMENT -->
+            <div id="viewAgentMgmt" class="card" style="display:none;">
+              <h2>Agent Management</h2>
 
-            <!-- EXACT FORMULARY (ADMIN) -->
-            <div id="viewFormulary" class="card" style="display:none;">
-              <h2>EXACT Formulary</h2>
-
-              <!-- Tabs -->
-              <div class="cm-actions action-pills" style="margin-top:10px;">
-                <button id="fxTabIngredients" class="btn-gold action-pill" type="button">Ingredients</button>
-                <button id="fxTabBases" class="action-pill" type="button">Bases</button>
-                <button id="fxTabBoosters" class="action-pill" type="button">Boosters</button>
-                <p id="fxMsg" class="subtle" style="margin:0;"></p>
+              <div class="cm-actions action-pills">
+                <button id="amViewBtn" class="btn-gold action-pill" type="button">View agents</button>
+                <button id="amAddBtn" class="action-pill" type="button">Add agent</button>
+                <button id="amClearBtn" class="action-pill" type="button" style="display:none;">Clear</button>
+                <p id="agentMsg" class="subtle" style="margin:0;"></p>
               </div>
 
-              <!-- INGREDIENTS PANEL -->
-              <div id="fxPanelIngredients" style="display:none; margin-top:10px;">
-
-                <div class="cm-actions action-pills" style="margin-top:0;">
-                  <button id="fxIngViewBtn" class="btn-gold action-pill" type="button">View ingredients</button>
-                  <button id="fxIngAddBtn" class="action-pill" type="button">Add ingredient</button>
-                  <button id="fxIngClearBtn" class="action-pill" type="button" style="display:none;">Clear</button>
-                  <p id="fxIngMsg" class="subtle" style="margin:0;"></p>
-                </div>
-
-                <div id="fxIngViewPanel" style="display:none; margin-top:10px;">
-                  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-                    <div style="flex:1; min-width:240px;">
-                      <label class="subtle" for="fxIngSearch" style="display:block; margin-bottom:6px;">Search (PSI / INCI / description)</label>
-                      <input id="fxIngSearch" placeholder="PSI number, INCI name, keyword…" />
-                    </div>
-                    <div style="display:flex; gap:10px;">
-                      <button id="fxIngSearchBtn" class="btn-primary action-pill" type="button">Search</button>
-                      <button id="fxIngShowAllBtn" class="action-pill" type="button">Show all</button>
-                    </div>
+              <div id="amViewPanel" style="display:none; margin-top:6px;">
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+                  <div style="flex:1; min-width:240px;">
+                    <label class="subtle" for="amSearch" style="display:block; margin-bottom:6px;">Search (name)</label>
+                    <input id="amSearch" placeholder="Agent / clinic name…" />
                   </div>
-
-                  <div id="fxIngList" class="customer-list"></div>
+                  <div style="display:flex; gap:10px;">
+                    <button id="amSearchBtn" class="btn-primary action-pill" type="button">Search</button>
+                    <button id="amShowAllBtn" class="action-pill" type="button">Show all</button>
+                  </div>
                 </div>
 
-                <div id="fxIngAddPanel" style="display:none; margin-top:10px;">
+                <div id="agentList" class="customer-list"></div>
+              </div>
+
+              <div id="amAddPanel" style="display:none; margin-top:6px;">
                 <div style="margin-bottom:10px;">
-                <label class="subtle" for="fxIngPsi" style="display:block; margin-bottom:6px;">PSI number</label>
-                <input id="fxIngPsi" placeholder="e.g. PSI-001" />
-              </div>
-
-
-                  <div style="margin-bottom:10px;">
-                    <label class="subtle" for="fxIngInci" style="display:block; margin-bottom:6px;">INCI name</label>
-                    <input id="fxIngInci" placeholder="e.g. Niacinamide" />
-                  </div>
-
-                  <div style="margin-bottom:10px;">
-                    <label class="subtle" for="fxIngDesc" style="display:block; margin-bottom:6px;">Short description</label>
-                    <input id="fxIngDesc" placeholder="What it does (short)..." />
-                  </div>
-
-                  <button id="fxIngSaveBtn" class="btn-primary action-pill" type="button">Save ingredient</button>
+                  <label class="subtle" for="agentName" style="display:block; margin-bottom:6px;">Agent / clinic name</label>
+                  <input id="agentName" placeholder="e.g. Dubai Aesthetics Clinic" />
                 </div>
 
-              </div>
-
-              <!-- BASES PANEL -->
-              <div id="fxPanelBases" style="display:none; margin-top:10px;">
-                <p class="subtle" style="margin:0;">Bases panel (later).</p>
-              </div>
-
-              <!-- BOOSTERS PANEL -->
-              <div id="fxPanelBoosters" style="display:none; margin-top:10px;">
-                <p class="subtle" style="margin:0;">Boosters panel (later).</p>
+                <button id="addAgentBtn" class="btn-primary action-pill" type="button">Save agent</button>
               </div>
             </div>
 
@@ -557,6 +491,74 @@
                 </div>
 
                 <button id="addCustomerBtn" class="btn-primary action-pill" type="button">Save customer</button>
+              </div>
+            </div>
+
+            <!-- EXACT FORMULARY -->
+            <div id="viewFormulary" class="card" style="display:none;">
+              <h2>EXACT Formulary</h2>
+
+              <!-- Tabs -->
+              <div class="tab-row">
+                <button id="fxTabIngredients" class="tabBtn active" type="button">Ingredients</button>
+                <button id="fxTabBases" class="tabBtn" type="button">Bases</button>
+                <button id="fxTabBoosters" class="tabBtn" type="button">Boosters</button>
+              </div>
+
+              <!-- INGREDIENTS section -->
+              <div id="fxSectionIngredients" class="tabSection" style="display:block;">
+                <div class="cm-actions action-pills">
+                  <button id="fxIngViewBtn" class="btn-gold action-pill" type="button">View ingredients</button>
+                  <button id="fxIngAddBtn" class="action-pill" type="button">Add ingredient</button>
+                  <button id="fxIngClearBtn" class="action-pill" type="button" style="display:none;">Clear</button>
+                  <p id="fxIngMsg" class="subtle" style="margin:0;"></p>
+                </div>
+
+                <!-- VIEW -->
+                <div id="fxIngViewPanel" style="display:none; margin-top:6px;">
+                  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+                    <div style="flex:1; min-width:240px;">
+                      <label class="subtle" for="fxIngSearch" style="display:block; margin-bottom:6px;">Search (PSI or INCI)</label>
+                      <input id="fxIngSearch" placeholder="PSI-001, Niacinamide…" />
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                      <button id="fxIngSearchBtn" class="btn-primary action-pill" type="button">Search</button>
+                      <button id="fxIngShowAllBtn" class="action-pill" type="button">Show all</button>
+                    </div>
+                  </div>
+
+                  <div id="fxIngList" class="customer-list"></div>
+                </div>
+
+                <!-- ADD / EDIT -->
+                <div id="fxIngAddPanel" style="display:none; margin-top:6px;">
+                  <div style="margin-bottom:10px;">
+                    <label class="subtle" for="fxIngPsi" style="display:block; margin-bottom:6px;">PSI number</label>
+                    <input id="fxIngPsi" placeholder="e.g. PSI-001" />
+                  </div>
+
+                  <div style="margin-bottom:10px;">
+                    <label class="subtle" for="fxIngInci" style="display:block; margin-bottom:6px;">INCI name</label>
+                    <input id="fxIngInci" placeholder="e.g. Niacinamide" />
+                  </div>
+
+                  <div style="margin-bottom:10px;">
+                    <label class="subtle" for="fxIngDesc" style="display:block; margin-bottom:6px;">Short description</label>
+                    <textarea id="fxIngDesc" placeholder="What it does (short)…"></textarea>
+                  </div>
+
+                  <button id="fxIngSaveBtn" class="btn-primary action-pill" type="button">Save ingredient</button>
+                </div>
+              </div>
+
+              <!-- BASES placeholder -->
+              <div id="fxSectionBases" class="tabSection">
+                <p class="subtle" style="margin:0;">Bases: coming next step.</p>
+              </div>
+
+              <!-- BOOSTERS placeholder -->
+              <div id="fxSectionBoosters" class="tabSection">
+                <p class="subtle" style="margin:0;">Boosters: coming next step.</p>
               </div>
             </div>
 
