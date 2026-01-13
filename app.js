@@ -1,4 +1,4 @@
-console.log("EXACT Agents Portal loaded (v32)");
+console.log("EXACT Agents Portal loaded (v33)");
 
 // NOTE: Supabase anon key is public by design. RLS protects data.
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
