@@ -1,9 +1,8 @@
-console.log("EXACT Agents Portal loaded (v34)");
+console.log("EXACT Agents Portal loaded (v35)");
 
 // NOTE: Supabase anon key is public by design. RLS protects data.
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WyTPGuhMg_WQbOMJyJ";
-
+const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     storage: window.localStorage,
@@ -893,12 +892,24 @@ window.addEventListener("DOMContentLoaded", () => {
     try {
       setLoggedInShell(session);
 
-      const profile = await loadProfileForUser(session.user.id);
-      if (!profile) {
-        setAuthMsg("No active profile in agent_users for this login.");
-        return;
-      }
-      currentProfile = profile;
+      let profile = null;
+try {
+  profile = await loadProfileForUser(session.user.id);
+} catch (e) {
+  console.error("loadProfileForUser failed:", e);
+}
+
+if (!profile) {
+  // ✅ Fallback: keep the UI usable even if profile lookup fails
+  if (topBarTitle) topBarTitle.textContent = "Logged in";
+  if (topBarSub) topBarSub.textContent = "Profile lookup failed (agent_users). Check RLS / row exists.";
+  renderMenuForRole("agent");     // shows at least Customer Management
+  setActiveView("customers");
+  return;
+}
+
+currentProfile = profile;
+
 
       if (profile.role === "admin") {
         if (topBarTitle) topBarTitle.textContent = "Admin";
