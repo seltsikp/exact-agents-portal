@@ -260,7 +260,7 @@ window.addEventListener("DOMContentLoaded", () => {
   if (cancelAddCustomerBtn) cancelAddCustomerBtn.addEventListener("click", closeAddCustomer);
 
   // --- UI: logged out ---
-  function setLoggedOutUI(message = "Not logged in") {
+  function setLoggedOutUI(message = "") {
     show(topBar, false);
     show(loginBox, true);
     show(appBox, false);
@@ -774,24 +774,43 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Initial restore ---
-  (async () => {
-    try {
-      const { data, error } = await supabaseClient.auth.getSession();
-      if (error) {
-        setLoggedOutUI("Session restore error: " + error.message);
+// --- Initial restore (silent if refresh token missing/invalid) ---
+(async () => {
+  try {
+    const { data, error } = await supabaseClient.auth.getSession();
+
+    if (error) {
+      const msg = (error.message || "").toLowerCase();
+
+      // Common + harmless case: no refresh token in storage
+      const isTokenMissing =
+        msg.includes("refresh token") &&
+        (msg.includes("not found") || msg.includes("invalid"));
+
+      if (isTokenMissing) {
+        // clean up any partial state and show login (no scary message)
+        try { await supabaseClient.auth.signOut(); } catch {}
+        setLoggedOutUI(""); // keep authMsg empty
         return;
       }
-      if (data?.session) {
-        await hydrateAfterLogin(data.session);
-      } else {
-        setLoggedOutUI("Not logged in");
-      }
-    } catch (e) {
-      console.error("Initial restore crashed:", e);
-      setLoggedOutUI("Session restore crashed: " + (e?.message || "Unknown error"));
+
+      // Real restore error (still keep it user-friendly)
+      console.warn("Session restore error:", error.message);
+      setLoggedOutUI("Please log in.");
+      return;
     }
-  })();
+
+    if (data?.session) {
+      await hydrateAfterLogin(data.session);
+    } else {
+      setLoggedOutUI(""); // no message
+    }
+  } catch (e) {
+    console.error("Initial restore crashed:", e);
+    setLoggedOutUI("Please log in.");
+  }
+})();
+
 
   // --- Auth state events ---
   supabaseClient.auth.onAuthStateChange((event, session) => {
