@@ -413,6 +413,68 @@
         color:#fff;
       }
       .tabSection{ display:none; }
+.ingredient-list{
+  display: grid;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.ingredient-row{
+  display: grid;
+  grid-template-columns: 110px 1.3fr 2fr 140px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.ingredient-row:hover{
+  border-color: rgba(184,154,91,.35);
+}
+
+.ingredient-cell{
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.ingredient-psi{
+  font-weight: 700;
+}
+
+.ingredient-actions{
+  display: inline-flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.ing-link{
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ing-link.ing-delete{
+  color: var(--danger);
+}
+
+@media (max-width: 840px){
+  .ingredient-row{
+    grid-template-columns: 1fr;
+  }
+  .ingredient-actions{
+    justify-content: flex-start;
+  }
+}
+
     </style>
   </head>
 
