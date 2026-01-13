@@ -142,17 +142,37 @@ window.addEventListener("DOMContentLoaded", () => {
   const viewCustomerMgmt = document.getElementById("viewCustomerMgmt");
   const viewWelcome = document.getElementById("viewWelcome");
   const viewFormulary = document.getElementById("viewFormulary");
+
+  // Formulary tabs
   const fxTabIngredients = document.getElementById("fxTabIngredients");
-const fxTabBases = document.getElementById("fxTabBases");
-const fxTabBoosters = document.getElementById("fxTabBoosters");
-const fxMsg = document.getElementById("fxMsg");
+  const fxTabBases = document.getElementById("fxTabBases");
+  const fxTabBoosters = document.getElementById("fxTabBoosters");
+  const fxMsg = document.getElementById("fxMsg");
 
-const fxPanelIngredients = document.getElementById("fxPanelIngredients");
-const fxPanelBases = document.getElementById("fxPanelBases");
-const fxPanelBoosters = document.getElementById("fxPanelBoosters");
+  const fxPanelIngredients = document.getElementById("fxPanelIngredients");
+  const fxPanelBases = document.getElementById("fxPanelBases");
+  const fxPanelBoosters = document.getElementById("fxPanelBoosters");
 
+  // Ingredients panel UI
+  const fxIngViewBtn = document.getElementById("fxIngViewBtn");
+  const fxIngAddBtn = document.getElementById("fxIngAddBtn");
+  const fxIngClearBtn = document.getElementById("fxIngClearBtn");
+  const fxIngMsg = document.getElementById("fxIngMsg");
 
-  // Customer Mgmt UI (new)
+  const fxIngViewPanel = document.getElementById("fxIngViewPanel");
+  const fxIngAddPanel = document.getElementById("fxIngAddPanel");
+  const fxIngSearch = document.getElementById("fxIngSearch");
+  const fxIngSearchBtn = document.getElementById("fxIngSearchBtn");
+  const fxIngShowAllBtn = document.getElementById("fxIngShowAllBtn");
+  const fxIngList = document.getElementById("fxIngList");
+
+  const fxIngPsi = document.getElementById("fxIngPsi");
+  const fxIngInci = document.getElementById("fxIngInci");
+  const fxIngDesc = document.getElementById("fxIngDesc");
+  const fxIngAqua = document.getElementById("fxIngAqua");
+  const fxIngSaveBtn = document.getElementById("fxIngSaveBtn");
+
+  // Customer Mgmt UI
   const cmViewBtn = document.getElementById("cmViewBtn");
   const cmAddBtn = document.getElementById("cmAddBtn");
   const cmClearBtn = document.getElementById("cmClearBtn");
@@ -169,27 +189,26 @@ const fxPanelBoosters = document.getElementById("fxPanelBoosters");
 
   const viewAgentMgmt = document.getElementById("viewAgentMgmt");
 
-// Agent Mgmt UI
-const amViewBtn = document.getElementById("amViewBtn");
-const amAddBtn = document.getElementById("amAddBtn");
-const amClearBtn = document.getElementById("amClearBtn");
-const agentMsg = document.getElementById("agentMsg");
+  // Agent Mgmt UI
+  const amViewBtn = document.getElementById("amViewBtn");
+  const amAddBtn = document.getElementById("amAddBtn");
+  const amClearBtn = document.getElementById("amClearBtn");
+  const agentMsg = document.getElementById("agentMsg");
 
-const amViewPanel = document.getElementById("amViewPanel");
-const amAddPanel = document.getElementById("amAddPanel");
+  const amViewPanel = document.getElementById("amViewPanel");
+  const amAddPanel = document.getElementById("amAddPanel");
 
-const amSearch = document.getElementById("amSearch");
-const amSearchBtn = document.getElementById("amSearchBtn");
-const amShowAllBtn = document.getElementById("amShowAllBtn");
+  const amSearch = document.getElementById("amSearch");
+  const amSearchBtn = document.getElementById("amSearchBtn");
+  const amShowAllBtn = document.getElementById("amShowAllBtn");
 
-const agentList = document.getElementById("agentList");
+  const agentList = document.getElementById("agentList");
 
-// Add/Edit agent field
-const agentNameInput = document.getElementById("agentName");
-const addAgentBtn = document.getElementById("addAgentBtn");
+  // Add/Edit agent field
+  const agentNameInput = document.getElementById("agentName");
+  const addAgentBtn = document.getElementById("addAgentBtn");
 
-
-  // Add form fields
+  // Add customer form fields
   const firstNameInput = document.getElementById("firstName");
   const lastNameInput = document.getElementById("lastName");
   const custEmailInput = document.getElementById("custEmail");
@@ -214,13 +233,18 @@ const addAgentBtn = document.getElementById("addAgentBtn");
   let customersById = {};       // {customerId: row}
 
   let editingCustomerId = null; // for edit mode (after search results)
-let agentsById = {};          // {agentId: row}
-let editingAgentId = null;    // for edit mode (after search results)
 
-const setAgentMsg = (t) => { if (agentMsg) agentMsg.textContent = t || ""; };
+  let agentsById = {};          // {agentId: row}
+  let editingAgentId = null;    // for edit mode (after search results)
 
-  const setAuthMsg = (t) => { if (authMsg) authMsg.textContent = t || ""; };
-  const setCustMsg = (t) => { if (custMsg) custMsg.textContent = t || ""; };
+  // Formulary Ingredients UI state (local only for now)
+  let fxIngredientsById = {};   // keyed store (future: from DB)
+  let fxEditingIngId = null;
+
+  const setAgentMsg = (t) => { if (agentMsg) agentMsg.textContent = t || ""; };
+  const setAuthMsg  = (t) => { if (authMsg) authMsg.textContent = t || ""; };
+  const setCustMsg  = (t) => { if (custMsg) custMsg.textContent = t || ""; };
+  const setFxIngMsg = (t) => { if (fxIngMsg) fxIngMsg.textContent = t || ""; };
 
   // ---------- premium row renderer ----------
   function buildCustomerRowHTML(c, { role, agentNameMap }) {
@@ -236,18 +260,16 @@ const setAgentMsg = (t) => { if (agentMsg) agentMsg.textContent = t || ""; };
     const phone = escapeHtml((c.phone || "").trim());
     const created = formatDateShort(c.created_at);
 
-let metaLine = "";
+    let metaLine = "";
 
-const codePart = code
-  ? `<span>${code}</span><span class="customer-dot">•</span>`
-  : "";
+    const codePart = code
+      ? `<span>${code}</span><span class="customer-dot">•</span>`
+      : "";
 
-if (email && phone) metaLine = `${codePart}<span>${email}</span><span class="customer-dot">•</span><span>${phone}</span>`;
-else if (email) metaLine = `${codePart}<span>${email}</span>`;
-else if (phone) metaLine = `${codePart}<span>${phone}</span>`;
-else metaLine = codePart || `<span style="opacity:.65;">No contact details</span>`;
-
-
+    if (email && phone) metaLine = `${codePart}<span>${email}</span><span class="customer-dot">•</span><span>${phone}</span>`;
+    else if (email) metaLine = `${codePart}<span>${email}</span>`;
+    else if (phone) metaLine = `${codePart}<span>${phone}</span>`;
+    else metaLine = codePart || `<span style="opacity:.65;">No contact details</span>`;
 
     let clinicPill = "";
     if (role === "admin") {
@@ -271,164 +293,198 @@ else metaLine = codePart || `<span style="opacity:.65;">No contact details</span
 
         <div class="customer-actions">
           <button class="btn btn-soft action-pill edit-pill" data-action="edit" type="button">Edit</button>
-        <button class="btn action-pill delete-pill" data-action="delete" type="button">Delete</button>
-
+          <button class="btn action-pill delete-pill" data-action="delete" type="button">Delete</button>
         </div>
       </div>
     `.trim();
   }
-// ---------- agent mgmt: premium row renderer ----------
-function buildAgentRowHTML(a) {
-  const id = escapeHtml(a.id);
-  const code = escapeHtml(a.agent_code || "");
-  const name = escapeHtml((a.name || "").trim() || "Unnamed agent");
-  const created = formatDateShort(a.created_at);
 
-  const createdPill = created ? `<span class="pill-soft">Created: ${escapeHtml(created)}</span>` : "";
+  // ---------- agent mgmt: premium row renderer ----------
+  function buildAgentRowHTML(a) {
+    const id = escapeHtml(a.id);
+    const code = escapeHtml(a.agent_code || "");
+    const name = escapeHtml((a.name || "").trim() || "Unnamed agent");
+    const created = formatDateShort(a.created_at);
 
-  return `
-    <div class="customer-row" data-agent-id="${id}">
-      <div class="customer-main">
-        <div class="name">${name}</div>
-        <div class="meta"><span style="opacity:.75;">${code}</span></div>
+    const createdPill = created ? `<span class="pill-soft">Created: ${escapeHtml(created)}</span>` : "";
+
+    return `
+      <div class="customer-row" data-agent-id="${id}">
+        <div class="customer-main">
+          <div class="name">${name}</div>
+          <div class="meta"><span style="opacity:.75;">${code}</span></div>
+        </div>
+
+        <div class="customer-context">
+          ${createdPill}
+        </div>
+
+        <div class="customer-actions">
+          <button class="btn btn-soft action-pill edit-pill" data-action="edit" type="button">Edit</button>
+          <button class="btn action-pill delete-pill" data-action="delete" type="button">Delete</button>
+        </div>
       </div>
+    `.trim();
+  }
 
-      <div class="customer-context">
-        ${createdPill}
+  // ---------- Formulary Ingredients: row renderer (UI only) ----------
+  function buildIngredientRowHTML(row) {
+    const id = escapeHtml(row.id);
+    const psi = escapeHtml(row.psi_number || "");
+    const inci = escapeHtml(row.inci_name || "");
+    const desc = escapeHtml(row.short_description || "");
+    const isAqua = !!row.is_aqua;
+
+    const aquaPill = isAqua ? `<span class="pill-soft pill-soft-gold">Aqua</span>` : "";
+
+    const meta = [
+      psi ? `<span>${psi}</span>` : `<span style="opacity:.65;">No PSI</span>`,
+      `<span class="customer-dot">•</span>`,
+      inci ? `<span>${inci}</span>` : `<span style="opacity:.65;">No INCI</span>`
+    ].join("");
+
+    const descLine = desc ? `<div class="meta" style="margin-top:6px;">${desc}</div>` : "";
+
+    return `
+      <div class="customer-row" data-ingredient-id="${id}">
+        <div class="customer-main">
+          <div class="name">${psi || inci || "Ingredient"}</div>
+          <div class="meta">${meta}</div>
+          ${descLine}
+        </div>
+
+        <div class="customer-context">
+          ${aquaPill}
+        </div>
+
+        <div class="customer-actions">
+          <button class="btn btn-soft action-pill edit-pill" data-action="edit" type="button">Edit</button>
+          <button class="btn action-pill delete-pill" data-action="delete" type="button">Delete</button>
+        </div>
       </div>
+    `.trim();
+  }
 
-     <div class="customer-actions">
-  <button class="btn btn-soft action-pill edit-pill" data-action="edit" type="button">Edit</button>
-<button class="btn action-pill delete-pill" data-action="delete" type="button">Delete</button>
-</div>
+  // ---------- agent mgmt screen states ----------
+  function resetAgentScreen() {
+    show(amViewPanel, false);
+    show(amAddPanel, false);
+    show(amClearBtn, false);
 
-    </div>
-  `.trim();
-}
+    if (agentList) agentList.innerHTML = "";
+    agentsById = {};
+    editingAgentId = null;
 
-// ---------- agent mgmt screen states ----------
-function resetAgentScreen() {
-  show(amViewPanel, false);
-  show(amAddPanel, false);
-  show(amClearBtn, false);
+    if (agentNameInput) agentNameInput.value = "";
+    setAgentMsg("");
+  }
 
-  if (agentList) agentList.innerHTML = "";
-  agentsById = {};
-  editingAgentId = null;
+  function showViewAgentsPanel() {
+    show(amViewPanel, true);
+    show(amAddPanel, false);
+    show(amClearBtn, true);
 
-  if (agentNameInput) agentNameInput.value = "";
-  setAgentMsg("");
-}
+    if (amSearch) amSearch.focus();
+    setAgentMsg("Enter a search term or click “Show all”.");
+  }
 
-function showViewAgentsPanel() {
-  show(amViewPanel, true);
-  show(amAddPanel, false);
-  show(amClearBtn, true);
+  function showAddAgentPanel() {
+    show(amViewPanel, false);
+    show(amAddPanel, true);
+    show(amClearBtn, true);
 
-  if (amSearch) amSearch.focus();
-  setAgentMsg("Enter a search term or click “Show all”.");
-}
+    setAgentMsg("");
+    if (agentNameInput) agentNameInput.focus();
+  }
 
-function showAddAgentPanel() {
-  show(amViewPanel, false);
-  show(amAddPanel, true);
-  show(amClearBtn, true);
+  function ensureAgentListDelegation() {
+    if (!agentList) return;
+    if (agentList.dataset.bound === "1") return;
 
-  setAgentMsg("");
-  if (agentNameInput) agentNameInput.focus();
-}
+    agentList.addEventListener("click", async (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn) return;
 
-function ensureAgentListDelegation() {
-  if (!agentList) return;
-  if (agentList.dataset.bound === "1") return;
+      const row = e.target.closest(".customer-row");
+      if (!row) return;
 
-  agentList.addEventListener("click", async (e) => {
-    const btn = e.target.closest("button[data-action]");
-    if (!btn) return;
+      const agentId = row.getAttribute("data-agent-id");
+      const action = btn.getAttribute("data-action");
+      const a = agentsById[agentId];
+      if (!a) return;
 
-    const row = e.target.closest(".customer-row");
-    if (!row) return;
+      if (action === "edit") {
+        editingAgentId = a.id;
+        if (agentNameInput) agentNameInput.value = a.name || "";
+        showAddAgentPanel();
+        setAgentMsg("Editing agent — click Save agent to update.");
+        return;
+      }
 
-    const agentId = row.getAttribute("data-agent-id");
-    const action = btn.getAttribute("data-action");
-    const a = agentsById[agentId];
-    if (!a) return;
+      if (action === "delete") {
+        setAgentMsg("");
 
-    if (action === "edit") {
-      editingAgentId = a.id;
-      if (agentNameInput) agentNameInput.value = a.name || "";
-      showAddAgentPanel();
-      setAgentMsg("Editing agent — click Save agent to update.");
+        const agentName = (a.name || "").trim() || "this agent";
+        const ok = await confirmExact(`Delete ${agentName}? This cannot be undone.`);
+        if (!ok) return;
+
+        const { data, error } = await supabaseClient
+          .from("agents")
+          .delete()
+          .eq("id", a.id)
+          .select("id");
+
+        if (error) { setAgentMsg("Delete error: " + error.message); return; }
+        if (!data || data.length === 0) { setAgentMsg("Delete blocked (RLS) — no rows deleted."); return; }
+
+        setAgentMsg("Deleted ✅");
+
+        await loadAgentNameMap();
+        await loadAgentsForAssignDropdown();
+
+        await runAgentSearch(amSearch?.value || "");
+      }
+    });
+
+    agentList.dataset.bound = "1";
+  }
+
+  // ---------- agent search / load ----------
+  async function runAgentSearch(term) {
+    if (!agentList) return;
+
+    ensureAgentListDelegation();
+
+    agentList.innerHTML = "";
+    agentsById = {};
+    setAgentMsg("Searching…");
+
+    let q = supabaseClient
+      .from("agents")
+      .select("id, agent_code, name, created_at")
+      .order("created_at", { ascending: false });
+
+    const t = (term || "").trim();
+    if (t) {
+      const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
+      q = q.ilike("name", `%${esc}%`);
+    }
+
+    const { data, error } = await q;
+
+    if (error) {
+      setAgentMsg("Search error: " + error.message);
       return;
     }
 
-    if (action === "delete") {
-      setAgentMsg("");
+    const rows = data || [];
+    rows.forEach(a => { agentsById[a.id] = a; });
 
-      const agentName = (a.name || "").trim() || "this agent";
-      const ok = await confirmExact(`Delete ${agentName}? This cannot be undone.`);
-      if (!ok) return;
+    agentList.innerHTML = rows.map(buildAgentRowHTML).join("");
 
-      const { data, error } = await supabaseClient
-        .from("agents")
-        .delete()
-        .eq("id", a.id)
-        .select("id");
-
-      if (error) { setAgentMsg("Delete error: " + error.message); return; }
-      if (!data || data.length === 0) { setAgentMsg("Delete blocked (RLS) — no rows deleted."); return; }
-
-      setAgentMsg("Deleted ✅");
-
-      // keep admin dropdown + map fresh
-      await loadAgentNameMap();
-      await loadAgentsForAssignDropdown();
-
-      await runAgentSearch(amSearch?.value || "");
-    }
-  });
-
-  agentList.dataset.bound = "1";
-}
-
-// ---------- agent search / load ----------
-async function runAgentSearch(term) {
-  if (!agentList) return;
-
-  ensureAgentListDelegation();
-
-  agentList.innerHTML = "";
-  agentsById = {};
-  setAgentMsg("Searching…");
-
-  // NOTE: using only columns we already know exist: id, name, created_at
-  let q = supabaseClient
-    .from("agents")
-    .select("id, agent_code, name, created_at")
-    .order("created_at", { ascending: false });
-
-  // empty term -> ALL rows (RLS still applies)
-  const t = (term || "").trim();
-  if (t) {
-    const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
-    q = q.ilike("name", `%${esc}%`);
+    if (rows.length === 0) setAgentMsg("No matches found.");
+    else setAgentMsg(`Found ${rows.length} agent${rows.length === 1 ? "" : "s"}.`);
   }
-
-  const { data, error } = await q;
-
-  if (error) {
-    setAgentMsg("Search error: " + error.message);
-    return;
-  }
-
-  const rows = data || [];
-  rows.forEach(a => { agentsById[a.id] = a; });
-
-  agentList.innerHTML = rows.map(buildAgentRowHTML).join("");
-
-  if (rows.length === 0) setAgentMsg("No matches found.");
-  else setAgentMsg(`Found ${rows.length} agent${rows.length === 1 ? "" : "s"}.`);
-}
 
   // ---------- auth + profile ----------
   async function loadProfileForUser(userId) {
@@ -490,7 +546,6 @@ async function runAgentSearch(term) {
 
   // ---------- customer mgmt screen states ----------
   function resetCustomerScreen() {
-    // start blank: no customers shown, no forms
     show(cmViewPanel, false);
     show(cmAddPanel, false);
     show(cmClearBtn, false);
@@ -519,7 +574,6 @@ async function runAgentSearch(term) {
 
     setCustMsg("");
 
-    // role-specific clinic UI
     if (currentProfile?.role === "admin") {
       show(assignClinicRow, true);
       show(agentClinicRow, false);
@@ -559,7 +613,6 @@ async function runAgentSearch(term) {
       if (!c) return;
 
       if (action === "edit") {
-        // editing happens in Add panel (reuse form)
         editingCustomerId = c.id;
         if (firstNameInput) firstNameInput.value = c.first_name || "";
         if (lastNameInput) lastNameInput.value = c.last_name || "";
@@ -595,7 +648,6 @@ async function runAgentSearch(term) {
         }
 
         setCustMsg("Deleted ✅");
-        // re-run the current search term (empty term returns all)
         await runCustomerSearch(cmSearch?.value || "");
       }
     });
@@ -603,7 +655,6 @@ async function runAgentSearch(term) {
     customerList.dataset.bound = "1";
   }
 
-  // ✅ FIXED: removed duplicated/invalid search block that was breaking JS (and blocking login)
   async function runCustomerSearch(term) {
     if (!customerList) return;
 
@@ -620,7 +671,6 @@ async function runAgentSearch(term) {
       .select("id, customer_code, agent_id, first_name, last_name, email, phone, created_at")
       .order("created_at", { ascending: false });
 
-    // If search term is empty -> return ALL rows (RLS still applies)
     const t = (term || "").trim();
     if (t) {
       const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
@@ -646,37 +696,129 @@ async function runAgentSearch(term) {
       .map(c => buildCustomerRowHTML(c, { role, agentNameMap }))
       .join("");
 
+    if (rows.length === 0) setCustMsg("No matches found.");
+    else setCustMsg(`Found ${rows.length} customer${rows.length === 1 ? "" : "s"}.`);
+  }
 
-    if (rows.length === 0) {
-      setCustMsg("No matches found.");
-    } else {
-      setCustMsg(`Found ${rows.length} customer${rows.length === 1 ? "" : "s"}.`);
-    }
+  // ---------- Formulary tabs ----------
+  function setFormularyTab(tabKey) {
+    show(fxPanelIngredients, tabKey === "ingredients");
+    show(fxPanelBases, tabKey === "bases");
+    show(fxPanelBoosters, tabKey === "boosters");
+
+    if (fxTabIngredients) fxTabIngredients.classList.toggle("active", tabKey === "ingredients");
+    if (fxTabBases) fxTabBases.classList.toggle("active", tabKey === "bases");
+    if (fxTabBoosters) fxTabBoosters.classList.toggle("active", tabKey === "boosters");
+
+    if (fxMsg) fxMsg.textContent = "";
+  }
+
+  // ---------- Formulary Ingredients screen states (UI only) ----------
+  function resetFxIngScreen() {
+    show(fxIngViewPanel, false);
+    show(fxIngAddPanel, false);
+    show(fxIngClearBtn, false);
+
+    if (fxIngList) fxIngList.innerHTML = "";
+    fxEditingIngId = null;
+
+    if (fxIngPsi) fxIngPsi.value = "";
+    if (fxIngInci) fxIngInci.value = "";
+    if (fxIngDesc) fxIngDesc.value = "";
+    if (fxIngAqua) fxIngAqua.value = "false";
+
+    setFxIngMsg("");
+  }
+
+  function showFxIngViewPanel() {
+    show(fxIngViewPanel, true);
+    show(fxIngAddPanel, false);
+    show(fxIngClearBtn, true);
+
+    setFxIngMsg("Enter a search term or click “Show all”.");
+    if (fxIngSearch) fxIngSearch.focus();
+  }
+
+  function showFxIngAddPanel() {
+    show(fxIngViewPanel, false);
+    show(fxIngAddPanel, true);
+    show(fxIngClearBtn, true);
+
+    setFxIngMsg("");
+    if (fxIngPsi) fxIngPsi.focus();
+  }
+
+  function renderFxIngList(rows) {
+    if (!fxIngList) return;
+    fxIngList.innerHTML = (rows || []).map(buildIngredientRowHTML).join("");
+  }
+
+  function ensureFxIngListDelegation() {
+    if (!fxIngList) return;
+    if (fxIngList.dataset.bound === "1") return;
+
+    fxIngList.addEventListener("click", async (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn) return;
+
+      const rowEl = e.target.closest(".customer-row");
+      if (!rowEl) return;
+
+      const ingId = rowEl.getAttribute("data-ingredient-id");
+      const action = btn.getAttribute("data-action");
+      const row = fxIngredientsById[ingId];
+
+      // UI-only until DB wiring (next step)
+      if (!row) {
+        setFxIngMsg("Not loaded yet (DB wiring is next step).");
+        return;
+      }
+
+      if (action === "edit") {
+        fxEditingIngId = ingId;
+        if (fxIngPsi) fxIngPsi.value = row.psi_number || "";
+        if (fxIngInci) fxIngInci.value = row.inci_name || "";
+        if (fxIngDesc) fxIngDesc.value = row.short_description || "";
+        if (fxIngAqua) fxIngAqua.value = row.is_aqua ? "true" : "false";
+        showFxIngAddPanel();
+        setFxIngMsg("Editing ingredient — click Save ingredient to update.");
+        return;
+      }
+
+      if (action === "delete") {
+        const ok = await confirmExact("Delete ingredient? (DB wiring is next step)");
+        if (!ok) return;
+        setFxIngMsg("Delete not active yet (DB wiring is next step).");
+      }
+    });
+
+    fxIngList.dataset.bound = "1";
+  }
+
+  // UI-only search (no DB yet): shows empty list + message
+  async function runFxIngSearch_UIOnly(term) {
+    ensureFxIngListDelegation();
+    setFxIngMsg("Searching…");
+
+    // no DB yet: keep empty
+    fxIngredientsById = {};
+    renderFxIngList([]);
+
+    const t = (term || "").trim();
+    if (t) setFxIngMsg("0 matches (DB wiring is next step).");
+    else setFxIngMsg("0 ingredients (DB wiring is next step).");
   }
 
   // ---------- menu + views ----------
-  function setFormularyTab(tabKey) {
-  // panels
-  show(fxPanelIngredients, tabKey === "ingredients");
-  show(fxPanelBases, tabKey === "bases");
-  show(fxPanelBoosters, tabKey === "boosters");
-
-  // button active styling (reuse .active like menu buttons)
-  if (fxTabIngredients) fxTabIngredients.classList.toggle("active", tabKey === "ingredients");
-  if (fxTabBases) fxTabBases.classList.toggle("active", tabKey === "bases");
-  if (fxTabBoosters) fxTabBoosters.classList.toggle("active", tabKey === "boosters");
-
-  if (fxMsg) fxMsg.textContent = "";
-}
-
   function setActiveView(viewKey) {
     activeViewKey = viewKey;
     if (viewKey === "agents" && currentProfile?.role !== "admin") return;
 
-show(viewWelcome, false);
-show(viewCustomerMgmt, viewKey === "customers");
-show(viewAgentMgmt, viewKey === "agents");
-show(viewFormulary, viewKey === "formulary");
+    show(viewWelcome, false);
+    show(viewCustomerMgmt, viewKey === "customers");
+    show(viewAgentMgmt, viewKey === "agents");
+    show(viewFormulary, viewKey === "formulary");
+
     if (viewKey === "formulary") setFormularyTab("ingredients");
 
     if (menuItems) {
@@ -684,10 +826,16 @@ show(viewFormulary, viewKey === "formulary");
       btns.forEach(b => b.classList.toggle("active", b.getAttribute("data-view") === viewKey));
     }
 
-    // For Customer Management: DO NOT auto-load anything
     if (viewKey === "customers") resetCustomerScreen();
-if (viewKey === "agents") resetAgentScreen();
+    if (viewKey === "agents") resetAgentScreen();
 
+    // If you open formulary, default clean state
+    if (viewKey === "formulary") {
+      resetFxIngScreen();
+      show(fxPanelIngredients, true);
+      show(fxPanelBases, false);
+      show(fxPanelBoosters, false);
+    }
   }
 
   function renderMenuForRole(role) {
@@ -703,27 +851,25 @@ if (viewKey === "agents") resetAgentScreen();
       menuItems.appendChild(b);
     };
 
-// Admin gets Agent Management + Customer Management
-if (role === "admin") {
-  addMenuBtn("Agent Management", "agents");
-  addMenuBtn("Customer Management", "customers");
-  addMenuBtn("EXACT Formulary", "formulary");
-} else {
-  addMenuBtn("Customer Management", "customers");
-}
+    // Admin gets Agent Management + Customer Management + Formulary
+    if (role === "admin") {
+      addMenuBtn("Agent Management", "agents");
+      addMenuBtn("Customer Management", "customers");
+      addMenuBtn("EXACT Formulary", "formulary");
+    } else {
+      addMenuBtn("Customer Management", "customers");
+    }
 
+    // IMPORTANT: do not auto-open any view on login
+    activeViewKey = null;
+    show(viewCustomerMgmt, false);
+    show(viewAgentMgmt, false);
+    show(viewFormulary, false);
 
-// IMPORTANT: do not auto-open any view on login
-activeViewKey = null;
-show(viewCustomerMgmt, false);
-show(viewAgentMgmt, false);
-
-if (menuItems) {
-  const btns = menuItems.querySelectorAll("button[data-view]");
-  btns.forEach(b => b.classList.remove("active"));
-}
-
-
+    if (menuItems) {
+      const btns = menuItems.querySelectorAll("button[data-view]");
+      btns.forEach(b => b.classList.remove("active"));
+    }
   }
 
   // ---------- logged in/out shell ----------
@@ -751,6 +897,10 @@ if (menuItems) {
 
     resetCustomerScreen();
     resetAgentScreen();
+    resetFxIngScreen();
+
+    show(viewWelcome, false);
+    show(viewFormulary, false);
   }
 
   function setLoggedInShell(session) {
@@ -790,20 +940,20 @@ if (menuItems) {
         if (topBarTitle) topBarTitle.textContent = `Agent — ${agentName || "Unknown clinic"}`;
         if (topBarSub) topBarSub.textContent = session.user.email || "";
 
-        // show agent clinic name in Add screen (if it's an <input>)
         if (agentClinicName) agentClinicName.value = agentName || "Unknown clinic";
       }
 
-renderMenuForRole(profile.role);
+      renderMenuForRole(profile.role);
 
-// Start on neutral Welcome page
-show(viewWelcome, true);
-show(viewCustomerMgmt, false);
-show(viewAgentMgmt, false);
+      // Start on neutral Welcome page
+      show(viewWelcome, true);
+      show(viewCustomerMgmt, false);
+      show(viewAgentMgmt, false);
+      show(viewFormulary, false);
 
-resetCustomerScreen();
-resetAgentScreen();
-
+      resetCustomerScreen();
+      resetAgentScreen();
+      resetFxIngScreen();
 
     } catch (e) {
       console.error("hydrateAfterLogin error:", e);
@@ -811,19 +961,37 @@ resetAgentScreen();
     }
   }
 
+  // ---------- bind formulary tabs ----------
+  if (fxTabIngredients) fxTabIngredients.addEventListener("click", () => setFormularyTab("ingredients"));
+  if (fxTabBases) fxTabBases.addEventListener("click", () => setFormularyTab("bases"));
+  if (fxTabBoosters) fxTabBoosters.addEventListener("click", () => setFormularyTab("boosters"));
+
+  // ---------- bind Ingredients panel buttons (UI only) ----------
+  if (fxIngViewBtn) fxIngViewBtn.addEventListener("click", () => showFxIngViewPanel());
+  if (fxIngAddBtn) fxIngAddBtn.addEventListener("click", () => { fxEditingIngId = null; showFxIngAddPanel(); });
+  if (fxIngClearBtn) fxIngClearBtn.addEventListener("click", () => resetFxIngScreen());
+
+  if (fxIngSearchBtn) fxIngSearchBtn.addEventListener("click", async () => {
+    await runFxIngSearch_UIOnly(fxIngSearch?.value || "");
+  });
+
+  if (fxIngShowAllBtn) fxIngShowAllBtn.addEventListener("click", async () => {
+    await runFxIngSearch_UIOnly("");
+  });
+
+  if (fxIngSearch) fxIngSearch.addEventListener("keydown", async (e) => {
+    if (e.key === "Enter") await runFxIngSearch_UIOnly(fxIngSearch.value || "");
+  });
+
+  if (fxIngSaveBtn) fxIngSaveBtn.addEventListener("click", async () => {
+    // UI only until DB wiring (next step)
+    setFxIngMsg("Save not active yet (DB wiring is next step).");
+  });
+
   // ---------- bind customer mgmt buttons ----------
-  if (cmViewBtn) cmViewBtn.addEventListener("click", () => {
-    showViewCustomersPanel();
-  });
-
-  if (cmAddBtn) cmAddBtn.addEventListener("click", () => {
-    clearAddForm();
-    showAddCustomerPanel();
-  });
-
-  if (cmClearBtn) cmClearBtn.addEventListener("click", () => {
-    resetCustomerScreen();
-  });
+  if (cmViewBtn) cmViewBtn.addEventListener("click", () => showViewCustomersPanel());
+  if (cmAddBtn) cmAddBtn.addEventListener("click", () => { clearAddForm(); showAddCustomerPanel(); });
+  if (cmClearBtn) cmClearBtn.addEventListener("click", () => resetCustomerScreen());
 
   if (cmSearchBtn) cmSearchBtn.addEventListener("click", async () => {
     await runCustomerSearch(cmSearch?.value || "");
@@ -834,42 +1002,31 @@ resetAgentScreen();
   });
 
   if (cmSearch) cmSearch.addEventListener("keydown", async (e) => {
-    if (e.key === "Enter") {
-      await runCustomerSearch(cmSearch.value || "");
-    }
+    if (e.key === "Enter") await runCustomerSearch(cmSearch.value || "");
   });
-// ---------- bind agent mgmt buttons ----------
-if (amViewBtn) amViewBtn.addEventListener("click", () => {
-  showViewAgentsPanel();
-});
 
-if (amAddBtn) amAddBtn.addEventListener("click", () => {
-  editingAgentId = null;
-  if (agentNameInput) agentNameInput.value = "";
-  showAddAgentPanel();
-});
+  // ---------- bind agent mgmt buttons ----------
+  if (amViewBtn) amViewBtn.addEventListener("click", () => showViewAgentsPanel());
 
-if (amClearBtn) amClearBtn.addEventListener("click", () => {
-  resetAgentScreen();
-});
+  if (amAddBtn) amAddBtn.addEventListener("click", () => {
+    editingAgentId = null;
+    if (agentNameInput) agentNameInput.value = "";
+    showAddAgentPanel();
+  });
 
-if (amSearchBtn) amSearchBtn.addEventListener("click", async () => {
-  await runAgentSearch(amSearch?.value || "");
-});
+  if (amClearBtn) amClearBtn.addEventListener("click", () => resetAgentScreen());
 
-if (amShowAllBtn) amShowAllBtn.addEventListener("click", async () => {
-  await runAgentSearch("");
-});
+  if (amSearchBtn) amSearchBtn.addEventListener("click", async () => {
+    await runAgentSearch(amSearch?.value || "");
+  });
 
-if (amSearch) amSearch.addEventListener("keydown", async (e) => {
-  if (e.key === "Enter") {
-    await runAgentSearch(amSearch.value || "");
-  }
-});
+  if (amShowAllBtn) amShowAllBtn.addEventListener("click", async () => {
+    await runAgentSearch("");
+  });
 
-  if (fxTabIngredients) fxTabIngredients.addEventListener("click", () => setFormularyTab("ingredients"));
-if (fxTabBases) fxTabBases.addEventListener("click", () => setFormularyTab("bases"));
-if (fxTabBoosters) fxTabBoosters.addEventListener("click", () => setFormularyTab("boosters"));
+  if (amSearch) amSearch.addEventListener("keydown", async (e) => {
+    if (e.key === "Enter") await runAgentSearch(amSearch.value || "");
+  });
 
   // live validation listeners (once)
   [firstNameInput, lastNameInput, custEmailInput, custPhoneInput].forEach((el) => {
@@ -890,38 +1047,28 @@ if (fxTabBoosters) fxTabBoosters.addEventListener("click", () => setFormularyTab
 
       clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
 
-      // required
       if (!first_name) { markField(firstNameInput, "error"); setCustMsg("First name is required."); return; }
       markField(firstNameInput, "ok");
 
       if (!last_name) { markField(lastNameInput, "error"); setCustMsg("Last name is required."); return; }
       markField(lastNameInput, "ok");
 
-      // optional
       if (email && !isValidEmail(email)) { markField(custEmailInput, "error"); setCustMsg("Please enter a valid email address."); return; }
       if (email) markField(custEmailInput, "ok");
 
       if (phone && !isValidPhone(phone)) { markField(custPhoneInput, "error"); setCustMsg("Please enter a valid phone number."); return; }
       if (phone) markField(custPhoneInput, "ok");
 
-      // determine agent_id assignment
       let agent_id = null;
 
       if (currentProfile?.role === "admin") {
         agent_id = assignClinicSelect?.value || null;
-        if (!agent_id) {
-          setCustMsg("Please select a clinic to assign this customer to.");
-          return;
-        }
+        if (!agent_id) { setCustMsg("Please select a clinic to assign this customer to."); return; }
       } else {
         agent_id = currentProfile?.agent_id || null;
-        if (!agent_id) {
-          setCustMsg("No clinic linked to this login.");
-          return;
-        }
+        if (!agent_id) { setCustMsg("No clinic linked to this login."); return; }
       }
 
-      // EDIT mode
       if (editingCustomerId) {
         const { data, error } = await supabaseClient
           .from("customers")
@@ -937,78 +1084,65 @@ if (fxTabBoosters) fxTabBoosters.addEventListener("click", () => setFormularyTab
         showViewCustomersPanel();
         await runCustomerSearch(cmSearch?.value || "");
         return;
-
       }
 
-      // ADD mode
       const { error } = await supabaseClient
         .from("customers")
         .insert([{ agent_id, first_name, last_name, email, phone }]);
 
-      if (error) {
-        setCustMsg("Insert error: " + error.message);
-        return;
-      }
+      if (error) { setCustMsg("Insert error: " + error.message); return; }
 
       setCustMsg("Customer added ✅");
       clearAddForm();
       showViewCustomersPanel();
     });
   }
-// ---------- add/edit agent ----------
-if (addAgentBtn) {
-  addAgentBtn.addEventListener("click", async () => {
-    setAgentMsg("");
 
-    const name = (agentNameInput?.value || "").trim();
-    if (!name) {
-      setAgentMsg("Agent name is required.");
-      return;
-    }
+  // ---------- add/edit agent ----------
+  if (addAgentBtn) {
+    addAgentBtn.addEventListener("click", async () => {
+      setAgentMsg("");
 
-    // EDIT mode
-    if (editingAgentId) {
-      const { data, error } = await supabaseClient
+      const name = (agentNameInput?.value || "").trim();
+      if (!name) { setAgentMsg("Agent name is required."); return; }
+
+      if (editingAgentId) {
+        const { data, error } = await supabaseClient
+          .from("agents")
+          .update({ name })
+          .eq("id", editingAgentId)
+          .select("id");
+
+        if (error) { setAgentMsg("Update error: " + error.message); return; }
+        if (!data || data.length === 0) { setAgentMsg("Update blocked (RLS) — no rows updated."); return; }
+
+        setAgentMsg("Saved ✅");
+        editingAgentId = null;
+        if (agentNameInput) agentNameInput.value = "";
+
+        await loadAgentNameMap();
+        await loadAgentsForAssignDropdown();
+
+        showViewAgentsPanel();
+        await runAgentSearch(amSearch?.value || "");
+        return;
+      }
+
+      const { error } = await supabaseClient
         .from("agents")
-        .update({ name })
-        .eq("id", editingAgentId)
-        .select("id");
+        .insert([{ name }]);
 
-      if (error) { setAgentMsg("Update error: " + error.message); return; }
-      if (!data || data.length === 0) { setAgentMsg("Update blocked (RLS) — no rows updated."); return; }
+      if (error) { setAgentMsg("Insert error: " + error.message); return; }
 
-      setAgentMsg("Saved ✅");
-      editingAgentId = null;
+      setAgentMsg("Agent added ✅");
       if (agentNameInput) agentNameInput.value = "";
-      
+
       await loadAgentNameMap();
       await loadAgentsForAssignDropdown();
-      
+
       showViewAgentsPanel();
-      await runAgentSearch(amSearch?.value || "");
-      return;
-
-    }
-
-    // ADD mode
-    const { error } = await supabaseClient
-      .from("agents")
-      .insert([{ name }]);
-
-    if (error) {
-      setAgentMsg("Insert error: " + error.message);
-      return;
-    }
-
-    setAgentMsg("Agent added ✅");
-    if (agentNameInput) agentNameInput.value = "";
-
-    await loadAgentNameMap();
-    await loadAgentsForAssignDropdown();
-
-    showViewAgentsPanel();
-  });
-}
+    });
+  }
 
   // ---------- login ----------
   if (loginBtn) {
@@ -1018,10 +1152,7 @@ if (addAgentBtn) {
       const email = (emailInput?.value || "").trim();
       const password = passwordInput?.value || "";
 
-      if (!email || !password) {
-        setAuthMsg("Enter email + password.");
-        return;
-      }
+      if (!email || !password) { setAuthMsg("Enter email + password."); return; }
 
       try {
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
@@ -1048,15 +1179,9 @@ if (addAgentBtn) {
   (async () => {
     try {
       const { data, error } = await supabaseClient.auth.getSession();
-      if (error) {
-        setLoggedOutUI("Not logged in");
-        return;
-      }
-      if (data?.session) {
-        await hydrateAfterLogin(data.session);
-      } else {
-        setLoggedOutUI("Not logged in");
-      }
+      if (error) { setLoggedOutUI("Not logged in"); return; }
+      if (data?.session) await hydrateAfterLogin(data.session);
+      else setLoggedOutUI("Not logged in");
     } catch (e) {
       console.error("Initial restore crashed:", e);
       setLoggedOutUI("Not logged in");
