@@ -48,6 +48,26 @@
         margin: 0 0 18px;
       }
 
+      .page-header{
+  display: flex;
+  align-items: center;
+  margin-bottom: 18px;
+
+  /* move away from hard top-left */
+  padding-top: 10px;
+  padding-left: 6px;
+}
+
+.exact-logo{
+  height: 34px;          /* adjust if needed */
+  display: block;
+}
+
+/* Optional: subtle hover polish */
+.logo-link:hover{
+  opacity: 0.9;
+}
+
 .page-header{
   display: flex;
   align-items: center;
@@ -93,6 +113,58 @@
         padding: 14px 16px;
         margin-bottom: 18px;
       }
+
+      /* ===== Header layout ===== */
+
+.topbar-inner{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+/* Logo */
+.exact-logo{
+  height: 34px;
+  display: block;
+}
+
+.logo-link{
+  display: inline-flex;
+  align-items: center;
+}
+
+.logo-link:hover{
+  opacity: 0.9;
+}
+
+/* User block */
+.user-box{
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: right;
+}
+
+.user-role{
+  font-weight: 600;
+}
+
+/* Mobile behavior */
+@media (max-width: 640px){
+  .topbar-inner{
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .user-box{
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+}
 
       .row{
         display:flex;
@@ -308,14 +380,23 @@
 </div>
 
       <div id="topBar" class="topbar" style="display:none;">
-        <div class="row">
-          <div>
-            <div id="topBarTitle" style="font-weight:600;"></div>
-            <div class="subtle" id="topBarSub"></div>
-          </div>
-          <button id="logoutBtn">Logout</button>
-        </div>
-      </div>
+  <div class="topbar-inner">
+
+    <!-- Logo -->
+    <a href="/" class="logo-link">
+      <img src="/assets/logo.png" alt="EXACT" class="exact-logo">
+    </a>
+
+    <!-- User info -->
+    <div class="user-box">
+      <div id="topBarTitle" class="user-role">Logged in</div>
+      <div id="topBarSub" class="subtle"></div>
+      <button id="logoutBtn">Logout</button>
+    </div>
+
+  </div>
+</div>
+
 
       <div id="loginBox" class="card" style="max-width:480px;">
         <h2>Login</h2>
