@@ -421,13 +421,18 @@ window.addEventListener("DOMContentLoaded", () => {
       .select("id, agent_id, first_name, last_name, email, phone, created_at")
       .order("created_at", { ascending: false });
 
-    // If not showAll, apply OR search across fields
-    if (!showAll) {
-      const t = (term || "").trim();
-      if (!t) {
-        setCustMsg("Enter a search term, or click “Show all”.");
-        return;
-      }
+  // If search term is empty, return ALL rows
+const t = (term || "").trim();
+if (t) {
+  const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
+  q = q.or([
+    `first_name.ilike.%${esc}%`,
+    `last_name.ilike.%${esc}%`,
+    `email.ilike.%${esc}%`,
+    `phone.ilike.%${esc}%`
+  ].join(","));
+}
+
 
       // ilike works for text fields. We search first_name/last_name/email/phone.
       // RLS will still restrict agent users.
