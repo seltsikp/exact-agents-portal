@@ -289,6 +289,36 @@
       }
       dialog::backdrop{ background: rgba(10,10,12,.55); }
       .dialog-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+
+/* ======================================================
+   GLOBAL ACTION PILL SYSTEM (DO NOT OVERRIDE PER SCREEN)
+   ====================================================== */
+
+.action-pills {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.action-pill {
+  min-width: 120px;          /* SINGLE source of truth */
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* Ensure all buttons behave consistently */
+button.action-pill {
+  appearance: none;
+}
+
     </style>
   </head>
 
@@ -337,12 +367,13 @@
   <h2>Agent Management</h2>
 
   <!-- top action buttons -->
-  <div class="cm-actions">
-    <button id="amViewBtn" class="btn-gold" type="button">View agents</button>
-    <button id="amAddBtn" type="button">Add agent</button>
-    <button id="amClearBtn" type="button" style="display:none;">Clear</button>
-    <p id="agentMsg" class="subtle" style="margin:0;"></p>
-  </div>
+<div class="cm-actions action-pills">
+  <button id="amViewBtn" class="btn-gold action-pill" type="button">View agents</button>
+  <button id="amAddBtn" class="action-pill" type="button">Add agent</button>
+  <button id="amClearBtn" class="action-pill" type="button" style="display:none;">Clear</button>
+  <p id="agentMsg" class="subtle" style="margin:0;"></p>
+</div>
+
 
   <!-- VIEW AGENTS: search -->
   <div id="amViewPanel" style="display:none; margin-top:6px;">
@@ -352,8 +383,9 @@
         <input id="amSearch" placeholder="Agent / clinic name…" />
       </div>
       <div style="display:flex; gap:10px;">
-        <button id="amSearchBtn" class="btn-primary" type="button">Search</button>
-        <button id="amShowAllBtn" type="button">Show all</button>
+      <button id="amSearchBtn" class="btn-primary action-pill" type="button">Search</button>
+      <button id="amShowAllBtn" class="action-pill" type="button">Show all</button>
+
       </div>
     </div>
 
@@ -367,7 +399,7 @@
       <input id="agentName" placeholder="e.g. Dubai Aesthetics Clinic" />
     </div>
 
-    <button id="addAgentBtn" class="btn-primary" type="button">Save agent</button>
+    <button id="addAgentBtn" class="btn-primary action-pill" type="button">Save agent</button>
   </div>
 </div>
 
@@ -379,12 +411,13 @@
               <h2>Customer Management</h2>
 
               <!-- top action buttons -->
-              <div class="cm-actions">
-                <button id="cmViewBtn" class="btn-gold" type="button">View customers</button>
-                <button id="cmAddBtn" type="button">Add customer</button>
-                <button id="cmClearBtn" type="button" style="display:none;">Clear</button>
-                <p id="custMsg" class="subtle" style="margin:0;"></p>
-              </div>
+      <div class="cm-actions action-pills">
+        <button id="cmViewBtn" class="btn-gold action-pill" type="button">View customers</button>
+        <button id="cmAddBtn" class="action-pill" type="button">Add customer</button>
+        <button id="cmClearBtn" class="action-pill" type="button" style="display:none;">Clear</button>
+        <p id="custMsg" class="subtle" style="margin:0;"></p>
+      </div>
+
 
               <!-- VIEW CUSTOMERS: search -->
               <div id="cmViewPanel" style="display:none; margin-top:6px;">
@@ -394,8 +427,9 @@
                     <input id="cmSearch" placeholder="Name, email, phone…" />
                   </div>
                   <div style="display:flex; gap:10px;">
-                    <button id="cmSearchBtn" class="btn-primary" type="button">Search</button>
-                    <button id="cmShowAllBtn" type="button">Show all</button>
+                  <button id="cmSearchBtn" class="btn-primary action-pill" type="button">Search</button>
+                  <button id="cmShowAllBtn" class="action-pill" type="button">Show all</button>
+
                   </div>
                 </div>
 
@@ -426,7 +460,7 @@
                   <input id="custPhone" placeholder="Phone (optional)" />
                 </div>
 
-                <button id="addCustomerBtn" class="btn-primary" type="button">Save customer</button>
+              <button id="addCustomerBtn" class="btn-primary action-pill" type="button">Save customer</button>
               </div>
             </div>
 
