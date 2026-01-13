@@ -141,6 +141,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const viewCustomerMgmt = document.getElementById("viewCustomerMgmt");
   const viewWelcome = document.getElementById("viewWelcome");
+  const viewFormulary = document.getElementById("viewFormulary");
 
   // Customer Mgmt UI (new)
   const cmViewBtn = document.getElementById("cmViewBtn");
@@ -652,6 +653,8 @@ async function runAgentSearch(term) {
 show(viewWelcome, false);
 show(viewCustomerMgmt, viewKey === "customers");
 show(viewAgentMgmt, viewKey === "agents");
+show(viewFormulary, viewKey === "formulary");
+
 
 
     if (menuItems) {
@@ -682,10 +685,11 @@ if (viewKey === "agents") resetAgentScreen();
 if (role === "admin") {
   addMenuBtn("Agent Management", "agents");
   addMenuBtn("Customer Management", "customers");
+  addMenuBtn("EXACT Formulary", "formulary");
 } else {
-  // Agent users only see Customer Management
   addMenuBtn("Customer Management", "customers");
 }
+
 
 // IMPORTANT: do not auto-open any view on login
 activeViewKey = null;
