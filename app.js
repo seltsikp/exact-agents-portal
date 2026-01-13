@@ -1,4 +1,4 @@
-console.log("EXACT Agents Portal loaded (v39)");
+console.log("EXACT Agents Portal loaded (v40)");
 
 // =========================================================
 // BLOCK: SUPABASE CLIENT
