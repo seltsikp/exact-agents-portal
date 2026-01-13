@@ -4,11 +4,17 @@
     <meta charset="utf-8" />
     <title>EXACT Portal</title>
 
+    <!-- =========================================================
+         BLOCK: FONTS + ICON
+         ========================================================= -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" href="data:," />
 
+    <!-- =========================================================
+         BLOCK: GLOBAL STYLES
+         ========================================================= -->
     <style>
       :root{
         --bg: #fbfbfc;
@@ -39,7 +45,9 @@
         padding: 0 18px 60px;
       }
 
-      /* Header / Topbar */
+      /* =========================================================
+         BLOCK: TOPBAR
+         ========================================================= */
       .topbar{
         background: #fafafa;
         border: 1px solid var(--line);
@@ -80,7 +88,9 @@
         .exact-logo{ height: 36px; }
       }
 
-      /* Cards / layout */
+      /* =========================================================
+         BLOCK: CARDS + LAYOUT
+         ========================================================= */
       .card{
         background: var(--card);
         border: 1px solid var(--line);
@@ -100,7 +110,9 @@
         .appLayout{ grid-template-columns: 1fr; }
       }
 
-      /* Menu */
+      /* =========================================================
+         BLOCK: MENU
+         ========================================================= */
       .menu{ position: sticky; top: 14px; margin:0; }
 
       .menuBtn{
@@ -119,7 +131,9 @@
         box-shadow: 0 16px 30px rgba(15,20,25,.10);
       }
 
-      /* Controls */
+      /* =========================================================
+         BLOCK: CONTROLS
+         ========================================================= */
       input, select, textarea{
         width: 100%;
         padding: 10px 12px;
@@ -169,15 +183,6 @@
         opacity: 0.8;
       }
 
-      /* Soft (non-black) button */
-      .btn-soft{
-        background: #fff;
-        color: var(--text);
-        border-color: rgba(15, 20, 25, .18);
-        font-weight: 500;
-      }
-
-      /* Screen header actions */
       .cm-actions{
         display:flex;
         gap:10px;
@@ -186,7 +191,9 @@
         align-items: center;
       }
 
-      /* List rows */
+      /* =========================================================
+         BLOCK: CUSTOMER/AGENT LIST ROWS (existing)
+         ========================================================= */
       .customer-list{
         display: grid;
         gap: 12px;
@@ -209,59 +216,6 @@
         border-color: rgba(184,154,91,.45);
         box-shadow: 0 14px 28px rgba(15,20,25,.08);
       }
-/* =========================
-   INGREDIENTS – SIMPLE ROWS
-   ========================= */
-
-.ingredient-list{
-  display: grid;
-  gap: 10px;
-  padding: 10px 0;
-}
-
-.ingredient-row{
-  display: grid;
-  grid-template-columns: 180px 320px 1fr; /* PSI | INCI | Description */
-  gap: 14px;
-  align-items: center;
-
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: none;           /* no pill / no heavy effects */
-}
-
-.ingredient-row:hover{
-  border-color: var(--line);
-  box-shadow: none;           /* keep neutral */
-}
-
-.ingredient-cell{
-  font-size: 13px;
-  color: var(--text);
-  line-height: 1.35;
-}
-
-.ingredient-psi{
-  font-weight: 700;
-  letter-spacing: .2px;
-}
-
-.ingredient-inci{
-  font-weight: 600;
-}
-
-.ingredient-desc{
-  color: var(--muted);
-}
-
-@media (max-width: 840px){
-  .ingredient-row{
-    grid-template-columns: 1fr; /* stack on mobile */
-    gap: 6px;
-  }
-}
 
       .customer-main .name{
         font-size: 15px;
@@ -313,86 +267,74 @@
         justify-content:flex-end;
       }
 
-      .customer-actions .btn{
-        padding: 8px 12px;
-        border-radius: 12px;
-      }
-
       @media (max-width: 768px){
         .customer-row{ grid-template-columns: 1fr; gap:10px; }
         .customer-actions{ justify-content:flex-start; }
       }
 
-      /* Validation */
-      .field-error{
-        border-color: #c9a24a !important;
-        box-shadow: 0 0 0 1px #c9a24a, inset 4px 0 0 #c9a24a;
-        background: rgba(201,162,74,.08) !important;
-        background-image: linear-gradient(to right, #c9a24a 4px, transparent 4px);
-        background-repeat: no-repeat;
-      }
-      .field-ok{
-        border-color: #5b7c99 !important;
-        box-shadow: 0 0 0 1px #5b7c99, inset 4px 0 0 #5b7c99;
-        background: rgba(91,124,153,.05) !important;
-        background-image: linear-gradient(to right, #5b7c99 4px, transparent 4px);
-        background-repeat: no-repeat;
-      }
-
-      /* Dialog */
-      dialog{
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        box-shadow: 0 28px 70px rgba(15,20,25,.22);
-        padding: 16px;
-        width: min(520px, calc(100vw - 26px));
-      }
-      dialog::backdrop{ background: rgba(10,10,12,.55); }
-      .dialog-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
-
-      /* GLOBAL ACTION PILL SYSTEM */
-      .action-pills {
-        display: flex;
+      /* =========================================================
+         BLOCK: INGREDIENTS LIST (simple row, includes actions col)
+         ========================================================= */
+      .ingredient-list{
+        display: grid;
         gap: 10px;
-        flex-wrap: wrap;
+        padding: 10px 0;
       }
 
-      .action-pill {
-        min-width: 120px;
-        height: 38px;
-        display: inline-flex;
+      .ingredient-row{
+        display: grid;
+        grid-template-columns: 140px 1.4fr 2fr 140px; /* PSI | INCI | DESC | actions */
+        gap: 12px;
         align-items: center;
-        justify-content: center;
-        text-align: center;
-        border-radius: 999px;
-        font-weight: 600;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: none;
+      }
+
+      .ingredient-row:hover{
+        border-color: rgba(184,154,91,.35);
+      }
+
+      .ingredient-cell{
         font-size: 13px;
-        white-space: nowrap;
+        line-height: 1.25;
       }
 
-      button.action-pill { appearance: none; }
+      .ingredient-psi{ font-weight: 700; }
+      .ingredient-inci{ font-weight: 600; }
+      .ingredient-desc{ color: var(--muted); }
 
-      .action-pill.edit-pill {
-        min-width: 84px;
-        height: 32px;
-        font-weight: 500;
-        font-size: 12px;
-        background: #fff;
+      .ingredient-actions{
+        display: inline-flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      .ing-link{
+        border: none;
+        background: transparent;
+        padding: 0;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
         color: var(--text);
-        border: 1px solid rgba(15, 20, 25, 0.28);
+        text-decoration: underline;
+        text-underline-offset: 3px;
       }
 
-      .action-pill.delete-pill {
-        min-width: 84px;
-        height: 32px;
-        font-weight: 500;
-        font-size: 12px;
-        background: #fff;
-        color: var(--danger);
-        border: 1px solid rgba(180, 35, 24, 0.45);
+      .ing-link.ing-delete{ color: var(--danger); }
+
+      @media (max-width: 840px){
+        .ingredient-row{ grid-template-columns: 1fr; }
+        .ingredient-actions{ justify-content: flex-start; }
       }
 
-      /* Formulary tabs */
+      /* =========================================================
+         BLOCK: FORMULARY TABS
+         ========================================================= */
       .tab-row{
         display:flex;
         gap:12px;
@@ -413,75 +355,28 @@
         color:#fff;
       }
       .tabSection{ display:none; }
-.ingredient-list{
-  display: grid;
-  gap: 10px;
-  padding: 10px 0;
-}
 
-.ingredient-row{
-  display: grid;
-  grid-template-columns: 110px 1.3fr 2fr 140px;
-  gap: 12px;
-  align-items: center;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fff;
-}
-
-.ingredient-row:hover{
-  border-color: rgba(184,154,91,.35);
-}
-
-.ingredient-cell{
-  font-size: 13px;
-  line-height: 1.25;
-}
-
-.ingredient-psi{
-  font-weight: 700;
-}
-
-.ingredient-actions{
-  display: inline-flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.ing-link{
-  border: none;
-  background: transparent;
-  padding: 0;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  color: var(--text);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.ing-link.ing-delete{
-  color: var(--danger);
-}
-
-@media (max-width: 840px){
-  .ingredient-row{
-    grid-template-columns: 1fr;
-  }
-  .ingredient-actions{
-    justify-content: flex-start;
-  }
-}
-
+      /* =========================================================
+         BLOCK: DIALOG
+         ========================================================= */
+      dialog{
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: 0 28px 70px rgba(15,20,25,.22);
+        padding: 16px;
+        width: min(520px, calc(100vw - 26px));
+      }
+      dialog::backdrop{ background: rgba(10,10,12,.55); }
+      .dialog-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
     </style>
   </head>
 
   <body>
     <div class="container">
 
-      <!-- TOP BAR -->
+      <!-- =========================================================
+           BLOCK: TOPBAR SHELL (shown when logged in)
+           ========================================================= -->
       <div id="topBar" class="topbar" style="display:none;">
         <div class="topbar-inner">
           <a href="./" class="logo-link" aria-label="EXACT Portal home">
@@ -496,7 +391,9 @@
         </div>
       </div>
 
-      <!-- LOGIN -->
+      <!-- =========================================================
+           BLOCK: LOGIN
+           ========================================================= -->
       <div id="loginBox" class="card" style="max-width:480px;">
         <h2 style="margin-top:0;">Login</h2>
         <div style="margin-bottom:10px;">
@@ -509,35 +406,49 @@
         <p id="authMsg" class="subtle" style="margin-top:10px;"></p>
       </div>
 
-      <!-- MAIN APP -->
+      <!-- =========================================================
+           BLOCK: APP SHELL (menu + views)
+           ========================================================= -->
       <div id="appBox" style="display:none;">
         <div class="appLayout">
 
-          <!-- MENU -->
+          <!-- =====================================================
+               BLOCK: MENU CONTAINER (JS renders buttons here)
+               ===================================================== -->
           <div class="card menu">
             <h2 style="margin-top:0;">Menu</h2>
             <div id="menuItems"></div>
           </div>
 
-          <!-- CONTENT -->
+          <!-- =====================================================
+               BLOCK: VIEWS CONTAINER (only one shown at a time)
+               ===================================================== -->
           <div>
-<!-- WELCOME -->
-<div id="viewWelcome" class="card" style="display:none;">
-  <h2 style="margin-top:0;">Welcome</h2>
-  <p style="margin:0;">
-    Welcome to the EXACT Cosmetics Portal. If you encounter any issues whatsoever, please contact us at
-    <a href="mailto:exactportal@exactcosmetics.com">exactportal@exactcosmetics.com</a>.
-  </p>
-</div>
 
-            <!-- AGENT MANAGEMENT -->
+            <!-- ===================================================
+                 BLOCK: WELCOME VIEW  ✅ (RESTORED)
+                 =================================================== -->
+            <div id="viewWelcome" class="card" style="display:none;">
+              <h2 style="margin-top:0;">Welcome</h2>
+              <p style="margin:0 0 10px 0;">
+                Welcome to the <b>EXACT Cosmetics Portal</b>.
+              </p>
+              <p class="subtle" style="margin:0;">
+                If you encounter any issues whatsoever, please contact us at
+                <b>exactportal@exactcosmetics.com</b>.
+              </p>
+            </div>
+
+            <!-- ===================================================
+                 BLOCK: AGENT MANAGEMENT VIEW
+                 =================================================== -->
             <div id="viewAgentMgmt" class="card" style="display:none;">
               <h2>Agent Management</h2>
 
-              <div class="cm-actions action-pills">
-                <button id="amViewBtn" class="btn-gold action-pill" type="button">View agents</button>
-                <button id="amAddBtn" class="action-pill" type="button">Add agent</button>
-                <button id="amClearBtn" class="action-pill" type="button" style="display:none;">Clear</button>
+              <div class="cm-actions">
+                <button id="amViewBtn" class="btn-gold" type="button">View agents</button>
+                <button id="amAddBtn" type="button">Add agent</button>
+                <button id="amClearBtn" type="button" style="display:none;">Clear</button>
                 <p id="agentMsg" class="subtle" style="margin:0;"></p>
               </div>
 
@@ -548,11 +459,10 @@
                     <input id="amSearch" placeholder="Agent / clinic name…" />
                   </div>
                   <div style="display:flex; gap:10px;">
-                    <button id="amSearchBtn" class="btn-primary action-pill" type="button">Search</button>
-                    <button id="amShowAllBtn" class="action-pill" type="button">Show all</button>
+                    <button id="amSearchBtn" class="btn-primary" type="button">Search</button>
+                    <button id="amShowAllBtn" type="button">Show all</button>
                   </div>
                 </div>
-
                 <div id="agentList" class="customer-list"></div>
               </div>
 
@@ -561,19 +471,20 @@
                   <label class="subtle" for="agentName" style="display:block; margin-bottom:6px;">Agent / clinic name</label>
                   <input id="agentName" placeholder="e.g. Dubai Aesthetics Clinic" />
                 </div>
-
-                <button id="addAgentBtn" class="btn-primary action-pill" type="button">Save agent</button>
+                <button id="addAgentBtn" class="btn-primary" type="button">Save agent</button>
               </div>
             </div>
 
-            <!-- CUSTOMER MANAGEMENT -->
+            <!-- ===================================================
+                 BLOCK: CUSTOMER MANAGEMENT VIEW
+                 =================================================== -->
             <div id="viewCustomerMgmt" class="card" style="display:none;">
               <h2>Customer Management</h2>
 
-              <div class="cm-actions action-pills">
-                <button id="cmViewBtn" class="btn-gold action-pill" type="button">View customers</button>
-                <button id="cmAddBtn" class="action-pill" type="button">Add customer</button>
-                <button id="cmClearBtn" class="action-pill" type="button" style="display:none;">Clear</button>
+              <div class="cm-actions">
+                <button id="cmViewBtn" class="btn-gold" type="button">View customers</button>
+                <button id="cmAddBtn" type="button">Add customer</button>
+                <button id="cmClearBtn" type="button" style="display:none;">Clear</button>
                 <p id="custMsg" class="subtle" style="margin:0;"></p>
               </div>
 
@@ -584,11 +495,10 @@
                     <input id="cmSearch" placeholder="Name, email, phone…" />
                   </div>
                   <div style="display:flex; gap:10px;">
-                    <button id="cmSearchBtn" class="btn-primary action-pill" type="button">Search</button>
-                    <button id="cmShowAllBtn" class="action-pill" type="button">Show all</button>
+                    <button id="cmSearchBtn" class="btn-primary" type="button">Search</button>
+                    <button id="cmShowAllBtn" type="button">Show all</button>
                   </div>
                 </div>
-
                 <div id="customerList" class="customer-list"></div>
               </div>
 
@@ -613,31 +523,31 @@
                   <input id="custPhone" placeholder="Phone (optional)" />
                 </div>
 
-                <button id="addCustomerBtn" class="btn-primary action-pill" type="button">Save customer</button>
+                <button id="addCustomerBtn" class="btn-primary" type="button">Save customer</button>
               </div>
             </div>
 
-            <!-- EXACT FORMULARY -->
+            <!-- ===================================================
+                 BLOCK: EXACT FORMULARY VIEW
+                 =================================================== -->
             <div id="viewFormulary" class="card" style="display:none;">
               <h2>EXACT Formulary</h2>
 
-              <!-- Tabs -->
               <div class="tab-row">
                 <button id="fxTabIngredients" class="tabBtn active" type="button">Ingredients</button>
                 <button id="fxTabBases" class="tabBtn" type="button">Bases</button>
                 <button id="fxTabBoosters" class="tabBtn" type="button">Boosters</button>
               </div>
 
-              <!-- INGREDIENTS section -->
+              <!-- INGREDIENTS -->
               <div id="fxSectionIngredients" class="tabSection" style="display:block;">
-                <div class="cm-actions action-pills">
-                  <button id="fxIngViewBtn" class="btn-gold action-pill" type="button">View ingredients</button>
-                  <button id="fxIngAddBtn" class="action-pill" type="button">Add ingredient</button>
-                  <button id="fxIngClearBtn" class="action-pill" type="button" style="display:none;">Clear</button>
+                <div class="cm-actions">
+                  <button id="fxIngViewBtn" class="btn-gold" type="button">View ingredients</button>
+                  <button id="fxIngAddBtn" type="button">Add ingredient</button>
+                  <button id="fxIngClearBtn" type="button" style="display:none;">Clear</button>
                   <p id="fxIngMsg" class="subtle" style="margin:0;"></p>
                 </div>
 
-                <!-- VIEW -->
                 <div id="fxIngViewPanel" style="display:none; margin-top:6px;">
                   <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
                     <div style="flex:1; min-width:240px;">
@@ -645,15 +555,15 @@
                       <input id="fxIngSearch" placeholder="PSI-001, Niacinamide…" />
                     </div>
                     <div style="display:flex; gap:10px;">
-                      <button id="fxIngSearchBtn" class="btn-primary action-pill" type="button">Search</button>
-                      <button id="fxIngShowAllBtn" class="action-pill" type="button">Show all</button>
+                      <button id="fxIngSearchBtn" class="btn-primary" type="button">Search</button>
+                      <button id="fxIngShowAllBtn" type="button">Show all</button>
                     </div>
                   </div>
-  
-              <div id="fxIngList" class="ingredient-list"></div>
+
+                  <!-- IMPORTANT: ingredient-list class will be applied by JS too -->
+                  <div id="fxIngList" class="ingredient-list"></div>
                 </div>
 
-                <!-- ADD / EDIT -->
                 <div id="fxIngAddPanel" style="display:none; margin-top:6px;">
                   <div style="margin-bottom:10px;">
                     <label class="subtle" for="fxIngPsi" style="display:block; margin-bottom:6px;">PSI number</label>
@@ -670,16 +580,16 @@
                     <textarea id="fxIngDesc" placeholder="What it does (short)…"></textarea>
                   </div>
 
-                  <button id="fxIngSaveBtn" class="btn-primary action-pill" type="button">Save ingredient</button>
+                  <button id="fxIngSaveBtn" class="btn-primary" type="button">Save ingredient</button>
                 </div>
               </div>
 
-              <!-- BASES placeholder -->
+              <!-- BASES -->
               <div id="fxSectionBases" class="tabSection">
                 <p class="subtle" style="margin:0;">Bases: coming next step.</p>
               </div>
 
-              <!-- BOOSTERS placeholder -->
+              <!-- BOOSTERS -->
               <div id="fxSectionBoosters" class="tabSection">
                 <p class="subtle" style="margin:0;">Boosters: coming next step.</p>
               </div>
@@ -689,7 +599,9 @@
         </div>
       </div>
 
-      <!-- Confirm dialog -->
+      <!-- =========================================================
+           BLOCK: CONFIRM DIALOG
+           ========================================================= -->
       <dialog id="confirmDialog">
         <h3 style="margin:0 0 6px 0;">EXACT Agents Portal</h3>
         <p id="confirmDialogText" class="subtle" style="margin:0;"></p>
@@ -699,8 +611,11 @@
         </div>
       </dialog>
 
+      <!-- =========================================================
+           BLOCK: SCRIPTS
+           ========================================================= -->
       <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-      <script src="./app.js?v=35"></script>
+      <script src="./app.js?v=33"></script>
     </div>
   </body>
 </html>
