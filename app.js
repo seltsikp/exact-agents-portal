@@ -140,6 +140,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const menuItems = document.getElementById("menuItems");
 
   const viewCustomerMgmt = document.getElementById("viewCustomerMgmt");
+  const viewWelcome = document.getElementById("viewWelcome");
 
   // Customer Mgmt UI (new)
   const cmViewBtn = document.getElementById("cmViewBtn");
@@ -648,8 +649,10 @@ async function runAgentSearch(term) {
     activeViewKey = viewKey;
     if (viewKey === "agents" && currentProfile?.role !== "admin") return;
 
+show(viewWelcome, false);
 show(viewCustomerMgmt, viewKey === "customers");
 show(viewAgentMgmt, viewKey === "agents");
+
 
     if (menuItems) {
       const btns = menuItems.querySelectorAll("button[data-view]");
@@ -765,9 +768,16 @@ if (menuItems) {
         if (agentClinicName) agentClinicName.value = agentName || "Unknown clinic";
       }
 
-      renderMenuForRole(profile.role);
-      resetCustomerScreen();
-      resetAgentScreen();
+renderMenuForRole(profile.role);
+
+// Start on neutral Welcome page
+show(viewWelcome, true);
+show(viewCustomerMgmt, false);
+show(viewAgentMgmt, false);
+
+resetCustomerScreen();
+resetAgentScreen();
+
 
     } catch (e) {
       console.error("hydrateAfterLogin error:", e);
