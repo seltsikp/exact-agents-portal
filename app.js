@@ -259,7 +259,7 @@ else metaLine = codePart || `<span style="opacity:.65;">No contact details</span
         </div>
 
         <div class="customer-actions">
-          <button class="btn btn-primary action-pill" data-action="edit" type="button">Edit</button>
+          <button class="btn btn-soft action-pill edit-pill" data-action="edit" type="button">Edit</button>
           <button class="btn btn-danger action-pill" data-action="delete" type="button">Delete</button>
 
         </div>
@@ -286,11 +286,11 @@ function buildAgentRowHTML(a) {
         ${createdPill}
       </div>
 
-      <div class="customer-actions">
-       <button class="btn btn-primary action-pill" data-action="edit" type="button">Edit</button>
-      <button class="btn btn-danger action-pill" data-action="delete" type="button">Delete</button>
+     <div class="customer-actions">
+  <button class="btn btn-soft action-pill edit-pill" data-action="edit" type="button">Edit</button>
+  <button class="btn btn-danger action-pill" data-action="delete" type="button">Delete</button>
+</div>
 
-      </div>
     </div>
   `.trim();
 }
