@@ -48,18 +48,34 @@
         margin: 0 0 18px;
       }
 
-      .page-header{
+.page-header{
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  justify-content: flex-start; /* logo on the left */
+  margin-bottom: 18px;
+}
+
+.logo-link{
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
 }
 
 .exact-logo{
-  height: 42px;          /* adjust if needed */
+  height: 42px;
   width: auto;
   object-fit: contain;
+  opacity: 0.95;
+  transition: opacity .15s ease, transform .05s ease;
 }
+
+.logo-link:hover .exact-logo{ opacity: 1; }
+.logo-link:active .exact-logo{ transform: translateY(1px); }
+
+@media (max-width: 600px){
+  .exact-logo{ height: 32px; }
+}
+
 
       h2{
         font-size: 13px;
@@ -285,12 +301,11 @@
   </head>
 
   <body>
-    <div class="container">
-      <div class="page-header">
-  <h1>EXACT Portal</h1>
-  <img src="assets/logo.png" alt="EXACT Cosmetics" class="exact-logo">
+   <div class="page-header">
+  <a href="./" class="logo-link" aria-label="EXACT Portal home">
+    <img src="assets/logo.png" alt="EXACT Cosmetics" class="exact-logo">
+  </a>
 </div>
-
 
       <div id="topBar" class="topbar" style="display:none;">
         <div class="row">
