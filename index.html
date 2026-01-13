@@ -4,11 +4,9 @@
     <meta charset="utf-8" />
     <title>EXACT Portal</title>
 
-    <!-- Brand font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <link rel="icon" href="data:," />
 
     <style>
@@ -37,27 +35,11 @@
 
       .container{
         max-width: 1100px;
-        margin: 36px auto;
+        margin: 28px auto;
         padding: 0 18px 60px;
       }
 
-      h1{
-        font-size: 34px;
-        font-weight: 700;
-        letter-spacing: .6px;
-        margin: 0 0 18px;
-      }
-
-      
-      h2{
-        font-size: 13px;
-        font-weight: 600;
-        letter-spacing: 1.4px;
-        text-transform: uppercase;
-        margin: 0 0 12px;
-        color: var(--muted);
-      }
-
+      /* Header / Topbar */
       .topbar{
         background: #fafafa;
         border: 1px solid var(--line);
@@ -66,56 +48,39 @@
         margin-bottom: 18px;
       }
 
-      /* ===== Header layout ===== */
+      .topbar-inner{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+      }
 
-.topbar-inner{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
+      .logo-link{ display:inline-flex; align-items:center; text-decoration:none; }
+      .logo-link:hover{ opacity:.92; }
 
+      .exact-logo{
+        height: 42px;
+        width: auto;
+        display: block;
+      }
 
-/* User block */
-.user-box{
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  text-align: right;
-}
-
-.user-role{
-  font-weight: 600;
-}
-
-/* Mobile behavior */
-@media (max-width: 640px){
-  .topbar-inner{
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 10px;
-  }
-
-  .user-box{
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-  }
-}
-
-      .row{
+      .user-box{
         display:flex;
-        justify-content:space-between;
         align-items:center;
-        gap: 12px;
+        gap: 14px;
+        text-align:right;
       }
 
-      .subtle{
-        color: var(--muted);
-        font-size: 12px;
+      .user-role{ font-weight: 600; }
+      .subtle{ color: var(--muted); font-size: 12px; }
+
+      @media (max-width: 640px){
+        .topbar-inner{ flex-direction: column; align-items:center; text-align:center; gap:10px; }
+        .user-box{ flex-direction: column; align-items:center; gap:6px; }
+        .exact-logo{ height: 36px; }
       }
 
+      /* Cards / layout */
       .card{
         background: var(--card);
         border: 1px solid var(--line);
@@ -129,14 +94,14 @@
         display: grid;
         grid-template-columns: 260px 1fr;
         gap: 14px;
+        align-items: start;
       }
-
       @media (max-width: 840px){
         .appLayout{ grid-template-columns: 1fr; }
       }
 
       /* Menu */
-      .menu{ position: sticky; top: 14px; }
+      .menu{ position: sticky; top: 14px; margin:0; }
 
       .menuBtn{
         width: 100%;
@@ -149,28 +114,28 @@
         cursor: pointer;
         margin-bottom: 8px;
       }
-
       .menuBtn.active{
         border-color: rgba(184,154,91,.75);
         box-shadow: 0 16px 30px rgba(15,20,25,.10);
       }
 
-      /* Inputs */
+      /* Controls */
       input, select{
         width: 100%;
         padding: 10px 12px;
         border-radius: 12px;
         border: 1px solid var(--line);
+        outline: none;
         background: #fff;
         font-size: 14px;
       }
-
       input:focus, select:focus{
         border-color: rgba(184,154,91,.55);
         box-shadow: 0 0 0 4px rgba(184,154,91,.18);
       }
 
       button{
+        appearance:none;
         border: 1px solid var(--line);
         background: #fff;
         padding: 9px 12px;
@@ -184,21 +149,32 @@
         color: #fff;
         border-color: transparent;
       }
-
       .btn-gold{
         background: var(--gold);
         color: #fff;
         border-color: transparent;
       }
-
       .btn-danger{
         background: #fff;
         border-color: rgba(180,35,24,.35);
         color: var(--danger);
       }
+      #logoutBtn{
+        font-size: 13px;
+        font-weight: 500;
+        padding: 6px 10px;
+        opacity: 0.8;
+      }
 
-      /* ===== CUSTOMER LIST ===== */
+      /* Customer screen header actions */
+      .cm-actions{
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+        margin: 6px 0 12px;
+      }
 
+      /* Customer list rows */
       .customer-list{
         display: grid;
         gap: 12px;
@@ -225,32 +201,37 @@
       .customer-main .name{
         font-size: 15px;
         font-weight: 700;
+        letter-spacing: .2px;
       }
 
       .customer-main .meta{
         margin-top: 4px;
         font-size: 13px;
         color: var(--muted);
-        display: flex;
-        gap: 8px;
+        display:flex;
         flex-wrap: wrap;
+        gap: 8px;
+        align-items:center;
       }
 
-      .customer-dot{ opacity: .35; }
+      .customer-dot{ opacity:.35; }
 
       .customer-context{
-        display: flex;
-        gap: 8px;
+        display:flex;
         flex-wrap: wrap;
+        gap: 8px;
       }
 
       .pill-soft{
+        display:inline-flex;
+        align-items:center;
         padding: 6px 10px;
         border-radius: 999px;
         border: 1px solid rgba(184,154,91,.35);
         background: rgba(184,154,91,.08);
         font-size: 12px;
         color: var(--gold-dark);
+        white-space: nowrap;
       }
 
       .pill-soft-gold{
@@ -259,28 +240,23 @@
       }
 
       .customer-actions{
-        display: inline-flex;
-        gap: 10px;
-        justify-content: flex-end;
+        display:inline-flex;
+        gap:10px;
+        justify-content:flex-end;
       }
 
-      .customer-actions .btn-primary,
-      .customer-actions .btn-danger{
+      .customer-actions .btn{
         padding: 8px 12px;
         border-radius: 12px;
         font-size: 13px;
       }
 
       @media (max-width: 768px){
-        .customer-row{
-          grid-template-columns: 1fr;
-          gap: 10px;
-        }
-        .customer-actions{ justify-content: flex-start; }
+        .customer-row{ grid-template-columns: 1fr; gap:10px; }
+        .customer-actions{ justify-content:flex-start; }
       }
 
-      /* ===== VALIDATION (ACCESSIBLE) ===== */
-
+      /* Validation (accessible) */
       .field-error{
         border-color: #c9a24a !important;
         box-shadow: 0 0 0 1px #c9a24a, inset 4px 0 0 #c9a24a;
@@ -305,95 +281,129 @@
         padding: 16px;
         width: min(520px, calc(100vw - 26px));
       }
-
       dialog::backdrop{ background: rgba(10,10,12,.55); }
-      
-      /* === FINAL logo size override (authoritative) === */
-.exact-logo{
-  height: 42px !important;
-  width: auto;
-}
-      @media (max-width: 640px){
-  .exact-logo{
-    height: 24px !important;
-  }
-}
-
-
+      .dialog-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
     </style>
   </head>
 
   <body>
+    <div class="container">
 
-    <div id="topBar" class="topbar" style="display:none;">
-  <div class="topbar-inner">
+      <!-- TOP BAR (logo + user) -->
+      <div id="topBar" class="topbar" style="display:none;">
+        <div class="topbar-inner">
+          <a href="./" class="logo-link" aria-label="EXACT Portal home">
+            <img src="./assets/logo.png" alt="EXACT Cosmetics" class="exact-logo">
+          </a>
 
-    <!-- Logo -->
-    <a href="./" class="logo-link">
-      <img src="./assets/logo.png" alt="EXACT" class="exact-logo">
-    </a>
-
-    <!-- User info -->
-    <div class="user-box">
-      <div id="topBarTitle" class="user-role">Logged in</div>
-      <div id="topBarSub" class="subtle"></div>
-      <button id="logoutBtn">Logout</button>
-    </div>
-
-  </div>
-</div>
-
-
-      <div id="loginBox" class="card" style="max-width:480px;">
-        <h2>Login</h2>
-        <input id="email" placeholder="Email" />
-        <input id="password" type="password" placeholder="Password" style="margin-top:10px;" />
-        <button id="loginBtn" class="btn-primary" style="margin-top:10px;">Login</button>
-        <p id="authMsg"></p>
-      </div>
-
-      <div id="appBox" style="display:none;">
-        <div class="appLayout">
-          <div class="card menu">
-            <h2>Menu</h2>
-            <div id="menuItems"></div>
-          </div>
-
-          <div>
-            <div id="viewCustomerMgmt" class="card" style="display:none;">
-              <div id="adminAgentPicker" style="display:none; margin-bottom:14px;">
-                <label>Insert as clinic</label>
-                <select id="agentSelect"></select>
-              </div>
-
-              <h2>Customer Management</h2>
-
-              <button id="openAddCustomerBtn" class="btn-gold">Add customer</button>
-              <button id="cancelAddCustomerBtn" style="display:none;">Cancel</button>
-              <p id="custMsg"></p>
-
-              <div id="addCustomerPanel" style="display:none;">
-                <input id="firstName" placeholder="First name" />
-                <input id="lastName" placeholder="Last name" style="margin-top:10px;" />
-                <input id="custEmail" placeholder="Email (optional)" style="margin-top:10px;" />
-                <input id="custPhone" placeholder="Phone (optional)" style="margin-top:10px;" />
-                <button id="addCustomerBtn" class="btn-primary" style="margin-top:10px;">Save customer</button>
-              </div>
-
-              <div id="customerList" class="customer-list"></div>
-            </div>
+          <div class="user-box">
+            <div id="topBarTitle" class="user-role">Logged in</div>
+            <div id="topBarSub" class="subtle"></div>
+            <button id="logoutBtn">Logout</button>
           </div>
         </div>
       </div>
 
+      <!-- LOGIN -->
+      <div id="loginBox" class="card" style="max-width:480px;">
+        <h2 style="margin-top:0;">Login</h2>
+        <div style="margin-bottom:10px;">
+          <input id="email" placeholder="Email" />
+        </div>
+        <div style="margin-bottom:10px;">
+          <input id="password" type="password" placeholder="Password" />
+        </div>
+        <button id="loginBtn" class="btn-primary">Login</button>
+        <p id="authMsg" class="subtle" style="margin-top:10px;"></p>
+      </div>
+
+      <!-- MAIN APP -->
+      <div id="appBox" style="display:none;">
+        <div class="appLayout">
+
+          <!-- MENU -->
+          <div class="card menu">
+            <h2 style="margin-top:0;">Menu</h2>
+            <div id="menuItems"></div>
+          </div>
+
+          <!-- CONTENT -->
+          <div>
+
+            <!-- CUSTOMER MANAGEMENT -->
+            <div id="viewCustomerMgmt" class="card" style="display:none;">
+              <h2>Customer Management</h2>
+
+              <!-- top action buttons -->
+              <div class="cm-actions">
+                <button id="cmViewBtn" class="btn-gold" type="button">View customers</button>
+                <button id="cmAddBtn" type="button">Add customer</button>
+                <button id="cmClearBtn" type="button" style="display:none;">Clear</button>
+                <p id="custMsg" class="subtle" style="margin:0;"></p>
+              </div>
+
+              <!-- VIEW CUSTOMERS: search -->
+              <div id="cmViewPanel" style="display:none; margin-top:6px;">
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+                  <div style="flex:1; min-width:240px;">
+                    <label class="subtle" for="cmSearch" style="display:block; margin-bottom:6px;">Search (any field)</label>
+                    <input id="cmSearch" placeholder="Name, email, phone…" />
+                  </div>
+                  <div style="display:flex; gap:10px;">
+                    <button id="cmSearchBtn" class="btn-primary" type="button">Search</button>
+                    <button id="cmShowAllBtn" type="button">Show all</button>
+                  </div>
+                </div>
+
+                <div id="customerList" class="customer-list"></div>
+              </div>
+
+              <!-- ADD CUSTOMER: form -->
+              <div id="cmAddPanel" style="display:none; margin-top:6px;">
+                <!-- Admin: assign to clinic -->
+                <div id="assignClinicRow" style="display:none; margin-bottom:12px;">
+                  <label class="subtle" for="assignClinicSelect" style="display:block; margin-bottom:6px;">Assign to clinic</label>
+                  <select id="assignClinicSelect"></select>
+                </div>
+
+                <!-- Agent: read-only clinic display -->
+                <div id="agentClinicRow" style="display:none; margin-bottom:12px;">
+                  <label class="subtle" style="display:block; margin-bottom:6px;">Assigned clinic</label>
+                  <input id="agentClinicName" readonly />
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                  <input id="firstName" placeholder="First name" />
+                  <input id="lastName" placeholder="Last name" />
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                  <input id="custEmail" placeholder="Email (optional)" />
+                  <input id="custPhone" placeholder="Phone (optional)" />
+                </div>
+
+                <button id="addCustomerBtn" class="btn-primary" type="button">Save customer</button>
+              </div>
+            </div>
+
+            <!-- other views can remain here (agents/lab etc) -->
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirm dialog -->
       <dialog id="confirmDialog">
-        <p id="confirmDialogText"></p>
-        <button id="confirmCancelBtn">Cancel</button>
-        <button id="confirmOkBtn" class="btn-danger">Delete</button>
+        <h3 style="margin:0 0 6px 0;">EXACT Agents Portal</h3>
+        <p id="confirmDialogText" class="subtle" style="margin:0;"></p>
+        <div class="dialog-actions">
+          <button id="confirmCancelBtn" type="button">Cancel</button>
+          <button id="confirmOkBtn" type="button" class="btn-danger">Delete</button>
+        </div>
       </dialog>
 
       <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-      <script src="./app.js?v=28"></script>
+      <script src="./app.js?v=29"></script>
     </div>
   </body>
 </html>
