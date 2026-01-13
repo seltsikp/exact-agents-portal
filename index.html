@@ -48,55 +48,7 @@
         margin: 0 0 18px;
       }
 
-      .page-header{
-  display: flex;
-  align-items: center;
-  margin-bottom: 18px;
-
-  /* move away from hard top-left */
-  padding-top: 10px;
-  padding-left: 6px;
-}
-
-.exact-logo{
-  height: 34px;          /* adjust if needed */
-  display: block;
-}
-
-/* Optional: subtle hover polish */
-.logo-link:hover{
-  opacity: 0.9;
-}
-
-.page-header{
-  display: flex;
-  align-items: center;
-  justify-content: flex-start; /* logo on the left */
-  margin-bottom: 18px;
-}
-
-.logo-link{
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
-}
-
-.exact-logo{
-  height: 42px;
-  width: auto;
-  object-fit: contain;
-  opacity: 0.95;
-  transition: opacity .15s ease, transform .05s ease;
-}
-
-.logo-link:hover .exact-logo{ opacity: 1; }
-.logo-link:active .exact-logo{ transform: translateY(1px); }
-
-@media (max-width: 600px){
-  .exact-logo{ height: 32px; }
-}
-
-
+      
       h2{
         font-size: 13px;
         font-weight: 600;
@@ -123,20 +75,6 @@
   gap: 14px;
 }
 
-/* Logo */
-.exact-logo{
-  height: 34px;
-  display: block;
-}
-
-.logo-link{
-  display: inline-flex;
-  align-items: center;
-}
-
-.logo-link:hover{
-  opacity: 0.9;
-}
 
 /* User block */
 .user-box{
@@ -373,17 +311,12 @@
   </head>
 
   <body>
-   <div class="page-header">
-  <a href="./" class="logo-link" aria-label="EXACT Portal home">
-    <img src="assets/logo.png" alt="EXACT Cosmetics" class="exact-logo">
-  </a>
-</div>
 
-      <div id="topBar" class="topbar" style="display:none;">
+    <div id="topBar" class="topbar" style="display:none;">
   <div class="topbar-inner">
 
     <!-- Logo -->
-    <a href="/" class="logo-link">
+    <a href="./" class="logo-link">
       <img src="./assets/logo.png" alt="EXACT" class="exact-logo">
     </a>
 
