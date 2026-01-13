@@ -142,6 +142,15 @@ window.addEventListener("DOMContentLoaded", () => {
   const viewCustomerMgmt = document.getElementById("viewCustomerMgmt");
   const viewWelcome = document.getElementById("viewWelcome");
   const viewFormulary = document.getElementById("viewFormulary");
+  const fxTabIngredients = document.getElementById("fxTabIngredients");
+const fxTabBases = document.getElementById("fxTabBases");
+const fxTabBoosters = document.getElementById("fxTabBoosters");
+const fxMsg = document.getElementById("fxMsg");
+
+const fxPanelIngredients = document.getElementById("fxPanelIngredients");
+const fxPanelBases = document.getElementById("fxPanelBases");
+const fxPanelBoosters = document.getElementById("fxPanelBoosters");
+
 
   // Customer Mgmt UI (new)
   const cmViewBtn = document.getElementById("cmViewBtn");
@@ -646,6 +655,20 @@ async function runAgentSearch(term) {
   }
 
   // ---------- menu + views ----------
+  function setFormularyTab(tabKey) {
+  // panels
+  show(fxPanelIngredients, tabKey === "ingredients");
+  show(fxPanelBases, tabKey === "bases");
+  show(fxPanelBoosters, tabKey === "boosters");
+
+  // button active styling (reuse .active like menu buttons)
+  if (fxTabIngredients) fxTabIngredients.classList.toggle("active", tabKey === "ingredients");
+  if (fxTabBases) fxTabBases.classList.toggle("active", tabKey === "bases");
+  if (fxTabBoosters) fxTabBoosters.classList.toggle("active", tabKey === "boosters");
+
+  if (fxMsg) fxMsg.textContent = "";
+}
+
   function setActiveView(viewKey) {
     activeViewKey = viewKey;
     if (viewKey === "agents" && currentProfile?.role !== "admin") return;
@@ -654,8 +677,7 @@ show(viewWelcome, false);
 show(viewCustomerMgmt, viewKey === "customers");
 show(viewAgentMgmt, viewKey === "agents");
 show(viewFormulary, viewKey === "formulary");
-
-
+    if (viewKey === "formulary") setFormularyTab("ingredients");
 
     if (menuItems) {
       const btns = menuItems.querySelectorAll("button[data-view]");
@@ -844,6 +866,10 @@ if (amSearch) amSearch.addEventListener("keydown", async (e) => {
     await runAgentSearch(amSearch.value || "");
   }
 });
+
+  if (fxTabIngredients) fxTabIngredients.addEventListener("click", () => setFormularyTab("ingredients"));
+if (fxTabBases) fxTabBases.addEventListener("click", () => setFormularyTab("bases"));
+if (fxTabBoosters) fxTabBoosters.addEventListener("click", () => setFormularyTab("boosters"));
 
   // live validation listeners (once)
   [firstNameInput, lastNameInput, custEmailInput, custPhoneInput].forEach((el) => {
