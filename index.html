@@ -327,13 +327,29 @@ button.action-pill {
 }
 /* Subtle EDIT action pill */
 .action-pill.edit-pill {
-  min-width: 84px;          /* smaller than standard pills */
+  min-width: 84px;
   height: 32px;
-  font-weight: 500;        /* not bold */
-  background: #fff;        /* not black */
+  font-weight: 500;
+  font-size: 12px;
+
+  background: #fff;
   color: var(--text);
-  border-color: var(--line);
+
+  border: 1px solid rgba(15, 20, 25, 0.28); /* stronger, deliberate */
 }
+/* Subtle DELETE action pill */
+.action-pill.delete-pill {
+  min-width: 84px;
+  height: 32px;
+  font-weight: 500;
+  font-size: 12px;
+
+  background: #fff;
+  color: var(--danger);
+
+  border: 1px solid rgba(180, 35, 24, 0.45);
+}
+
 
     </style>
   </head>
