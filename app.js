@@ -320,21 +320,25 @@ window.addEventListener("DOMContentLoaded", () => {
     `.trim();
   }
 
-  // ---------- INGREDIENT row renderer (simple row: PSI | INCI | Description) ----------
-  function buildIngredientRowHTML(i) {
-    const id = escapeHtml(i.id);
-    const psi = escapeHtml((i.psi_number || "").trim());
-    const inci = escapeHtml((i.inci_name || "").trim());
-    const desc = escapeHtml((i.short_description || "").trim());
+ // ---------- INGREDIENT row renderer (row: PSI | INCI | Description | Actions) ----------
+function buildIngredientRowHTML(i) {
+  const id = escapeHtml(i.id);
+  const psi = escapeHtml((i.psi_number || "").trim());
+  const inci = escapeHtml((i.inci_name || "").trim());
+  const desc = escapeHtml((i.short_description || "").trim());
 
-    return `
-      <div class="ingredient-row" data-ingredient-id="${id}">
-        <div class="ingredient-cell ingredient-psi">${psi}</div>
-        <div class="ingredient-cell ingredient-inci">${inci}</div>
-        <div class="ingredient-cell ingredient-desc">${desc}</div>
+  return `
+    <div class="ingredient-row" data-ingredient-id="${id}" role="button" tabindex="0" aria-label="Edit ingredient ${psi}">
+      <div class="ingredient-cell ingredient-psi">${psi}</div>
+      <div class="ingredient-cell ingredient-inci">${inci}</div>
+      <div class="ingredient-cell ingredient-desc">${desc}</div>
+      <div class="ingredient-cell ingredient-actions">
+        <button class="ing-link" type="button" data-action="edit">Edit</button>
+        <button class="ing-link ing-delete" type="button" data-action="delete">Delete</button>
       </div>
-    `.trim();
-  }
+    </div>
+  `.trim();
+}
 
   // ---------- agent mgmt screen states ----------
   function resetAgentScreen() {
@@ -391,6 +395,79 @@ window.addEventListener("DOMContentLoaded", () => {
         setAgentMsg("Editing agent — click Save agent to update.");
         return;
       }
+function ensureIngredientListDelegation() {
+  if (!fxIngList) return;
+  if (fxIngList.dataset.bound === "1") return;
+
+  const doEdit = (i) => {
+    editingIngredientId = i.id;
+    if (fxIngPsi) fxIngPsi.value = i.psi_number || "";
+    if (fxIngInci) fxIngInci.value = i.inci_name || "";
+    if (fxIngDesc) fxIngDesc.value = i.short_description || "";
+    showAddIngredientPanel();
+    setFxIngMsg("Editing ingredient — click Save ingredient to update.");
+  };
+
+  fxIngList.addEventListener("click", async (e) => {
+    const row = e.target.closest(".ingredient-row");
+    if (!row) return;
+
+    const ingId = row.getAttribute("data-ingredient-id");
+    const i = ingredientsById[ingId];
+    if (!i) return;
+
+    const btn = e.target.closest("button[data-action]");
+    const action = btn?.getAttribute("data-action") || null;
+
+    // Delete button
+    if (action === "delete") {
+      e.preventDefault();
+      e.stopPropagation();
+
+      setFxIngMsg("");
+      const label = (i.inci_name || "").trim() || (i.psi_number || "").trim() || "this ingredient";
+      const ok = await confirmExact(`Delete ${label}? This cannot be undone.`);
+      if (!ok) return;
+
+      const { data, error } = await supabaseClient
+        .from("ingredients")
+        .delete()
+        .eq("id", i.id)
+        .select("id");
+
+      if (error) { setFxIngMsg("Delete error: " + error.message); return; }
+      if (!data || data.length === 0) { setFxIngMsg("Delete blocked (RLS) — no rows deleted."); return; }
+
+      setFxIngMsg("Deleted ✅");
+      await runIngredientSearch(fxIngSearch?.value || "");
+      return;
+    }
+
+    // Edit button OR click row
+    doEdit(i);
+  });
+
+  // Keyboard: Enter/Space edits
+  fxIngList.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const row = e.target.closest(".ingredient-row");
+    if (!row) return;
+
+    e.preventDefault();
+    const ingId = row.getAttribute("data-ingredient-id");
+    const i = ingredientsById[ingId];
+    if (!i) return;
+
+    editingIngredientId = i.id;
+    if (fxIngPsi) fxIngPsi.value = i.psi_number || "";
+    if (fxIngInci) fxIngInci.value = i.inci_name || "";
+    if (fxIngDesc) fxIngDesc.value = i.short_description || "";
+    showAddIngredientPanel();
+    setFxIngMsg("Editing ingredient — click Save ingredient to update.");
+  });
+
+  fxIngList.dataset.bound = "1";
+}
 
       if (action === "delete") {
         setAgentMsg("");
@@ -710,41 +787,43 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   // ✅ Ingredients list: no click delegation / no row actions
-  async function runIngredientSearch(term) {
-    if (!fxIngList) return;
+ async function runIngredientSearch(term) {
+  if (!fxIngList) return;
 
-    fxIngList.className = "ingredient-list";
-    fxIngList.innerHTML = "";
-    ingredientsById = {};
-    setFxIngMsg("Searching…");
+  ensureIngredientListDelegation();
 
-    let q = supabaseClient
-      .from("ingredients")
-      .select("id, psi_number, inci_name, short_description")
-      .order("psi_number", { ascending: true });
+  fxIngList.className = "ingredient-list";
+  fxIngList.innerHTML = "";
+  ingredientsById = {};
+  setFxIngMsg("Searching…");
 
-    const t = (term || "").trim();
-    if (t) {
-      const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
-      q = q.or([
-        `psi_number.ilike.%${esc}%`,
-        `inci_name.ilike.%${esc}%`,
-        `short_description.ilike.%${esc}%`
-      ].join(","));
-    }
+  let q = supabaseClient
+    .from("ingredients")
+    .select("id, psi_number, inci_name, short_description")
+    .order("psi_number", { ascending: true });
 
-    const { data, error } = await q;
-
-    if (error) { setFxIngMsg("Search error: " + error.message); return; }
-
-    const rows = data || [];
-    rows.forEach(i => { ingredientsById[i.id] = i; });
-
-    fxIngList.innerHTML = rows.map(buildIngredientRowHTML).join("");
-
-    if (rows.length === 0) setFxIngMsg("No matches found.");
-    else setFxIngMsg(`Found ${rows.length} ingredient${rows.length === 1 ? "" : "s"}.`);
+  const t = (term || "").trim();
+  if (t) {
+    const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
+    q = q.or([
+      `psi_number.ilike.%${esc}%`,
+      `inci_name.ilike.%${esc}%`,
+      `short_description.ilike.%${esc}%`
+    ].join(","));
   }
+
+  const { data, error } = await q;
+
+  if (error) { setFxIngMsg("Search error: " + error.message); return; }
+
+  const rows = data || [];
+  rows.forEach(i => { ingredientsById[i.id] = i; });
+
+  fxIngList.innerHTML = rows.map(buildIngredientRowHTML).join("");
+
+  if (rows.length === 0) setFxIngMsg("No matches found.");
+  else setFxIngMsg(`Found ${rows.length} ingredient${rows.length === 1 ? "" : "s"}. Click a row to edit.`);
+}
 
   // ---------- menu + views ----------
   function setActiveView(viewKey) {
