@@ -679,12 +679,21 @@ if (viewKey === "agents") resetAgentScreen();
 if (role === "admin") {
   addMenuBtn("Agent Management", "agents");
   addMenuBtn("Customer Management", "customers");
-  setActiveView("agents");
 } else {
   // Agent users only see Customer Management
   addMenuBtn("Customer Management", "customers");
-  setActiveView("customers");
 }
+
+// IMPORTANT: do not auto-open any view on login
+activeViewKey = null;
+show(viewCustomerMgmt, false);
+show(viewAgentMgmt, false);
+
+if (menuItems) {
+  const btns = menuItems.querySelectorAll("button[data-view]");
+  btns.forEach(b => b.classList.remove("active"));
+}
+
 
   }
 
