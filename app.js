@@ -1,10 +1,9 @@
-console.log("EXACT Agents Portal loaded (v33)");
+console.log("EXACT Agents Portal loaded (v34)");
 
 // NOTE: Supabase anon key is public by design. RLS protects data.
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
+const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WyTPGuhMg_WQbOMJyJ";
 
-// Supabase client (Edge-friendly settings)
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     storage: window.localStorage,
@@ -74,7 +73,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // ---------- validation ----------
   function isValidEmail(email) {
-    if (!email) return true; // optional
+    if (!email) return true;
     const e = email.trim();
     if (e.includes(" ")) return false;
     const at = e.indexOf("@");
@@ -84,7 +83,7 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   function isValidPhone(phone) {
-    if (!phone) return true; // optional
+    if (!phone) return true;
     const digits = phone.replace(/[^\d]/g, "");
     return digits.length >= 7;
   }
@@ -104,7 +103,6 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   function validateCustomerFieldsLive() {
-    // only validate if Add panel is open
     if (!cmAddPanel || cmAddPanel.style.display === "none") return;
 
     const first = (firstNameInput?.value || "").trim();
@@ -220,21 +218,19 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // ---------- state ----------
   let currentSession = null;
-  let currentProfile = null;  // {agent_id, role, status...}
+  let currentProfile = null;
   let hydratedUserId = null;
 
   let activeViewKey = null;
 
-  // admin maps
-  let agentNameMap = {};        // {id: name}
-  let customersById = {};       // {customerId: row}
-  let agentsById = {};          // {agentId: row}
+  let agentNameMap = {};
+  let customersById = {};
+  let agentsById = {};
 
   let editingCustomerId = null;
   let editingAgentId = null;
 
-  // Ingredients state
-  let ingredientsById = {};     // {ingredientId: row}
+  let ingredientsById = {};
   let editingIngredientId = null;
 
   const setAgentMsg = (t) => { if (agentMsg) agentMsg.textContent = t || ""; };
@@ -320,27 +316,79 @@ window.addEventListener("DOMContentLoaded", () => {
     `.trim();
   }
 
- // ---------- INGREDIENT row renderer ----------
-function buildIngredientRowHTML(i) {
-  const id = escapeHtml(i.id);
-  const psi = escapeHtml((i.psi_number || "").trim());
-  const inci = escapeHtml((i.inci_name || "").trim());
-  const desc = escapeHtml((i.short_description || "").trim());
+  // ---------- INGREDIENT row renderer ----------
+  function buildIngredientRowHTML(i) {
+    const id = escapeHtml(i.id);
+    const psi = escapeHtml((i.psi_number || "").trim());
+    const inci = escapeHtml((i.inci_name || "").trim());
+    const desc = escapeHtml((i.short_description || "").trim());
 
-  return `
-    <div class="ingredient-row" data-ingredient-id="${id}">
-      <div class="ingredient-cell ingredient-psi">${psi}</div>
-      <div class="ingredient-cell ingredient-inci">${inci}</div>
-      <div class="ingredient-cell ingredient-desc">${desc}</div>
+    return `
+      <div class="ingredient-row" data-ingredient-id="${id}">
+        <div class="ingredient-cell ingredient-psi">${psi}</div>
+        <div class="ingredient-cell ingredient-inci">${inci}</div>
+        <div class="ingredient-cell ingredient-desc">${desc}</div>
 
-      <div class="ingredient-actions">
-        <button class="ing-link" data-action="edit" type="button">Edit</button>
-        <button class="ing-link ing-delete" data-action="delete" type="button">Delete</button>
+        <div class="ingredient-actions">
+          <button class="ing-link" data-action="edit" type="button">Edit</button>
+          <button class="ing-link ing-delete" data-action="delete" type="button">Delete</button>
+        </div>
       </div>
-    </div>
-  `.trim();
-}
+    `.trim();
+  }
 
+  // ---------- ingredients click delegation (FIXED: correct scope + selector) ----------
+  function ensureIngredientListDelegation() {
+    if (!fxIngList) return;
+    if (fxIngList.dataset.bound === "1") return;
+
+    fxIngList.addEventListener("click", async (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn) return;
+
+      const row = e.target.closest(".ingredient-row");
+      if (!row) return;
+
+      const ingId = row.getAttribute("data-ingredient-id");
+      const action = btn.getAttribute("data-action");
+      const i = ingredientsById[ingId];
+      if (!i) return;
+
+      if (action === "edit") {
+        editingIngredientId = i.id;
+        if (fxIngPsi) fxIngPsi.value = i.psi_number || "";
+        if (fxIngInci) fxIngInci.value = i.inci_name || "";
+        if (fxIngDesc) fxIngDesc.value = i.short_description || "";
+        showAddIngredientPanel();
+        setFxIngMsg("Editing ingredient — click Save ingredient to update.");
+        return;
+      }
+
+      if (action === "delete") {
+        const label =
+          (i.inci_name || "").trim() ||
+          (i.psi_number || "").trim() ||
+          "this ingredient";
+
+        const ok = await confirmExact(`Delete ${label}? This cannot be undone.`);
+        if (!ok) return;
+
+        const { data, error } = await supabaseClient
+          .from("ingredients")
+          .delete()
+          .eq("id", i.id)
+          .select("id");
+
+        if (error) { setFxIngMsg("Delete error: " + error.message); return; }
+        if (!data || data.length === 0) { setFxIngMsg("Delete blocked (RLS) — no rows deleted."); return; }
+
+        setFxIngMsg("Deleted ✅");
+        await runIngredientSearch(fxIngSearch?.value || "");
+      }
+    });
+
+    fxIngList.dataset.bound = "1";
+  }
 
   // ---------- agent mgmt screen states ----------
   function resetAgentScreen() {
@@ -397,62 +445,6 @@ function buildIngredientRowHTML(i) {
         setAgentMsg("Editing agent — click Save agent to update.");
         return;
       }
-function ensureIngredientListDelegation() {
-  if (!fxIngList) return;
-  if (fxIngList.dataset.bound === "1") return;
-
-  fxIngList.addEventListener("click", async (e) => {
-    const btn = e.target.closest("button[data-action]");
-    if (!btn) return;
-
-    const row = e.target.closest(".ingredient-row"); // ✅ correct selector
-    if (!row) return;
-
-    const ingId = row.getAttribute("data-ingredient-id");
-    const action = btn.getAttribute("data-action");
-    const i = ingredientsById[ingId];
-    if (!i) return;
-
-    if (action === "edit") {
-      editingIngredientId = i.id;
-      if (fxIngPsi) fxIngPsi.value = i.psi_number || "";
-      if (fxIngInci) fxIngInci.value = i.inci_name || "";
-      if (fxIngDesc) fxIngDesc.value = i.short_description || "";
-
-      showAddIngredientPanel();
-      setFxIngMsg("Editing ingredient — click Save ingredient to update.");
-      return;
-    }
-
-    if (action === "delete") {
-      setFxIngMsg("");
-
-      const label =
-        (i.inci_name || "").trim() ||
-        (i.psi_number || "").trim() ||
-        "this ingredient";
-
-      const ok = await confirmExact(`Delete ${label}? This cannot be undone.`);
-      if (!ok) return;
-
-      const { data, error } = await supabaseClient
-        .from("ingredients")
-        .delete()
-        .eq("id", i.id)
-        .select("id");
-
-      if (error) { setFxIngMsg("Delete error: " + error.message); return; }
-      if (!data || data.length === 0) { setFxIngMsg("Delete blocked (RLS) — no rows deleted."); return; }
-
-      setFxIngMsg("Deleted ✅");
-      await runIngredientSearch(fxIngSearch?.value || "");
-    }
-  });
-
-  fxIngList.dataset.bound = "1";
-}
-
-
 
       if (action === "delete") {
         setAgentMsg("");
@@ -755,10 +747,8 @@ function ensureIngredientListDelegation() {
     show(fxIngClearBtn, true);
 
     if (fxIngList) fxIngList.className = "ingredient-list";
-
     if (fxIngSearch) fxIngSearch.focus();
 
-    // ✅ Load immediately so “View ingredients” is never a blank state
     runIngredientSearch("");
   }
 
@@ -771,44 +761,43 @@ function ensureIngredientListDelegation() {
     if (fxIngPsi) fxIngPsi.focus();
   }
 
-  // ✅ Ingredients list: no click delegation / no row actions
- async function runIngredientSearch(term) {
-  if (!fxIngList) return;
+  async function runIngredientSearch(term) {
+    if (!fxIngList) return;
 
-  ensureIngredientListDelegation();
+    ensureIngredientListDelegation();
 
-  fxIngList.className = "ingredient-list";
-  fxIngList.innerHTML = "";
-  ingredientsById = {};
-  setFxIngMsg("Searching…");
+    fxIngList.className = "ingredient-list";
+    fxIngList.innerHTML = "";
+    ingredientsById = {};
+    setFxIngMsg("Searching…");
 
-  let q = supabaseClient
-    .from("ingredients")
-    .select("id, psi_number, inci_name, short_description")
-    .order("psi_number", { ascending: true });
+    let q = supabaseClient
+      .from("ingredients")
+      .select("id, psi_number, inci_name, short_description")
+      .order("psi_number", { ascending: true });
 
-  const t = (term || "").trim();
-  if (t) {
-    const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
-    q = q.or([
-      `psi_number.ilike.%${esc}%`,
-      `inci_name.ilike.%${esc}%`,
-      `short_description.ilike.%${esc}%`
-    ].join(","));
+    const t = (term || "").trim();
+    if (t) {
+      const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
+      q = q.or([
+        `psi_number.ilike.%${esc}%`,
+        `inci_name.ilike.%${esc}%`,
+        `short_description.ilike.%${esc}%`
+      ].join(","));
+    }
+
+    const { data, error } = await q;
+
+    if (error) { setFxIngMsg("Search error: " + error.message); return; }
+
+    const rows = data || [];
+    rows.forEach(i => { ingredientsById[i.id] = i; });
+
+    fxIngList.innerHTML = rows.map(buildIngredientRowHTML).join("");
+
+    if (rows.length === 0) setFxIngMsg("No matches found.");
+    else setFxIngMsg(`Found ${rows.length} ingredient${rows.length === 1 ? "" : "s"}.`);
   }
-
-  const { data, error } = await q;
-
-  if (error) { setFxIngMsg("Search error: " + error.message); return; }
-
-  const rows = data || [];
-  rows.forEach(i => { ingredientsById[i.id] = i; });
-
-  fxIngList.innerHTML = rows.map(buildIngredientRowHTML).join("");
-
-  if (rows.length === 0) setFxIngMsg("No matches found.");
-  else setFxIngMsg(`Found ${rows.length} ingredient${rows.length === 1 ? "" : "s"}. Click a row to edit.`);
-}
 
   // ---------- menu + views ----------
   function setActiveView(viewKey) {
@@ -830,7 +819,7 @@ function ensureIngredientListDelegation() {
 
     if (viewKey === "formulary") {
       setActiveFormularyTab("ingredients");
-      resetIngredientsScreen(); // neutral until user clicks buttons
+      resetIngredientsScreen();
     }
   }
 
@@ -1016,7 +1005,6 @@ function ensureIngredientListDelegation() {
 
       showViewIngredientsPanel();
       await runIngredientSearch("");
-
     });
   }
 
