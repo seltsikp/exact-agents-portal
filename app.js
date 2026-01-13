@@ -1,4 +1,4 @@
-console.log("EXACT Agents Portal loaded (v30)");
+console.log("EXACT Agents Portal loaded (v31)");
 
 // NOTE: Supabase anon key is public by design. RLS protects data.
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
@@ -156,6 +156,28 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const customerList = document.getElementById("customerList");
 
+  const viewAgentMgmt = document.getElementById("viewAgentMgmt");
+
+// Agent Mgmt UI
+const amViewBtn = document.getElementById("amViewBtn");
+const amAddBtn = document.getElementById("amAddBtn");
+const amClearBtn = document.getElementById("amClearBtn");
+const agentMsg = document.getElementById("agentMsg");
+
+const amViewPanel = document.getElementById("amViewPanel");
+const amAddPanel = document.getElementById("amAddPanel");
+
+const amSearch = document.getElementById("amSearch");
+const amSearchBtn = document.getElementById("amSearchBtn");
+const amShowAllBtn = document.getElementById("amShowAllBtn");
+
+const agentList = document.getElementById("agentList");
+
+// Add/Edit agent field
+const agentNameInput = document.getElementById("agentName");
+const addAgentBtn = document.getElementById("addAgentBtn");
+
+
   // Add form fields
   const firstNameInput = document.getElementById("firstName");
   const lastNameInput = document.getElementById("lastName");
@@ -181,6 +203,10 @@ window.addEventListener("DOMContentLoaded", () => {
   let customersById = {};       // {customerId: row}
 
   let editingCustomerId = null; // for edit mode (after search results)
+let agentsById = {};          // {agentId: row}
+let editingAgentId = null;    // for edit mode (after search results)
+
+const setAgentMsg = (t) => { if (agentMsg) agentMsg.textContent = t || ""; };
 
   const setAuthMsg = (t) => { if (authMsg) authMsg.textContent = t || ""; };
   const setCustMsg = (t) => { if (custMsg) custMsg.textContent = t || ""; };
@@ -231,6 +257,156 @@ window.addEventListener("DOMContentLoaded", () => {
       </div>
     `.trim();
   }
+// ---------- agent mgmt: premium row renderer ----------
+function buildAgentRowHTML(a) {
+  const id = escapeHtml(a.id);
+  const name = escapeHtml((a.name || "").trim() || "Unnamed agent");
+  const created = formatDateShort(a.created_at);
+
+  const createdPill = created ? `<span class="pill-soft">Created: ${escapeHtml(created)}</span>` : "";
+
+  return `
+    <div class="customer-row" data-agent-id="${id}">
+      <div class="customer-main">
+        <div class="name">${name}</div>
+        <div class="meta"><span style="opacity:.75;">Agent ID: ${id}</span></div>
+      </div>
+
+      <div class="customer-context">
+        ${createdPill}
+      </div>
+
+      <div class="customer-actions">
+        <button class="btn btn-primary" data-action="edit" type="button">Edit</button>
+        <button class="btn btn-danger" data-action="delete" type="button">Delete</button>
+      </div>
+    </div>
+  `.trim();
+}
+
+// ---------- agent mgmt screen states ----------
+function resetAgentScreen() {
+  show(amViewPanel, false);
+  show(amAddPanel, false);
+  show(amClearBtn, false);
+
+  if (agentList) agentList.innerHTML = "";
+  agentsById = {};
+  editingAgentId = null;
+
+  if (agentNameInput) agentNameInput.value = "";
+  setAgentMsg("");
+}
+
+function showViewAgentsPanel() {
+  show(amViewPanel, true);
+  show(amAddPanel, false);
+  show(amClearBtn, true);
+
+  if (amSearch) amSearch.focus();
+  setAgentMsg("Enter a search term or click “Show all”.");
+}
+
+function showAddAgentPanel() {
+  show(amViewPanel, false);
+  show(amAddPanel, true);
+  show(amClearBtn, true);
+
+  setAgentMsg("");
+  if (agentNameInput) agentNameInput.focus();
+}
+
+function ensureAgentListDelegation() {
+  if (!agentList) return;
+  if (agentList.dataset.bound === "1") return;
+
+  agentList.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+
+    const row = e.target.closest(".customer-row");
+    if (!row) return;
+
+    const agentId = row.getAttribute("data-agent-id");
+    const action = btn.getAttribute("data-action");
+    const a = agentsById[agentId];
+    if (!a) return;
+
+    if (action === "edit") {
+      editingAgentId = a.id;
+      if (agentNameInput) agentNameInput.value = a.name || "";
+      showAddAgentPanel();
+      setAgentMsg("Editing agent — click Save agent to update.");
+      return;
+    }
+
+    if (action === "delete") {
+      setAgentMsg("");
+
+      const agentName = (a.name || "").trim() || "this agent";
+      const ok = await confirmExact(`Delete ${agentName}? This cannot be undone.`);
+      if (!ok) return;
+
+      const { data, error } = await supabaseClient
+        .from("agents")
+        .delete()
+        .eq("id", a.id)
+        .select("id");
+
+      if (error) { setAgentMsg("Delete error: " + error.message); return; }
+      if (!data || data.length === 0) { setAgentMsg("Delete blocked (RLS) — no rows deleted."); return; }
+
+      setAgentMsg("Deleted ✅");
+
+      // keep admin dropdown + map fresh
+      await loadAgentNameMap();
+      await loadAgentsForAssignDropdown();
+
+      await runAgentSearch(amSearch?.value || "");
+    }
+  });
+
+  agentList.dataset.bound = "1";
+}
+
+// ---------- agent search / load ----------
+async function runAgentSearch(term) {
+  if (!agentList) return;
+
+  ensureAgentListDelegation();
+
+  agentList.innerHTML = "";
+  agentsById = {};
+  setAgentMsg("Searching…");
+
+  // NOTE: using only columns we already know exist: id, name, created_at
+  let q = supabaseClient
+    .from("agents")
+    .select("id, name, created_at")
+    .order("created_at", { ascending: false });
+
+  // empty term -> ALL rows (RLS still applies)
+  const t = (term || "").trim();
+  if (t) {
+    const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
+    q = q.ilike("name", `%${esc}%`);
+  }
+
+  const { data, error } = await q;
+
+  if (error) {
+    setAgentMsg("Search error: " + error.message);
+    return;
+  }
+
+  const rows = data || [];
+  rows.forEach(a => { agentsById[a.id] = a; });
+
+  agentList.innerHTML = rows.map(buildAgentRowHTML).join("");
+
+  if (rows.length === 0) setAgentMsg("No matches found.");
+  else setAgentMsg(`Found ${rows.length} agent${rows.length === 1 ? "" : "s"}.`);
+}
 
   // ---------- auth + profile ----------
   async function loadProfileForUser(userId) {
@@ -458,8 +634,10 @@ window.addEventListener("DOMContentLoaded", () => {
   // ---------- menu + views ----------
   function setActiveView(viewKey) {
     activeViewKey = viewKey;
+    if (viewKey === "agents" && currentProfile?.role !== "admin") return;
 
-    show(viewCustomerMgmt, viewKey === "customers");
+show(viewCustomerMgmt, viewKey === "customers");
+show(viewAgentMgmt, viewKey === "agents");
 
     if (menuItems) {
       const btns = menuItems.querySelectorAll("button[data-view]");
@@ -467,9 +645,9 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     // For Customer Management: DO NOT auto-load anything
-    if (viewKey === "customers") {
-      resetCustomerScreen();
-    }
+    if (viewKey === "customers") resetCustomerScreen();
+if (viewKey === "agents") resetAgentScreen();
+
   }
 
   function renderMenuForRole(role) {
@@ -485,10 +663,17 @@ window.addEventListener("DOMContentLoaded", () => {
       menuItems.appendChild(b);
     };
 
-    // You can add other menu items here later
-    addMenuBtn("Customer Management", "customers");
+// Admin gets Agent Management + Customer Management
+if (role === "admin") {
+  addMenuBtn("Agent Management", "agents");
+  addMenuBtn("Customer Management", "customers");
+  setActiveView("agents");
+} else {
+  // Agent users only see Customer Management
+  addMenuBtn("Customer Management", "customers");
+  setActiveView("customers");
+}
 
-    setActiveView("customers");
   }
 
   // ---------- logged in/out shell ----------
@@ -510,9 +695,12 @@ window.addEventListener("DOMContentLoaded", () => {
     hydratedUserId = null;
     agentNameMap = {};
     customersById = {};
+    agentsById = {};
+    editingAgentId = null;
     activeViewKey = null;
 
     resetCustomerScreen();
+    resetAgentScreen();
   }
 
   function setLoggedInShell(session) {
@@ -558,6 +746,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
       renderMenuForRole(profile.role);
       resetCustomerScreen();
+      resetAgentScreen();
 
     } catch (e) {
       console.error("hydrateAfterLogin error:", e);
@@ -592,6 +781,34 @@ window.addEventListener("DOMContentLoaded", () => {
       await runCustomerSearch(cmSearch.value || "");
     }
   });
+// ---------- bind agent mgmt buttons ----------
+if (amViewBtn) amViewBtn.addEventListener("click", () => {
+  showViewAgentsPanel();
+});
+
+if (amAddBtn) amAddBtn.addEventListener("click", () => {
+  editingAgentId = null;
+  if (agentNameInput) agentNameInput.value = "";
+  showAddAgentPanel();
+});
+
+if (amClearBtn) amClearBtn.addEventListener("click", () => {
+  resetAgentScreen();
+});
+
+if (amSearchBtn) amSearchBtn.addEventListener("click", async () => {
+  await runAgentSearch(amSearch?.value || "");
+});
+
+if (amShowAllBtn) amShowAllBtn.addEventListener("click", async () => {
+  await runAgentSearch("");
+});
+
+if (amSearch) amSearch.addEventListener("keydown", async (e) => {
+  if (e.key === "Enter") {
+    await runAgentSearch(amSearch.value || "");
+  }
+});
 
   // live validation listeners (once)
   [firstNameInput, lastNameInput, custEmailInput, custPhoneInput].forEach((el) => {
@@ -675,6 +892,58 @@ window.addEventListener("DOMContentLoaded", () => {
       showViewCustomersPanel();
     });
   }
+// ---------- add/edit agent ----------
+if (addAgentBtn) {
+  addAgentBtn.addEventListener("click", async () => {
+    setAgentMsg("");
+
+    const name = (agentNameInput?.value || "").trim();
+    if (!name) {
+      setAgentMsg("Agent name is required.");
+      return;
+    }
+
+    // EDIT mode
+    if (editingAgentId) {
+      const { data, error } = await supabaseClient
+        .from("agents")
+        .update({ name })
+        .eq("id", editingAgentId)
+        .select("id");
+
+      if (error) { setAgentMsg("Update error: " + error.message); return; }
+      if (!data || data.length === 0) { setAgentMsg("Update blocked (RLS) — no rows updated."); return; }
+
+      setAgentMsg("Saved ✅");
+      editingAgentId = null;
+      if (agentNameInput) agentNameInput.value = "";
+
+      await loadAgentNameMap();
+      await loadAgentsForAssignDropdown();
+
+      showViewAgentsPanel();
+      return;
+    }
+
+    // ADD mode
+    const { error } = await supabaseClient
+      .from("agents")
+      .insert([{ name }]);
+
+    if (error) {
+      setAgentMsg("Insert error: " + error.message);
+      return;
+    }
+
+    setAgentMsg("Agent added ✅");
+    if (agentNameInput) agentNameInput.value = "";
+
+    await loadAgentNameMap();
+    await loadAgentsForAssignDropdown();
+
+    showViewAgentsPanel();
+  });
+}
 
   // ---------- login ----------
   if (loginBtn) {
