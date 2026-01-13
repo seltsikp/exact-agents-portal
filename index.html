@@ -332,6 +332,44 @@
             <h2 style="margin-top:0;">Menu</h2>
             <div id="menuItems"></div>
           </div>
+<!-- AGENT MANAGEMENT -->
+<div id="viewAgentMgmt" class="card" style="display:none;">
+  <h2>Agent Management</h2>
+
+  <!-- top action buttons -->
+  <div class="cm-actions">
+    <button id="amViewBtn" class="btn-gold" type="button">View agents</button>
+    <button id="amAddBtn" type="button">Add agent</button>
+    <button id="amClearBtn" type="button" style="display:none;">Clear</button>
+    <p id="agentMsg" class="subtle" style="margin:0;"></p>
+  </div>
+
+  <!-- VIEW AGENTS: search -->
+  <div id="amViewPanel" style="display:none; margin-top:6px;">
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+      <div style="flex:1; min-width:240px;">
+        <label class="subtle" for="amSearch" style="display:block; margin-bottom:6px;">Search (name)</label>
+        <input id="amSearch" placeholder="Agent / clinic name…" />
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button id="amSearchBtn" class="btn-primary" type="button">Search</button>
+        <button id="amShowAllBtn" type="button">Show all</button>
+      </div>
+    </div>
+
+    <div id="agentList" class="customer-list"></div>
+  </div>
+
+  <!-- ADD AGENT: form -->
+  <div id="amAddPanel" style="display:none; margin-top:6px;">
+    <div style="margin-bottom:10px;">
+      <label class="subtle" for="agentName" style="display:block; margin-bottom:6px;">Agent / clinic name</label>
+      <input id="agentName" placeholder="e.g. Dubai Aesthetics Clinic" />
+    </div>
+
+    <button id="addAgentBtn" class="btn-primary" type="button">Save agent</button>
+  </div>
+</div>
 
           <!-- CONTENT -->
           <div>
