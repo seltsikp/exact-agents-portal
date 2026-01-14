@@ -24,6 +24,7 @@ export function initLabManagement({ ui, helpers }) {
 
   // temporary in-memory storage (we will replace with Supabase next step)
   let labs = [];
+let editingLabIndex = null;
 
   function clearLabForm() {
     if (lmName) lmName.value = "";
@@ -59,10 +60,11 @@ export function initLabManagement({ ui, helpers }) {
           <span class="pill-soft">Local (not saved to DB yet)</span>
         </div>
 
-        <div class="customer-actions">
-          <button class="btn" type="button" data-action="delete" data-idx="${idx}">Delete</button>
-        </div>
-      </div>
+       <div class="customer-actions">
+  <button class="btn btn-soft action-pill edit-pill" type="button" data-action="edit" data-idx="${idx}">Edit</button>
+  <button class="btn action-pill delete-pill" type="button" data-action="delete" data-idx="${idx}">Delete</button>
+</div>
+
     `).join("");
   }
 
@@ -119,25 +121,60 @@ export function initLabManagement({ ui, helpers }) {
       const address = (lmAddress?.value || "").trim() || "";
       const shipping = (lmShipping?.value || "").trim() || "";
 
-      labs.unshift({ name, email, ordersEmail, phone, address, shipping });
-      setLabMsg("Saved ✅ (local only — database next)");
-      clearLabForm();
-      showViewLabsPanel();
+      const record = { name, email, ordersEmail, phone, address, shipping };
+
+if (editingLabIndex !== null) {
+  labs[editingLabIndex] = record;
+  editingLabIndex = null;
+  setLabMsg("Updated ✅ (local only — database next)");
+} else {
+  labs.unshift(record);
+  setLabMsg("Saved ✅ (local only — database next)");
+}
+
+clearLabForm();
+showViewLabsPanel();
+
     });
   }
 
   // delete lab (local)
-  if (labList) {
-    labList.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-action='delete']");
-      if (!btn) return;
-      const idx = Number(btn.getAttribute("data-idx"));
-      if (Number.isNaN(idx)) return;
+ if (labList) {
+  labList.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+
+    const action = btn.getAttribute("data-action");
+    const idx = Number(btn.getAttribute("data-idx"));
+    if (Number.isNaN(idx)) return;
+
+    const l = labs[idx];
+    if (!l) return;
+
+    if (action === "edit") {
+      editingLabIndex = idx;
+
+      if (lmName) lmName.value = l.name || "";
+      if (lmEmail) lmEmail.value = l.email || "";
+      if (lmOrdersEmail) lmOrdersEmail.value = l.ordersEmail || "";
+      if (lmPhone) lmPhone.value = l.phone || "";
+      if (lmAddress) lmAddress.value = l.address || "";
+      if (lmShipping) lmShipping.value = l.shipping || "";
+
+      showAddLabPanel();
+      setLabMsg("Editing lab — update fields and click Save lab.");
+      return;
+    }
+
+    if (action === "delete") {
       labs.splice(idx, 1);
       setLabMsg("Deleted ✅ (local only)");
       renderLabList();
-    });
-  }
+      return;
+    }
+  });
+}
+
 
   return {
     resetLabsScreen
