@@ -1,4 +1,5 @@
 import { showWelcomePanel } from "./modules/welcome.js";
+import { initNavigation } from "./modules/navigation.js";
 console.log("EXACT Agents Portal loaded (v41)");
 
 // =========================================================
@@ -826,71 +827,40 @@ window.addEventListener("DOMContentLoaded", () => {
     show(fxSectionBases, tabKey === "bases");
     show(fxSectionBoosters, tabKey === "boosters");
   }
-
   // =========================================================
-  // BLOCK: VIEWS + MENU  ✅ FIXED WELCOME SUPPORT
+  // BLOCK: VIEWS + MENU (MODULE)
   // =========================================================
-  function setActiveView(viewKey) {
-    activeViewKey = viewKey;
-
-    // permissions
-    if (viewKey === "agents" && currentProfile?.role !== "admin") return;
-    if (viewKey === "formulary" && currentProfile?.role !== "admin") return;
-
-    // ✅ show/hide views
-    show(viewWelcome, viewKey === "welcome");
-    show(viewCustomerMgmt, viewKey === "customers");
-    show(viewAgentMgmt, viewKey === "agents");
-    show(viewFormulary, viewKey === "formulary");
-
-    if (viewKey === "welcome") {
-  showWelcomePanel({ containerEl: welcomeContent });
-}
-
-
-    // ✅ menu highlight
-    if (menuItems) {
-      const btns = menuItems.querySelectorAll("button[data-view]");
-      btns.forEach(b => b.classList.toggle("active", b.getAttribute("data-view") === viewKey));
+  const nav = initNavigation({
+    menuItems,
+    views: {
+      welcome: viewWelcome,
+      customers: viewCustomerMgmt,
+      agents: viewAgentMgmt,
+      formulary: viewFormulary
+    },
+    show,
+    canAccess: (viewKey) => {
+      // permissions
+      if (viewKey === "agents" && currentProfile?.role !== "admin") return false;
+      if (viewKey === "formulary" && currentProfile?.role !== "admin") return false;
+      return true;
+    },
+    onEnter: {
+      welcome: () => {
+        showWelcomePanel({ containerEl: welcomeContent });
+      },
+      customers: () => {
+        resetCustomerScreen();
+      },
+      agents: () => {
+        resetAgentScreen();
+      },
+      formulary: () => {
+        setActiveFormularyTab("ingredients");
+        resetIngredientsScreen();
+      }
     }
-
-    // reset screens only when entering those views
-    if (viewKey === "customers") resetCustomerScreen();
-    if (viewKey === "agents") resetAgentScreen();
-
-    if (viewKey === "formulary") {
-      setActiveFormularyTab("ingredients");
-      resetIngredientsScreen();
-    }
-  }
-
-  function renderMenuForRole(role) {
-    if (!menuItems) return;
-    menuItems.innerHTML = "";
-
-    const addMenuBtn = (label, viewKey) => {
-      const b = document.createElement("button");
-      b.className = "menuBtn";
-      b.textContent = label;
-      b.setAttribute("data-view", viewKey);
-      b.addEventListener("click", () => setActiveView(viewKey));
-      menuItems.appendChild(b);
-    };
-
-    // ✅ Always show Welcome first
-    addMenuBtn("Welcome", "welcome");
-
-    if (role === "admin") {
-      addMenuBtn("Agent Management", "agents");
-      addMenuBtn("Customer Management", "customers");
-      addMenuBtn("EXACT Formulary", "formulary");
-    } else {
-      addMenuBtn("Customer Management", "customers");
-    }
-
-    // ✅ Default view after login
-    setActiveView("welcome");
-  }
+  });
 
   // =========================================================
   // BLOCK: LOGIN/LOGOUT SHELL
@@ -959,7 +929,7 @@ window.addEventListener("DOMContentLoaded", () => {
         if (topBarTitle) topBarTitle.textContent = "Logged in";
         if (topBarSub) topBarSub.textContent = "Profile lookup failed (agent_users). Check RLS / row exists.";
         renderMenuForRole("agent");
-        setActiveView("welcome");
+          nav.setActiveView("welcome");
         return;
       }
 
@@ -977,7 +947,7 @@ window.addEventListener("DOMContentLoaded", () => {
         if (agentClinicName) agentClinicName.value = agentName || "Unknown clinic";
       }
 
-      renderMenuForRole(profile.role);
+        nav.renderMenuForRole(profile.role);
 
       // keep screens neutral until user chooses
       resetCustomerScreen();
