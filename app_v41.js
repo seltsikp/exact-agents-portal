@@ -2,7 +2,7 @@ import { showWelcomePanel } from "./modules/welcome.js";
 import { initNavigation } from "./modules/navigation.js";
 import { initCustomerManagement } from "./modules/customers.js";
 import { initAgentManagement } from "./modules/agents.js";
-
+import { initLabManagement } from "./modules/labs.js";
 
 console.log("EXACT Agents Portal loaded (v41)");
 
@@ -157,6 +157,15 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const customerList = document.getElementById("customerList");
 
+  // Lab Mgmt UI
+const lmViewBtn = document.getElementById("lmViewBtn");
+const lmAddBtn = document.getElementById("lmAddBtn");
+const lmClearBtn = document.getElementById("lmClearBtn");
+const labMsg = document.getElementById("labMsg");
+const lmViewPanel = document.getElementById("lmViewPanel");
+const lmAddPanel = document.getElementById("lmAddPanel");
+
+
   // Agent Mgmt UI
   const amViewBtn = document.getElementById("amViewBtn");
   const amAddBtn = document.getElementById("amAddBtn");
@@ -284,6 +293,17 @@ const agentModule = initAgentManagement({
       await loadAgentsForAssignDropdown();
     }
   }
+});
+const labsModule = initLabManagement({
+  ui: {
+    lmViewBtn,
+    lmAddBtn,
+    lmClearBtn,
+    labMsg,
+    lmViewPanel,
+    lmAddPanel
+  },
+  helpers: { show }
 });
 
   // =========================================================
@@ -628,17 +648,8 @@ const agentModule = initAgentManagement({
       agents: () => {
   agentModule.resetAgentScreen();
 },
-      labs: () => {
-  // temporary: simple placeholder until we build the module
-  const msg = document.getElementById("labMsg");
-  const viewPanel = document.getElementById("lmViewPanel");
-  const addPanel = document.getElementById("lmAddPanel");
-  const clearBtn = document.getElementById("lmClearBtn");
-
-  if (msg) msg.textContent = "Lab Management loaded ✅ (module next)";
-  if (viewPanel) viewPanel.style.display = "none";
-  if (addPanel) addPanel.style.display = "none";
-  if (clearBtn) clearBtn.style.display = "inline-block";
+   labs: () => {
+  labsModule.resetLabsScreen();
 },
 
       formulary: () => {
