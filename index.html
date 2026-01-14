@@ -844,8 +844,44 @@
 <div id="fxSectionProducts" class="tabSection">
   <p class="subtle" style="margin:0;">Formulated Products: coming next step.</p>
 </div>
+ <!-- ===================================================
+                 BLOCK: PRODUCT TYPES VIEW
+                 =================================================== -->
+  <section id="viewProductTypes" style="display:none;">
+  <div class="card">
+    <h2>Product Types</h2>
 
-  
+    <div class="row" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+      <div style="min-width:220px;">
+        <label>Type Code</label>
+        <input id="pt_code" placeholder="e.g. SKIN_BASE" />
+      </div>
+
+      <div style="min-width:220px;">
+        <label>Type Name</label>
+        <input id="pt_name" placeholder="e.g. Skin Base" />
+      </div>
+
+      <button id="pt_addBtn" class="primaryBtn">Add</button>
+    </div>
+
+    <div style="margin-top:16px;">
+      <table class="table" style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="text-align:left;">Type Code</th>
+            <th style="text-align:left;">Type Name</th>
+            <th style="width:120px;"></th>
+          </tr>
+        </thead>
+        <tbody id="pt_tbody"></tbody>
+      </table>
+    </div>
+
+    <p id="pt_status" class="muted" style="margin-top:10px;"></p>
+  </div>
+</section>
+
       <!-- =========================================================
            BLOCK: CONFIRM DIALOG
            ========================================================= -->
