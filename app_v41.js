@@ -164,6 +164,14 @@ const lmClearBtn = document.getElementById("lmClearBtn");
 const labMsg = document.getElementById("labMsg");
 const lmViewPanel = document.getElementById("lmViewPanel");
 const lmAddPanel = document.getElementById("lmAddPanel");
+const labList = document.getElementById("labList");
+
+const lmName = document.getElementById("lmName");
+const lmEmail = document.getElementById("lmEmail");
+const lmPhone = document.getElementById("lmPhone");
+const lmAddress = document.getElementById("lmAddress");
+const lmShipping = document.getElementById("lmShipping");
+const lmSaveBtn = document.getElementById("lmSaveBtn");
 
 
   // Agent Mgmt UI
@@ -296,13 +304,22 @@ const agentModule = initAgentManagement({
 });
 const labsModule = initLabManagement({
   ui: {
-    lmViewBtn,
-    lmAddBtn,
-    lmClearBtn,
-    labMsg,
-    lmViewPanel,
-    lmAddPanel
-  },
+  lmViewBtn,
+  lmAddBtn,
+  lmClearBtn,
+  labMsg,
+  lmViewPanel,
+  lmAddPanel,
+  labList,
+
+  lmName,
+  lmEmail,
+  lmPhone,
+  lmAddress,
+  lmShipping,
+  lmSaveBtn
+},
+
   helpers: { show }
 });
 
