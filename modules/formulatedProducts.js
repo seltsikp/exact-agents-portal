@@ -12,17 +12,12 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
   const { show, escapeHtml, confirmExact } = helpers;
 
   let editingProductId = null;
-  let ingredientsCache = [];     // [{id, psi_number, inci_name}]
-  let productTypesCache = [];    // [{id, type_code, type_name}]
-  let productsById = {};         // for quick access
+
+  let ingredientsCache = [];   // [{id, psi_number, inci_name}]
+  let productTypesCache = [];  // [{id, type_code, type_name}]
+  let productsById = {};       // { [id]: product }
 
   const setMsg = (t) => { if (fpMsg) fpMsg.textContent = t || ""; };
-
-  function setActiveBtn(which) {
-    // which: "view" | "add" | ""
-    if (fpViewBtn) fpViewBtn.classList.toggle("active", which === "view");
-    if (fpAddBtn) fpAddBtn.classList.toggle("active", which === "add");
-  }
 
   function resetScreen() {
     setMsg("");
@@ -31,8 +26,6 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     show(fpViewPanel, false);
     show(fpAddPanel, false);
     show(fpClearBtn, false);
-
-    setActiveBtn("");
 
     if (fpSearch) fpSearch.value = "";
     if (fpList) fpList.innerHTML = "";
@@ -66,7 +59,7 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
       ingredientsCache = data || [];
     }
 
-    // Fill product type dropdown
+    // Fill product type dropdown (uses UUID id)
     if (fpType) {
       fpType.innerHTML = "";
       productTypesCache.forEach(pt => {
@@ -121,7 +114,7 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
       const pctStr = r.querySelector(".fp-pct")?.value || "";
       const pct = Number(pctStr);
 
-      if (!ingredient_id && !pctStr) continue; // ignore empty row
+      if (!ingredient_id && !pctStr) continue;
 
       if (!ingredient_id) return { error: "Please select an ingredient for every line." };
       if (!Number.isFinite(pct) || pct <= 0) return { error: "Each ingredient line needs a % greater than 0." };
@@ -141,57 +134,44 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     return { lines };
   }
 
-  async function showView() {
+  function showView() {
     show(fpViewPanel, true);
     show(fpAddPanel, false);
     show(fpClearBtn, true);
-    setActiveBtn("view");
     setMsg("");
-    await loadProducts(fpSearch?.value || "");
+    loadProducts("");
   }
 
   async function showAdd() {
     show(fpViewPanel, false);
     show(fpAddPanel, true);
     show(fpClearBtn, true);
-    setActiveBtn("add");
     setMsg("");
 
     editingProductId = null;
-
-    // IMPORTANT: code is auto-generated (EX0001, EX0002...), so don't ask user to type it.
-    if (fpCode) {
-      fpCode.value = "";
-      fpCode.placeholder = "Auto (EX0001...)";
-      fpCode.readOnly = true;
-    }
-
+    if (fpCode) fpCode.value = ""; // allow manual EX0001 etc
     if (fpName) fpName.value = "";
     if (fpNotes) fpNotes.value = "";
     if (fpLines) fpLines.innerHTML = "";
 
-    // start with one empty line
     addLine();
-
-    fpName?.focus();
+    fpCode?.focus();
   }
 
   async function loadProducts(term) {
     setMsg("Loading…");
     productsById = {};
-    fpList.innerHTML = "";
+    if (fpList) fpList.innerHTML = "";
 
-    // IMPORTANT: your DB must have formulated_products.product_code (EX0001 etc).
-    // If you renamed it, change this select accordingly.
     let q = supabaseClient
       .from("formulated_products")
-      .select("id, product_code, product_name, notes, product_type_id, created_at")
+      .select("id, product_code, name, notes, product_type_id, created_at")
       .order("product_code", { ascending: true });
 
     const t = (term || "").trim();
     if (t) {
       const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
-      q = q.or(`product_code.ilike.%${esc}%,product_name.ilike.%${esc}%`);
+      q = q.or(`product_code.ilike.%${esc}%,name.ilike.%${esc}%`);
     }
 
     const { data, error } = await q;
@@ -211,13 +191,13 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     setMsg(`Found ${rows.length} product${rows.length === 1 ? "" : "s"}.`);
 
     fpList.innerHTML = rows.map(p => {
-      const pt = productTypesCache.find(x => x.id === p.product_type_id);
-      const typeLabel = pt ? `${pt.type_code} — ${pt.type_name}` : "Unknown type";
+      const typeObj = productTypesCache.find(x => x.id === p.product_type_id);
+      const typeLabel = typeObj ? `${typeObj.type_code} — ${typeObj.type_name}` : "Unknown type";
 
       return `
         <div class="customer-row" data-id="${escapeHtml(p.id)}">
           <div class="customer-main">
-            <div class="name">${escapeHtml(p.product_code || "")} — ${escapeHtml(p.product_name || "")}</div>
+            <div class="name">${escapeHtml(p.product_code || "")} — ${escapeHtml(p.name || "")}</div>
             <div class="meta"><span>${escapeHtml(typeLabel)}</span></div>
           </div>
 
@@ -259,16 +239,10 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     show(fpViewPanel, false);
     show(fpAddPanel, true);
     show(fpClearBtn, true);
-    setActiveBtn("add");
     setMsg("Editing — change and Save product.");
 
-    // code stays read-only (still shown)
-    if (fpCode) {
-      fpCode.value = p.product_code || "";
-      fpCode.readOnly = true;
-    }
-
-    if (fpName) fpName.value = p.product_name || "";
+    if (fpCode) fpCode.value = p.product_code || "";
+    if (fpName) fpName.value = p.name || "";
     if (fpNotes) fpNotes.value = p.notes || "";
     if (fpType) fpType.value = p.product_type_id || "";
     if (fpLines) fpLines.innerHTML = "";
@@ -288,12 +262,12 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     if (lines.length === 0) addLine();
     else lines.forEach(l => addLine({ ingredient_id: l.ingredient_id, pct: l.pct }));
 
-    fpName?.focus();
+    fpCode?.focus();
   }
 
   async function deleteProduct(productId) {
     const p = productsById[productId];
-    const label = p ? `${p.product_code} — ${p.product_name}` : "this product";
+    const label = p ? `${p.product_code} — ${p.name}` : "this product";
 
     const ok = await confirmExact(`Delete "${label}"? This cannot be undone.`);
     if (!ok) return;
@@ -314,10 +288,12 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
   async function saveProduct() {
     setMsg("");
 
-    const product_name = (fpName.value || "").trim();
-    const product_type_id = fpType.value || "";
-    const notes = (fpNotes.value || "").trim() || null;
+    const product_code = (fpCode?.value || "").trim().toUpperCase();
+    const product_name = (fpName?.value || "").trim();
+    const product_type_id = fpType?.value || "";
+    const notes = (fpNotes?.value || "").trim() || null;
 
+    if (!product_code) return setMsg("Enter Product code.");
     if (!product_name) return setMsg("Enter Product name.");
     if (!product_type_id) return setMsg("Select Product type.");
 
@@ -327,28 +303,23 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     let productId = editingProductId;
 
     if (productId) {
-      // Update existing (do NOT update product_code here)
       const { data, error } = await supabaseClient
         .from("formulated_products")
-        .update({ product_name, product_type_id, notes })
+        .update({ product_code, name: product_name, product_type_id, notes })
         .eq("id", productId)
         .select("id");
 
       if (error) return setMsg("Save failed: " + error.message);
       if (!data || data.length === 0) return setMsg("Save blocked (RLS).");
     } else {
-      // Insert new WITHOUT product_code (DB generates EX0001 automatically)
       const { data, error } = await supabaseClient
         .from("formulated_products")
-        .insert([{ product_name, product_type_id, notes }])
-        .select("id, product_code")
+        .insert([{ product_code, name: product_name, product_type_id, notes }])
+        .select("id")
         .single();
 
       if (error) return setMsg("Save failed: " + error.message);
       productId = data.id;
-
-      // show generated code back in UI
-      if (fpCode) fpCode.value = data.product_code || "";
     }
 
     // Replace ingredient lines
@@ -376,7 +347,7 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
 
     setMsg("Saved ✅");
     editingProductId = null;
-    await showView();
+    showView();
   }
 
   function bindOnce() {
@@ -411,7 +382,7 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     }
 
     if (fpSearchBtn && fpSearchBtn.dataset.bound !== "1") {
-      fpSearchBtn.addEventListener("click", () => loadProducts(fpSearch.value || ""));
+      fpSearchBtn.addEventListener("click", () => loadProducts(fpSearch?.value || ""));
       fpSearchBtn.dataset.bound = "1";
     }
 
@@ -435,7 +406,7 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     enter: async () => {
       resetScreen();
       await loadLookups();
-      await showView();
+      showView();
     }
   };
 }
