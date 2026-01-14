@@ -138,8 +138,11 @@ window.addEventListener("DOMContentLoaded", () => {
   const welcomeContent = document.getElementById("welcomeContent");
   const viewCustomerMgmt = document.getElementById("viewCustomerMgmt");
   const viewAgentMgmt = document.getElementById("viewAgentMgmt");
-  const viewFormulary = document.getElementById("viewFormulary");
+   const viewFormulary = document.getElementById("viewFormulary");
   const viewLabMgmt = document.getElementById("viewLabMgmt");
+  const viewProductTypes = document.getElementById("viewProductTypes");
+
+
 
   // Customer Mgmt UI
   const cmViewBtn = document.getElementById("cmViewBtn");
