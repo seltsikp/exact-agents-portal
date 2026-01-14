@@ -52,6 +52,7 @@ export function initNavigation({
       addMenuBtn("Agent Management", "agents");
       addMenuBtn("Customer Management", "customers");
       addMenuBtn("EXACT Formulary", "formulary");
+      addMenuBtn("Lab Management", "labs");
     } else {
       addMenuBtn("Customer Management", "customers");
     }
