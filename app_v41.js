@@ -213,6 +213,13 @@ window.addEventListener("DOMContentLoaded", () => {
   const fxSectionBases = document.getElementById("fxSectionBases");
   const fxSectionBoosters = document.getElementById("fxSectionBoosters");
 
+  // Formulary tabs
+  const fxTabIngredients = document.getElementById("fxTabIngredients");
+  const fxTabProducts = document.getElementById("fxTabProducts");
+
+  const fxSectionIngredients = document.getElementById("fxSectionIngredients");
+  const fxSectionProducts = document.getElementById("fxSectionProducts");
+
   // Ingredients UI
   const fxIngViewBtn = document.getElementById("fxIngViewBtn");
   const fxIngAddBtn = document.getElementById("fxIngAddBtn");
@@ -232,6 +239,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const fxIngInci = document.getElementById("fxIngInci");
   const fxIngDesc = document.getElementById("fxIngDesc");
   const fxIngSaveBtn = document.getElementById("fxIngSaveBtn");
+
 
   // =========================================================
   // BLOCK: STATE
@@ -568,15 +576,14 @@ window.addEventListener("DOMContentLoaded", () => {
   // =========================================================
   // BLOCK: FORMULARY TABS
   // =========================================================
-  function setActiveFormularyTab(tabKey) {
-    fxTabIngredients?.classList.toggle("active", tabKey === "ingredients");
-    fxTabBases?.classList.toggle("active", tabKey === "bases");
-    fxTabBoosters?.classList.toggle("active", tabKey === "boosters");
+ function setActiveFormularyTab(tabKey) {
+  fxTabIngredients?.classList.toggle("active", tabKey === "ingredients");
+  fxTabProducts?.classList.toggle("active", tabKey === "products");
 
-    show(fxSectionIngredients, tabKey === "ingredients");
-    show(fxSectionBases, tabKey === "bases");
-    show(fxSectionBoosters, tabKey === "boosters");
-  }
+  show(fxSectionIngredients, tabKey === "ingredients");
+  show(fxSectionProducts, tabKey === "products");
+}
+
 
   // =========================================================
   // BLOCK: VIEWS + MENU (MODULE)
@@ -718,8 +725,7 @@ window.addEventListener("DOMContentLoaded", () => {
   // BLOCK: BIND BUTTONS (FORMULARY / ING)
   // =========================================================
   if (fxTabIngredients) fxTabIngredients.addEventListener("click", () => setActiveFormularyTab("ingredients"));
-  if (fxTabBases) fxTabBases.addEventListener("click", () => setActiveFormularyTab("bases"));
-  if (fxTabBoosters) fxTabBoosters.addEventListener("click", () => setActiveFormularyTab("boosters"));
+if (fxTabProducts) fxTabProducts.addEventListener("click", () => setActiveFormularyTab("products"));
 
   if (fxIngViewBtn) fxIngViewBtn.addEventListener("click", () => showViewIngredientsPanel());
   if (fxIngAddBtn) fxIngAddBtn.addEventListener("click", () => {
