@@ -525,6 +525,28 @@
                 <button id="addCustomerBtn" class="btn-primary" type="button">Save customer</button>
               </div>
             </div>
+<!-- ===================================================
+     BLOCK: LAB MANAGEMENT VIEW
+     =================================================== -->
+<div id="viewLabMgmt" class="card" style="display:none;">
+  <h2>Lab Management</h2>
+
+  <div class="cm-actions">
+    <button id="lmViewBtn" class="btn-gold" type="button">View labs</button>
+    <button id="lmAddBtn" type="button">Add lab</button>
+    <button id="lmClearBtn" type="button" style="display:none;">Clear</button>
+    <p id="labMsg" class="subtle" style="margin:0;"></p>
+  </div>
+
+  <div id="lmViewPanel" style="display:none; margin-top:6px;">
+    <p class="subtle" style="margin:0;">Labs list will appear here.</p>
+    <div id="labList" class="customer-list"></div>
+  </div>
+
+  <div id="lmAddPanel" style="display:none; margin-top:6px;">
+    <p class="subtle" style="margin:0;">Add/edit lab form will go here next.</p>
+  </div>
+</div>
 
             <!-- ===================================================
                  BLOCK: EXACT FORMULARY VIEW
