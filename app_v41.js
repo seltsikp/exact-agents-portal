@@ -139,6 +139,8 @@ window.addEventListener("DOMContentLoaded", () => {
   const viewCustomerMgmt = document.getElementById("viewCustomerMgmt");
   const viewAgentMgmt = document.getElementById("viewAgentMgmt");
   const viewFormulary = document.getElementById("viewFormulary");
+  const viewLabMgmt = document.getElementById("viewLabMgmt");
+
 
   // Customer Mgmt UI
   const cmViewBtn = document.getElementById("cmViewBtn");
@@ -604,13 +606,16 @@ const agentModule = initAgentManagement({
       welcome: viewWelcome,
       customers: viewCustomerMgmt,
       agents: viewAgentMgmt,
+      labs: viewLabMgmt,
       formulary: viewFormulary
     },
+
     show,
     canAccess: (viewKey) => {
       // permissions
       if (viewKey === "agents" && currentProfile?.role !== "admin") return false;
       if (viewKey === "formulary" && currentProfile?.role !== "admin") return false;
+      if (viewKey === "labs" && currentProfile?.role !== "admin") return false;
       return true;
     },
     onEnter: {
@@ -623,6 +628,19 @@ const agentModule = initAgentManagement({
       agents: () => {
   agentModule.resetAgentScreen();
 },
+      labs: () => {
+  // temporary: simple placeholder until we build the module
+  const msg = document.getElementById("labMsg");
+  const viewPanel = document.getElementById("lmViewPanel");
+  const addPanel = document.getElementById("lmAddPanel");
+  const clearBtn = document.getElementById("lmClearBtn");
+
+  if (msg) msg.textContent = "Lab Management loaded ✅ (module next)";
+  if (viewPanel) viewPanel.style.display = "none";
+  if (addPanel) addPanel.style.display = "none";
+  if (clearBtn) clearBtn.style.display = "none";
+},
+
       formulary: () => {
         setActiveFormularyTab("ingredients");
         resetIngredientsScreen();
