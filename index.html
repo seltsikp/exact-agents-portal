@@ -324,6 +324,23 @@
       }
       dialog::backdrop{ background: rgba(10,10,12,.55); }
       .dialog-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+
+      /* Small helper for Product Types layout */
+      .pt-row{
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+        align-items:flex-end;
+      }
+      .pt-field{
+        min-width:260px;
+        flex:1;
+      }
+      .pt-actions{
+        display:flex;
+        gap:10px;
+        justify-content:flex-end;
+      }
     </style>
   </head>
 
@@ -470,26 +487,24 @@
             <div id="viewProductTypes" class="card" style="display:none;">
               <h2>Product Types</h2>
 
-             <div style="min-width:260px; flex:1;">
-  <label class="subtle" style="display:block; margin-bottom:6px;">Type Name</label>
-  <input id="pt_name" placeholder="e.g. Skin Base" />
-</div>
-
+              <div class="pt-row" style="margin-top:6px;">
+                <div class="pt-field">
+                  <label class="subtle" style="display:block; margin-bottom:6px;">Type Name</label>
+                  <input id="pt_name" placeholder="e.g. Skin Base" />
+                </div>
 
                 <button id="pt_addBtn" class="btn-primary" type="button">Add</button>
-
               </div>
 
-              <dv style="margin-top:16px;">
+              <div style="margin-top:16px;">
                 <table style="width:100%; border-collapse:collapse;">
-                 <thead>
-  <tr>
-    <th style="text-align:left;">Code</th>
-    <th style="text-align:left;">Type Name</th>
-    <th style="width:180px;"></th>
-  </tr>
-</thead>
-
+                  <thead>
+                    <tr>
+                      <th style="text-align:left;">Code</th>
+                      <th style="text-align:left;">Type Name</th>
+                      <th style="width:180px;"></th>
+                    </tr>
+                  </thead>
                   <tbody id="pt_tbody"></tbody>
                 </table>
               </div>
