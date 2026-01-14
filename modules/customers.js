@@ -17,7 +17,6 @@ export function initCustomerManagement({
   } = helpers;
 
   const {
-    viewCustomerMgmt,
     cmViewBtn,
     cmAddBtn,
     cmClearBtn,
@@ -28,11 +27,13 @@ export function initCustomerManagement({
     cmSearchBtn,
     cmShowAllBtn,
     customerList,
+
     firstNameInput,
     lastNameInput,
     custEmailInput,
     custPhoneInput,
     addCustomerBtn,
+
     assignClinicRow,
     assignClinicSelect,
     agentClinicRow,
@@ -44,9 +45,35 @@ export function initCustomerManagement({
 
   const setCustMsg = (t) => { if (custMsg) custMsg.textContent = t || ""; };
 
-  // ----------------------------
-  // UI helpers
-  // ----------------------------
+  function validateCustomerFieldsLive() {
+    if (!cmAddPanel || cmAddPanel.style.display === "none") return;
+
+    const first = (firstNameInput?.value || "").trim();
+    const last  = (lastNameInput?.value || "").trim();
+    const email = (custEmailInput?.value || "").trim();
+    const phone = (custPhoneInput?.value || "").trim();
+
+    if (!first) markField(firstNameInput, "error"); else markField(firstNameInput, "ok");
+    if (!last) markField(lastNameInput, "error"); else markField(lastNameInput, "ok");
+
+    if (!email) markField(custEmailInput, null);
+    else if (!isValidEmail(email)) markField(custEmailInput, "error");
+    else markField(custEmailInput, "ok");
+
+    if (!phone) markField(custPhoneInput, null);
+    else if (!isValidPhone(phone)) markField(custPhoneInput, "error");
+    else markField(custPhoneInput, "ok");
+  }
+
+  function clearAddForm() {
+    if (firstNameInput) firstNameInput.value = "";
+    if (lastNameInput) lastNameInput.value = "";
+    if (custEmailInput) custEmailInput.value = "";
+    if (custPhoneInput) custPhoneInput.value = "";
+    editingCustomerId = null;
+    clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
+  }
+
   function resetCustomerScreen() {
     show(cmViewPanel, false);
     show(cmAddPanel, false);
@@ -88,39 +115,7 @@ export function initCustomerManagement({
     if (firstNameInput) firstNameInput.focus();
   }
 
-  function clearAddForm() {
-    if (firstNameInput) firstNameInput.value = "";
-    if (lastNameInput) lastNameInput.value = "";
-    if (custEmailInput) custEmailInput.value = "";
-    if (custPhoneInput) custPhoneInput.value = "";
-    editingCustomerId = null;
-    clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
-  }
-
-  function validateCustomerFieldsLive() {
-    if (!cmAddPanel || cmAddPanel.style.display === "none") return;
-
-    const first = (firstNameInput?.value || "").trim();
-    const last  = (lastNameInput?.value || "").trim();
-    const email = (custEmailInput?.value || "").trim();
-    const phone = (custPhoneInput?.value || "").trim();
-
-    if (!first) markField(firstNameInput, "error"); else markField(firstNameInput, "ok");
-    if (!last) markField(lastNameInput, "error"); else markField(lastNameInput, "ok");
-
-    if (!email) markField(custEmailInput, null);
-    else if (!isValidEmail(email)) markField(custEmailInput, "error");
-    else markField(custEmailInput, "ok");
-
-    if (!phone) markField(custPhoneInput, null);
-    else if (!isValidPhone(phone)) markField(custPhoneInput, "error");
-    else markField(custPhoneInput, "ok");
-  }
-
-  // ----------------------------
-  // Row renderer
-  // ----------------------------
-  function buildCustomerRowHTML(c) {
+  function buildCustomerRowHTML(c, { role, agentNameMap }) {
     const id = escapeHtml(c.id);
     const code = escapeHtml(c.customer_code || "");
 
@@ -141,6 +136,12 @@ export function initCustomerManagement({
     else if (phone) metaLine = `${codePart}<span>${phone}</span>`;
     else metaLine = codePart || `<span style="opacity:.65;">No contact details</span>`;
 
+    let clinicPill = "";
+    if (role === "admin") {
+      const clinicName = agentNameMap?.[c.agent_id] || "Unknown clinic";
+      clinicPill = `<span class="pill-soft pill-soft-gold">Clinic: ${escapeHtml(clinicName)}</span>`;
+    }
+
     const createdPill = created ? `<span class="pill-soft">Created: ${escapeHtml(created)}</span>` : "";
 
     return `
@@ -149,20 +150,20 @@ export function initCustomerManagement({
           <div class="name">${name}</div>
           <div class="meta">${metaLine}</div>
         </div>
+
         <div class="customer-context">
+          ${clinicPill}
           ${createdPill}
         </div>
+
         <div class="customer-actions">
-          <button data-action="edit" type="button">Edit</button>
-          <button data-action="delete" type="button">Delete</button>
+          <button class="btn btn-soft action-pill edit-pill" data-action="edit" type="button">Edit</button>
+          <button class="btn action-pill delete-pill" data-action="delete" type="button">Delete</button>
         </div>
       </div>
     `.trim();
   }
 
-  // ----------------------------
-  // List delegation
-  // ----------------------------
   function ensureCustomerListDelegation() {
     if (!customerList) return;
     if (customerList.dataset.bound === "1") return;
@@ -185,16 +186,17 @@ export function initCustomerManagement({
         if (lastNameInput) lastNameInput.value = c.last_name || "";
         if (custEmailInput) custEmailInput.value = c.email || "";
         if (custPhoneInput) custPhoneInput.value = c.phone || "";
+
         showAddCustomerPanel();
         setCustMsg("Editing customer — click Save customer to update.");
         return;
       }
 
       if (action === "delete") {
-        const name =
-          `${c.first_name || ""} ${c.last_name || ""}`.trim() || "this customer";
+        setCustMsg("");
 
-        const ok = await confirmExact(`Delete ${name}? This cannot be undone.`);
+        const customerName = `${c.first_name || ""} ${c.last_name || ""}`.trim() || "this customer";
+        const ok = await confirmExact(`Delete ${customerName}? This cannot be undone.`);
         if (!ok) return;
 
         const { data, error } = await supabaseClient
@@ -204,7 +206,7 @@ export function initCustomerManagement({
           .select("id");
 
         if (error) { setCustMsg("Delete error: " + error.message); return; }
-        if (!data || data.length === 0) { setCustMsg("Delete blocked (RLS)."); return; }
+        if (!data || data.length === 0) { setCustMsg("Delete blocked (RLS) — no rows deleted."); return; }
 
         setCustMsg("Deleted ✅");
         await runCustomerSearch(cmSearch?.value || "");
@@ -214,9 +216,6 @@ export function initCustomerManagement({
     customerList.dataset.bound = "1";
   }
 
-  // ----------------------------
-  // Queries
-  // ----------------------------
   async function runCustomerSearch(term) {
     if (!customerList) return;
 
@@ -225,6 +224,8 @@ export function initCustomerManagement({
     customerList.innerHTML = "";
     customersById = {};
     setCustMsg("Searching…");
+
+    const role = state.currentProfile?.role || "agent";
 
     let q = supabaseClient
       .from("customers")
@@ -245,25 +246,35 @@ export function initCustomerManagement({
     const { data, error } = await q;
     if (error) { setCustMsg("Search error: " + error.message); return; }
 
-    (data || []).forEach(c => { customersById[c.id] = c; });
-    customerList.innerHTML = (data || []).map(buildCustomerRowHTML).join("");
+    const rows = data || [];
+    rows.forEach(c => { customersById[c.id] = c; });
 
-    if (!data || data.length === 0) setCustMsg("No matches found.");
-    else setCustMsg(`Found ${data.length} customer${data.length === 1 ? "" : "s"}.`);
+    customerList.innerHTML = rows
+      .map(c => buildCustomerRowHTML(c, { role, agentNameMap: state.agentNameMap }))
+      .join("");
+
+    if (rows.length === 0) setCustMsg("No matches found.");
+    else setCustMsg(`Found ${rows.length} customer${rows.length === 1 ? "" : "s"}.`);
   }
 
-  // ----------------------------
-  // Bind buttons
-  // ----------------------------
-  if (cmViewBtn) cmViewBtn.addEventListener("click", showViewCustomersPanel);
-  if (cmAddBtn) cmAddBtn.addEventListener("click", () => { clearAddForm(); showAddCustomerPanel(); });
-  if (cmClearBtn) cmClearBtn.addEventListener("click", resetCustomerScreen);
-  if (cmSearchBtn) cmSearchBtn.addEventListener("click", () => runCustomerSearch(cmSearch?.value || ""));
-  if (cmShowAllBtn) cmShowAllBtn.addEventListener("click", () => runCustomerSearch(""));
-  if (cmSearch) cmSearch.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") runCustomerSearch(cmSearch.value || "");
+  // live validation listeners
+  [firstNameInput, lastNameInput, custEmailInput, custPhoneInput].forEach((el) => {
+    if (!el) return;
+    el.addEventListener("input", validateCustomerFieldsLive);
+    el.addEventListener("blur", validateCustomerFieldsLive);
   });
 
+  // buttons
+  if (cmViewBtn) cmViewBtn.addEventListener("click", () => showViewCustomersPanel());
+  if (cmAddBtn) cmAddBtn.addEventListener("click", () => { clearAddForm(); showAddCustomerPanel(); });
+  if (cmClearBtn) cmClearBtn.addEventListener("click", () => resetCustomerScreen());
+  if (cmSearchBtn) cmSearchBtn.addEventListener("click", async () => { await runCustomerSearch(cmSearch?.value || ""); });
+  if (cmShowAllBtn) cmShowAllBtn.addEventListener("click", async () => { await runCustomerSearch(""); });
+  if (cmSearch) cmSearch.addEventListener("keydown", async (e) => {
+    if (e.key === "Enter") await runCustomerSearch(cmSearch.value || "");
+  });
+
+  // save customer
   if (addCustomerBtn) {
     addCustomerBtn.addEventListener("click", async () => {
       setCustMsg("");
@@ -275,31 +286,42 @@ export function initCustomerManagement({
 
       clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
 
-      if (!first_name || !last_name) {
-        setCustMsg("First and last name are required.");
-        return;
-      }
+      if (!first_name) { markField(firstNameInput, "error"); setCustMsg("First name is required."); return; }
+      markField(firstNameInput, "ok");
 
-      let agent_id;
+      if (!last_name) { markField(lastNameInput, "error"); setCustMsg("Last name is required."); return; }
+      markField(lastNameInput, "ok");
+
+      if (email && !isValidEmail(email)) { markField(custEmailInput, "error"); setCustMsg("Please enter a valid email address."); return; }
+      if (email) markField(custEmailInput, "ok");
+
+      if (phone && !isValidPhone(phone)) { markField(custPhoneInput, "error"); setCustMsg("Please enter a valid phone number."); return; }
+      if (phone) markField(custPhoneInput, "ok");
+
+      let agent_id = null;
+
       if (state.currentProfile?.role === "admin") {
-        agent_id = assignClinicSelect?.value;
-        if (!agent_id) { setCustMsg("Please select a clinic."); return; }
+        agent_id = assignClinicSelect?.value || null;
+        if (!agent_id) { setCustMsg("Please select a clinic to assign this customer to."); return; }
       } else {
-        agent_id = state.currentProfile?.agent_id;
+        agent_id = state.currentProfile?.agent_id || null;
+        if (!agent_id) { setCustMsg("No clinic linked to this login."); return; }
       }
 
       if (editingCustomerId) {
-        const { error } = await supabaseClient
+        const { data, error } = await supabaseClient
           .from("customers")
           .update({ first_name, last_name, email, phone })
-          .eq("id", editingCustomerId);
+          .eq("id", editingCustomerId)
+          .select("id");
 
         if (error) { setCustMsg("Update error: " + error.message); return; }
+        if (!data || data.length === 0) { setCustMsg("Update blocked (RLS) — no rows updated."); return; }
 
         setCustMsg("Saved ✅");
         clearAddForm();
         showViewCustomersPanel();
-        runCustomerSearch(cmSearch?.value || "");
+        await runCustomerSearch(cmSearch?.value || "");
         return;
       }
 
