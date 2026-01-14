@@ -14,11 +14,11 @@ export function initNavigation({
 
     activeViewKey = viewKey;
 
-    // show/hide views
-    show(views.welcome, viewKey === "welcome");
-    show(views.customers, viewKey === "customers");
-    show(views.agents, viewKey === "agents");
-    show(views.formulary, viewKey === "formulary");
+    // show/hide views (generic)
+Object.entries(views).forEach(([key, el]) => {
+  show(el, key === viewKey);
+});
+
 
     // menu highlight
     if (menuItems) {
