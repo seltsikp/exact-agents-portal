@@ -13,6 +13,7 @@ export function initLabManagement({ ui, helpers }) {
 
     lmName,
     lmEmail,
+    lmOrdersEmail,
     lmPhone,
     lmAddress,
     lmShipping,
@@ -27,6 +28,7 @@ export function initLabManagement({ ui, helpers }) {
   function clearLabForm() {
     if (lmName) lmName.value = "";
     if (lmEmail) lmEmail.value = "";
+    if (lmOrdersEmail) lmOrdersEmail.value = "";
     if (lmPhone) lmPhone.value = "";
     if (lmAddress) lmAddress.value = "";
     if (lmShipping) lmShipping.value = "";
@@ -43,11 +45,14 @@ export function initLabManagement({ ui, helpers }) {
       <div class="customer-row">
         <div class="customer-main">
           <div class="name">${escapeHtml(l.name)}</div>
-          <div class="meta">
-            ${l.email ? `<span>${escapeHtml(l.email)}</span>` : `<span style="opacity:.65;">No email</span>`}
-            <span class="customer-dot">•</span>
-            ${l.phone ? `<span>${escapeHtml(l.phone)}</span>` : `<span style="opacity:.65;">No phone</span>`}
-          </div>
+         <div class="meta">
+  <span><b>Orders:</b> ${escapeHtml(l.ordersEmail || "")}</span>
+  <span class="customer-dot">•</span>
+  ${l.email ? `<span>Admin: ${escapeHtml(l.email)}</span>` : `<span style="opacity:.65;">No admin email</span>`}
+  <span class="customer-dot">•</span>
+  ${l.phone ? `<span>${escapeHtml(l.phone)}</span>` : `<span style="opacity:.65;">No phone</span>`}
+</div>
+
         </div>
 
         <div class="customer-context">
@@ -105,13 +110,16 @@ export function initLabManagement({ ui, helpers }) {
     lmSaveBtn.addEventListener("click", () => {
       const name = (lmName?.value || "").trim();
       if (!name) { setLabMsg("Lab name is required."); return; }
+      
+      const ordersEmail = (lmOrdersEmail?.value || "").trim();
+      if (!ordersEmail) { setLabMsg("Orders / formulations email is required."); return; }
 
       const email = (lmEmail?.value || "").trim() || "";
       const phone = (lmPhone?.value || "").trim() || "";
       const address = (lmAddress?.value || "").trim() || "";
       const shipping = (lmShipping?.value || "").trim() || "";
 
-      labs.unshift({ name, email, phone, address, shipping });
+      labs.unshift({ name, email, ordersEmail, phone, address, shipping });
       setLabMsg("Saved ✅ (local only — database next)");
       clearLabForm();
       showViewLabsPanel();
