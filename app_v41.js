@@ -136,15 +136,12 @@ window.addEventListener("DOMContentLoaded", () => {
   const menuItems = document.getElementById("menuItems");
 
   // Views
-  const viewWelcome = document.getElementById("viewWelcome");
-  const welcomeContent = document.getElementById("welcomeContent");
-  const viewCustomerMgmt = document.getElementById("viewCustomerMgmt");
-  const viewAgentMgmt = document.getElementById("viewAgentMgmt");
-   const viewFormulary = document.getElementById("viewFormulary");
-  const viewLabMgmt = document.getElementById("viewLabMgmt");
-  const viewProductTypes = document.getElementById("viewProductTypes");
-
-
+const viewWelcome = document.getElementById("viewWelcome");
+const welcomeContent = document.getElementById("welcomeContent");
+const viewCustomerMgmt = document.getElementById("viewCustomerMgmt");
+const viewAgentMgmt = document.getElementById("viewAgentMgmt");
+const viewFormulary = document.getElementById("viewFormulary");
+const viewLabMgmt = document.getElementById("viewLabMgmt");
 
   // Customer Mgmt UI
   const cmViewBtn = document.getElementById("cmViewBtn");
@@ -668,10 +665,12 @@ window.addEventListener("DOMContentLoaded", () => {
     ingredientsById = {};
     editingIngredientId = null;
 
-    customerModule.resetCustomerScreen();
-    agentModule.resetAgentScreen();
-    labsModule.resetLabsScreen();
-    resetIngredientsScreen();
+customerModule.resetCustomerScreen();
+agentModule.resetAgentScreen();
+labsModule.resetLabsScreen();
+productTypesModule.resetProductTypesScreen();
+resetIngredientsScreen();
+
 
     show(viewWelcome, false);
   }
