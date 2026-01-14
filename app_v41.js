@@ -485,42 +485,6 @@ const agentModule = initAgentManagement({
   }
 
 
-  // =========================================================
-  // BLOCK: QUERIES (AGENTS / CUSTOMERS / INGREDIENTS)
-  // =========================================================
-  
-    const { data, error } = await q;
-
-    if (error) {
-      setAgentMsg("Search error: " + error.message);
-      return;
-    }
-
-    const rows = data || [];
-    rows.forEach(a => { agentsById[a.id] = a; });
-
-    agentList.innerHTML = rows.map(buildAgentRowHTML).join("");
-
-    if (rows.length === 0) setAgentMsg("No matches found.");
-    else setAgentMsg(`Found ${rows.length} agent${rows.length === 1 ? "" : "s"}.`);
-  }
-
- 
-    const { data, error } = await q;
-
-    if (error) { setCustMsg("Search error: " + error.message); return; }
-
-    const rows = data || [];
-    rows.forEach(c => { customersById[c.id] = c; });
-
-    customerList.innerHTML = rows
-      .map(c => buildCustomerRowHTML(c, { role, agentNameMap }))
-      .join("");
-
-    if (rows.length === 0) setCustMsg("No matches found.");
-    else setCustMsg(`Found ${rows.length} customer${rows.length === 1 ? "" : "s"}.`);
-  }
-
   async function runIngredientSearch(term) {
     if (!fxIngList) return;
 
