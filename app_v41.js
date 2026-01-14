@@ -304,25 +304,25 @@ const agentModule = initAgentManagement({
   }
 });
 const labsModule = initLabManagement({
+  supabaseClient,
   ui: {
-  lmViewBtn,
-  lmAddBtn,
-  lmClearBtn,
-  labMsg,
-  lmViewPanel,
-  lmAddPanel,
-  labList,
+    lmViewBtn,
+    lmAddBtn,
+    lmClearBtn,
+    labMsg,
+    lmViewPanel,
+    lmAddPanel,
+    labList,
 
-  lmName,
-  lmEmail,
-  lmOrdersEmail,
-  lmPhone,
-  lmAddress,
-  lmShipping,
-  lmSaveBtn
-},
-
-  helpers: { show }
+    lmName,
+    lmEmail,
+    lmOrdersEmail,
+    lmPhone,
+    lmAddress,
+    lmShipping,
+    lmSaveBtn
+  },
+  helpers: { show, confirmExact }
 });
 
   // =========================================================
