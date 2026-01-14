@@ -1,5 +1,7 @@
 import { showWelcomePanel } from "./modules/welcome.js";
 import { initNavigation } from "./modules/navigation.js";
+import { initCustomerManagement } from "./modules/customers.js";
+
 console.log("EXACT Agents Portal loaded (v41)");
 
 // =========================================================
@@ -110,26 +112,6 @@ window.addEventListener("DOMContentLoaded", () => {
       if (!el) return;
       el.classList.remove("field-error", "field-ok");
     });
-  }
-
-  function validateCustomerFieldsLive() {
-    if (!cmAddPanel || cmAddPanel.style.display === "none") return;
-
-    const first = (firstNameInput?.value || "").trim();
-    const last  = (lastNameInput?.value || "").trim();
-    const email = (custEmailInput?.value || "").trim();
-    const phone = (custPhoneInput?.value || "").trim();
-
-    if (!first) markField(firstNameInput, "error"); else markField(firstNameInput, "ok");
-    if (!last) markField(lastNameInput, "error"); else markField(lastNameInput, "ok");
-
-    if (!email) markField(custEmailInput, null);
-    else if (!isValidEmail(email)) markField(custEmailInput, "error");
-    else markField(custEmailInput, "ok");
-
-    if (!phone) markField(custPhoneInput, null);
-    else if (!isValidPhone(phone)) markField(custPhoneInput, "error");
-    else markField(custPhoneInput, "ok");
   }
 
   // =========================================================
@@ -442,56 +424,6 @@ window.addEventListener("DOMContentLoaded", () => {
     if (agentNameInput) agentNameInput.focus();
   }
 
-  function resetCustomerScreen() {
-    show(cmViewPanel, false);
-    show(cmAddPanel, false);
-    show(cmClearBtn, false);
-
-    if (customerList) customerList.innerHTML = "";
-    customersById = {};
-    editingCustomerId = null;
-
-    clearAddForm();
-    setCustMsg("");
-  }
-
-  function showViewCustomersPanel() {
-    show(cmViewPanel, true);
-    show(cmAddPanel, false);
-    show(cmClearBtn, true);
-
-    if (cmSearch) cmSearch.focus();
-    setCustMsg("Enter a search term or click “Show all”.");
-  }
-
-  function showAddCustomerPanel() {
-    show(cmViewPanel, false);
-    show(cmAddPanel, true);
-    show(cmClearBtn, true);
-
-    setCustMsg("");
-
-    if (currentProfile?.role === "admin") {
-      show(assignClinicRow, true);
-      show(agentClinicRow, false);
-    } else {
-      show(assignClinicRow, false);
-      show(agentClinicRow, true);
-    }
-
-    validateCustomerFieldsLive();
-    if (firstNameInput) firstNameInput.focus();
-  }
-
-  function clearAddForm() {
-    if (firstNameInput) firstNameInput.value = "";
-    if (lastNameInput) lastNameInput.value = "";
-    if (custEmailInput) custEmailInput.value = "";
-    if (custPhoneInput) custPhoneInput.value = "";
-    editingCustomerId = null;
-    clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
-  }
-
   function resetIngredientsScreen() {
     show(fxIngViewPanel, false);
     show(fxIngAddPanel, false);
@@ -584,34 +516,6 @@ window.addEventListener("DOMContentLoaded", () => {
     agentList.dataset.bound = "1";
   }
 
-  function ensureCustomerListDelegation() {
-    if (!customerList) return;
-    if (customerList.dataset.bound === "1") return;
-
-    customerList.addEventListener("click", async (e) => {
-      const btn = e.target.closest("button[data-action]");
-      if (!btn) return;
-
-      const row = e.target.closest(".customer-row");
-      if (!row) return;
-
-      const customerId = row.getAttribute("data-customer-id");
-      const action = btn.getAttribute("data-action");
-      const c = customersById[customerId];
-      if (!c) return;
-
-      if (action === "edit") {
-        editingCustomerId = c.id;
-        if (firstNameInput) firstNameInput.value = c.first_name || "";
-        if (lastNameInput) lastNameInput.value = c.last_name || "";
-        if (custEmailInput) custEmailInput.value = c.email || "";
-        if (custPhoneInput) custPhoneInput.value = c.phone || "";
-
-        showAddCustomerPanel();
-        setCustMsg("Editing customer — click Save customer to update.");
-        return;
-      }
-
       if (action === "delete") {
         setCustMsg("");
 
@@ -675,33 +579,7 @@ window.addEventListener("DOMContentLoaded", () => {
     else setAgentMsg(`Found ${rows.length} agent${rows.length === 1 ? "" : "s"}.`);
   }
 
-  async function runCustomerSearch(term) {
-    if (!customerList) return;
-
-    ensureCustomerListDelegation();
-
-    customerList.innerHTML = "";
-    customersById = {};
-    setCustMsg("Searching…");
-
-    const role = currentProfile?.role || "agent";
-
-    let q = supabaseClient
-      .from("customers")
-      .select("id, customer_code, agent_id, first_name, last_name, email, phone, created_at")
-      .order("created_at", { ascending: false });
-
-    const t = (term || "").trim();
-    if (t) {
-      const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
-      q = q.or([
-        `first_name.ilike.%${esc}%`,
-        `last_name.ilike.%${esc}%`,
-        `email.ilike.%${esc}%`,
-        `phone.ilike.%${esc}%`
-      ].join(","));
-    }
-
+ 
     const { data, error } = await q;
 
     if (error) { setCustMsg("Search error: " + error.message); return; }
@@ -963,13 +841,7 @@ window.addEventListener("DOMContentLoaded", () => {
   // =========================================================
   // BLOCK: BIND BUTTONS (CUSTOMERS / AGENTS / FORMULARY / ING)
   // =========================================================
-  if (cmViewBtn) cmViewBtn.addEventListener("click", () => showViewCustomersPanel());
-  if (cmAddBtn) cmAddBtn.addEventListener("click", () => { clearAddForm(); showAddCustomerPanel(); });
-  if (cmClearBtn) cmClearBtn.addEventListener("click", () => resetCustomerScreen());
-  if (cmSearchBtn) cmSearchBtn.addEventListener("click", async () => { await runCustomerSearch(cmSearch?.value || ""); });
-  if (cmShowAllBtn) cmShowAllBtn.addEventListener("click", async () => { await runCustomerSearch(""); });
-  if (cmSearch) cmSearch.addEventListener("keydown", async (e) => { if (e.key === "Enter") await runCustomerSearch(cmSearch.value || ""); });
-
+ 
   if (amViewBtn) amViewBtn.addEventListener("click", () => showViewAgentsPanel());
   if (amAddBtn) amAddBtn.addEventListener("click", () => { editingAgentId = null; if (agentNameInput) agentNameInput.value = ""; showAddAgentPanel(); });
   if (amClearBtn) amClearBtn.addEventListener("click", () => resetAgentScreen());
@@ -1044,77 +916,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
       showViewIngredientsPanel();
       await runIngredientSearch("");
-    });
-  }
-
-  // =========================================================
-  // BLOCK: SAVE CUSTOMER (ADD/EDIT)
-  // =========================================================
-  [firstNameInput, lastNameInput, custEmailInput, custPhoneInput].forEach((el) => {
-    if (!el) return;
-    el.addEventListener("input", validateCustomerFieldsLive);
-    el.addEventListener("blur", validateCustomerFieldsLive);
-  });
-
-  if (addCustomerBtn) {
-    addCustomerBtn.addEventListener("click", async () => {
-      setCustMsg("");
-
-      const first_name = (firstNameInput?.value || "").trim();
-      const last_name = (lastNameInput?.value || "").trim();
-      const email = (custEmailInput?.value || "").trim() || null;
-      const phone = (custPhoneInput?.value || "").trim() || null;
-
-      clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
-
-      if (!first_name) { markField(firstNameInput, "error"); setCustMsg("First name is required."); return; }
-      markField(firstNameInput, "ok");
-
-      if (!last_name) { markField(lastNameInput, "error"); setCustMsg("Last name is required."); return; }
-      markField(lastNameInput, "ok");
-
-      if (email && !isValidEmail(email)) { markField(custEmailInput, "error"); setCustMsg("Please enter a valid email address."); return; }
-      if (email) markField(custEmailInput, "ok");
-
-      if (phone && !isValidPhone(phone)) { markField(custPhoneInput, "error"); setCustMsg("Please enter a valid phone number."); return; }
-      if (phone) markField(custPhoneInput, "ok");
-
-      let agent_id = null;
-
-      if (currentProfile?.role === "admin") {
-        agent_id = assignClinicSelect?.value || null;
-        if (!agent_id) { setCustMsg("Please select a clinic to assign this customer to."); return; }
-      } else {
-        agent_id = currentProfile?.agent_id || null;
-        if (!agent_id) { setCustMsg("No clinic linked to this login."); return; }
-      }
-
-      if (editingCustomerId) {
-        const { data, error } = await supabaseClient
-          .from("customers")
-          .update({ first_name, last_name, email, phone })
-          .eq("id", editingCustomerId)
-          .select("id");
-
-        if (error) { setCustMsg("Update error: " + error.message); return; }
-        if (!data || data.length === 0) { setCustMsg("Update blocked (RLS) — no rows updated."); return; }
-
-        setCustMsg("Saved ✅");
-        clearAddForm();
-        showViewCustomersPanel();
-        await runCustomerSearch(cmSearch?.value || "");
-        return;
-      }
-
-      const { error } = await supabaseClient
-        .from("customers")
-        .insert([{ agent_id, first_name, last_name, email, phone }]);
-
-      if (error) { setCustMsg("Insert error: " + error.message); return; }
-
-      setCustMsg("Customer added ✅");
-      clearAddForm();
-      showViewCustomersPanel();
     });
   }
 
