@@ -235,7 +235,6 @@ const viewLabMgmt = document.getElementById("viewLabMgmt");
 
   // Product Types view + UI
   const viewProductTypes = document.getElementById("viewProductTypes");
-  const ptCode = document.getElementById("pt_code");
   const ptName = document.getElementById("pt_name");
   const ptAddBtn = document.getElementById("pt_addBtn");
   const ptTbody = document.getElementById("pt_tbody");
@@ -352,11 +351,12 @@ const viewLabMgmt = document.getElementById("viewLabMgmt");
     },
     helpers: { show, confirmExact }
   });
-    const productTypesModule = initProductTypesManagement({
-    supabaseClient,
-    ui: { ptCode, ptName, ptAddBtn, ptTbody, ptStatus },
-    helpers: { confirmExact }
-  });
+   const productTypesModule = initProductTypesManagement({
+  supabaseClient,
+  ui: { ptName, ptAddBtn, ptTbody, ptStatus },
+  helpers: { confirmExact }
+});
+
 
 
   // =========================================================
