@@ -424,17 +424,223 @@
             <div id="menuItems"></div>
           </div>
 
-          <!-- =====================================================
+                    <!-- =====================================================
                BLOCK: VIEWS CONTAINER (only one shown at a time)
                ===================================================== -->
           <div>
 
             <!-- ===================================================
-                 BLOCK: WELCOME VIEW  ✅ (RESTORED)
+                 BLOCK: WELCOME VIEW
                  =================================================== -->
             <div id="viewWelcome" class="card" style="display:none;">
-  <div id="welcomeContent"></div>
-</div>
+              <div id="welcomeContent"></div>
+            </div>
+
+            <!-- ===================================================
+                 BLOCK: AGENT MANAGEMENT VIEW
+                 =================================================== -->
+            <div id="viewAgentMgmt" class="card" style="display:none;">
+              <h2>Agent Management</h2>
+
+              <div class="cm-actions">
+                <button id="amViewBtn" class="btn-gold" type="button">View agents</button>
+                <button id="amAddBtn" type="button">Add agent</button>
+                <button id="amClearBtn" type="button" style="display:none;">Clear</button>
+                <p id="agentMsg" class="subtle" style="margin:0;"></p>
+              </div>
+
+              <div id="amViewPanel" style="display:none; margin-top:6px;">
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+                  <div style="flex:1; min-width:240px;">
+                    <label class="subtle" for="amSearch" style="display:block; margin-bottom:6px;">Search (name)</label>
+                    <input id="amSearch" placeholder="Agent / clinic name…" />
+                  </div>
+                  <div style="display:flex; gap:10px;">
+                    <button id="amSearchBtn" class="btn-primary" type="button">Search</button>
+                    <button id="amShowAllBtn" type="button">Show all</button>
+                  </div>
+                </div>
+                <div id="agentList" class="customer-list"></div>
+              </div>
+
+              <div id="amAddPanel" style="display:none; margin-top:6px;">
+                <div style="margin-bottom:10px;">
+                  <label class="subtle" for="agentName" style="display:block; margin-bottom:6px;">Agent / clinic name</label>
+                  <input id="agentName" placeholder="e.g. Dubai Aesthetics Clinic" />
+                </div>
+                <button id="addAgentBtn" class="btn-primary" type="button">Save agent</button>
+              </div>
+            </div>
+
+            <!-- ===================================================
+                 BLOCK: CUSTOMER MANAGEMENT VIEW
+                 =================================================== -->
+            <div id="viewCustomerMgmt" class="card" style="display:none;">
+              <h2>Customer Management</h2>
+
+              <div class="cm-actions">
+                <button id="cmViewBtn" class="btn-gold" type="button">View customers</button>
+                <button id="cmAddBtn" type="button">Add customer</button>
+                <button id="cmClearBtn" type="button" style="display:none;">Clear</button>
+                <p id="custMsg" class="subtle" style="margin:0;"></p>
+              </div>
+
+              <div id="cmViewPanel" style="display:none; margin-top:6px;">
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+                  <div style="flex:1; min-width:240px;">
+                    <label class="subtle" for="cmSearch" style="display:block; margin-bottom:6px;">Search (any field)</label>
+                    <input id="cmSearch" placeholder="Name, email, phone…" />
+                  </div>
+                  <div style="display:flex; gap:10px;">
+                    <button id="cmSearchBtn" class="btn-primary" type="button">Search</button>
+                    <button id="cmShowAllBtn" type="button">Show all</button>
+                  </div>
+                </div>
+                <div id="customerList" class="customer-list"></div>
+              </div>
+
+              <div id="cmAddPanel" style="display:none; margin-top:6px;">
+                <div id="assignClinicRow" style="display:none; margin-bottom:12px;">
+                  <label class="subtle" for="assignClinicSelect" style="display:block; margin-bottom:6px;">Assign to clinic</label>
+                  <select id="assignClinicSelect"></select>
+                </div>
+
+                <div id="agentClinicRow" style="display:none; margin-bottom:12px;">
+                  <label class="subtle" style="display:block; margin-bottom:6px;">Assigned clinic</label>
+                  <input id="agentClinicName" readonly />
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                  <input id="firstName" placeholder="First name" />
+                  <input id="lastName" placeholder="Last name" />
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                  <input id="custEmail" placeholder="Email (optional)" />
+                  <input id="custPhone" placeholder="Phone (optional)" />
+                </div>
+
+                <button id="addCustomerBtn" class="btn-primary" type="button">Save customer</button>
+              </div>
+            </div>
+
+            <!-- ===================================================
+                 BLOCK: LAB MANAGEMENT VIEW
+                 =================================================== -->
+            <div id="viewLabMgmt" class="card" style="display:none;">
+              <h2>Lab Management</h2>
+
+              <div class="cm-actions">
+                <button id="lmViewBtn" class="btn-gold" type="button">View labs</button>
+                <button id="lmAddBtn" type="button">Add lab</button>
+                <button id="lmClearBtn" type="button" style="display:none;">Clear</button>
+                <p id="labMsg" class="subtle" style="margin:0;"></p>
+              </div>
+
+              <div id="lmViewPanel" style="display:none; margin-top:6px;">
+                <div id="labList" class="customer-list"></div>
+              </div>
+
+              <div id="lmAddPanel" style="display:none; margin-top:6px;">
+                <div style="margin-bottom:10px;">
+                  <label class="subtle" for="lmName" style="display:block; margin-bottom:6px;">Lab name</label>
+                  <input id="lmName" placeholder="e.g. Revitalife Compounding" />
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                  <div>
+                    <label class="subtle" for="lmEmail" style="display:block; margin-bottom:6px;">Email (optional)</label>
+                    <input id="lmEmail" placeholder="lab@example.com" />
+                  </div>
+                  <div>
+                    <label class="subtle" for="lmPhone" style="display:block; margin-bottom:6px;">Phone (optional)</label>
+                    <input id="lmPhone" placeholder="+971..." />
+                  </div>
+                </div>
+
+                <div style="margin-bottom:10px;">
+                  <label class="subtle" for="lmOrdersEmail" style="display:block; margin-bottom:6px;">Orders / formulations email (required)</label>
+                  <input id="lmOrdersEmail" placeholder="orders@lab.com" />
+                </div>
+
+                <div style="margin-bottom:10px;">
+                  <label class="subtle" for="lmAddress" style="display:block; margin-bottom:6px;">Lab address (optional)</label>
+                  <textarea id="lmAddress" placeholder="Full address for records…"></textarea>
+                </div>
+
+                <div style="margin-bottom:10px;">
+                  <label class="subtle" for="lmShipping" style="display:block; margin-bottom:6px;">Shipping / dispatch notes (optional)</label>
+                  <textarea id="lmShipping" placeholder="Where orders should be sent, delivery instructions, etc…"></textarea>
+                </div>
+
+                <button id="lmSaveBtn" class="btn-primary" type="button">Save lab</button>
+              </div>
+            </div>
+
+            <!-- ===================================================
+                 BLOCK: EXACT FORMULARY VIEW
+                 =================================================== -->
+            <div id="viewFormulary" class="card" style="display:none;">
+              <h2>EXACT Formulary</h2>
+
+              <div class="tab-row">
+                <button id="fxTabIngredients" class="tabBtn active" type="button">Ingredients</button>
+                <button id="fxTabProducts" class="tabBtn" type="button">Formulated Products</button>
+              </div>
+
+              <!-- INGREDIENTS -->
+              <div id="fxSectionIngredients" class="tabSection" style="display:block;">
+                <div class="cm-actions">
+                  <button id="fxIngViewBtn" class="btn-gold" type="button">View ingredients</button>
+                  <button id="fxIngAddBtn" type="button">Add ingredient</button>
+                  <button id="fxIngClearBtn" type="button" style="display:none;">Clear</button>
+                  <p id="fxIngMsg" class="subtle" style="margin:0;"></p>
+                </div>
+
+                <div id="fxIngViewPanel" style="display:none; margin-top:6px;">
+                  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+                    <div style="flex:1; min-width:240px;">
+                      <label class="subtle" for="fxIngSearch" style="display:block; margin-bottom:6px;">Search (PSI or INCI)</label>
+                      <input id="fxIngSearch" placeholder="PSI-001, Niacinamide…" />
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                      <button id="fxIngSearchBtn" class="btn-primary" type="button">Search</button>
+                      <button id="fxIngShowAllBtn" type="button">Show all</button>
+                    </div>
+                  </div>
+
+                  <div id="fxIngList" class="ingredient-list"></div>
+                </div>
+
+                <div id="fxIngAddPanel" style="display:none; margin-top:6px;">
+                  <div style="margin-bottom:10px;">
+                    <label class="subtle" for="fxIngPsi" style="display:block; margin-bottom:6px;">PSI number</label>
+                    <input id="fxIngPsi" placeholder="e.g. PSI-001" />
+                  </div>
+
+                  <div style="margin-bottom:10px;">
+                    <label class="subtle" for="fxIngInci" style="display:block; margin-bottom:6px;">INCI name</label>
+                    <input id="fxIngInci" placeholder="e.g. Niacinamide" />
+                  </div>
+
+                  <div style="margin-bottom:10px;">
+                    <label class="subtle" for="fxIngDesc" style="display:block; margin-bottom:6px;">Short description</label>
+                    <textarea id="fxIngDesc" placeholder="What it does (short)…"></textarea>
+                  </div>
+
+                  <button id="fxIngSaveBtn" class="btn-primary" type="button">Save ingredient</button>
+                </div>
+              </div>
+
+              <!-- FORMULATED PRODUCTS -->
+              <div id="fxSectionProducts" class="tabSection">
+                <p class="subtle" style="margin:0;">Formulated Products: coming next step.</p>
+              </div>
+            </div>
+
+          </div>
+
+        
 
 
             <!-- ===================================================
