@@ -484,33 +484,6 @@ const agentModule = initAgentManagement({
     if (fxIngPsi) fxIngPsi.focus();
   }
 
-  // =========================================================
-  // BLOCK: LIST DELEGATIONS (AGENTS / CUSTOMERS)
-  // =========================================================
-
-      if (action === "delete") {
-        setCustMsg("");
-
-        const customerName = `${c.first_name || ""} ${c.last_name || ""}`.trim() || "this customer";
-        const ok = await confirmExact(`Delete ${customerName}? This cannot be undone.`);
-        if (!ok) return;
-
-        const { data, error } = await supabaseClient
-          .from("customers")
-          .delete()
-          .eq("id", c.id)
-          .select("id");
-
-        if (error) { setCustMsg("Delete error: " + error.message); return; }
-        if (!data || data.length === 0) { setCustMsg("Delete blocked (RLS) — no rows deleted."); return; }
-
-        setCustMsg("Deleted ✅");
-        await runCustomerSearch(cmSearch?.value || "");
-      }
-    });
-
-    customerList.dataset.bound = "1";
-  }
 
   // =========================================================
   // BLOCK: QUERIES (AGENTS / CUSTOMERS / INGREDIENTS)
