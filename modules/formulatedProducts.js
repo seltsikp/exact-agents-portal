@@ -339,20 +339,34 @@ setActivePill("add");
     let productId = editingProductId;
 
     if (productId) {
-      const { data, error } = await supabaseClient
-        .from("formulated_products")
-        .update({ product_code, name: product_name, product_type_id, notes })
-        .eq("id", productId)
-        .select("id");
+const { data, error } = await supabaseClient
+  .from("formulated_products")
+  .update({
+    code: product_code,
+    product_code: product_code,
+    name: product_name,
+    type: "product",
+    notes
+  })
+  .eq("id", productId)
+  .select("id");
+
 
       if (error) return setMsg("Save failed: " + error.message);
       if (!data || data.length === 0) return setMsg("Save blocked (RLS).");
     } else {
-      const { data, error } = await supabaseClient
-        .from("formulated_products")
-        .insert([{ product_code, name: product_name, product_type_id, notes }])
-        .select("id")
-        .single();
+const { data, error } = await supabaseClient
+  .from("formulated_products")
+  .insert([{
+    code: product_code,
+    product_code: product_code,
+    name: product_name,
+    type: "product",
+    notes
+  }])
+  .select("id")
+  .single();
+
 
       if (error) return setMsg("Save failed: " + error.message);
       productId = data.id;
