@@ -99,10 +99,11 @@
         padding: 16px;
         margin: 14px 0;
       }
-/* Align the right-side cards with the Menu card */
-.appLayout > div:nth-child(2) > .card {
-  margin-top: 0;
-}
+
+      /* Align the right-side cards with the Menu card */
+      .appLayout > div:nth-child(2) > .card {
+        margin-top: 0;
+      }
 
       .appLayout{
         display: grid;
@@ -196,7 +197,7 @@
       }
 
       /* =========================================================
-         BLOCK: CUSTOMER/AGENT LIST ROWS (existing)
+         BLOCK: CUSTOMER/AGENT LIST ROWS
          ========================================================= */
       .customer-list{
         display: grid;
@@ -221,50 +222,6 @@
         box-shadow: 0 14px 28px rgba(15,20,25,.08);
       }
 
-      .customer-main .name{
-        font-size: 15px;
-        font-weight: 700;
-        letter-spacing: .2px;
-      }
-
-      .customer-main .meta{
-        margin-top: 4px;
-        font-size: 13px;
-        color: var(--muted);
-        display:flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        align-items:center;
-      }
-
-      .customer-dot{ opacity:.35; }
-
-      .customer-context{
-        display:flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      .pill-soft{
-        display:inline-flex;
-        align-items:center;
-        padding: 6px 10px;
-        border-radius: 999px;
-        border: 1px solid rgba(184,154,91,.35);
-        background: rgba(184,154,91,.08);
-        font-size: 12px;
-        color: var(--gold-dark);
-        white-space: nowrap;
-        min-width: 140px;
-        justify-content: center;
-        text-align: center;
-      }
-
-      .pill-soft-gold{
-        border-color: rgba(184,154,91,.55);
-        background: rgba(184,154,91,.14);
-      }
-
       .customer-actions{
         display:inline-flex;
         gap:10px;
@@ -277,7 +234,7 @@
       }
 
       /* =========================================================
-         BLOCK: INGREDIENTS LIST (simple row, includes actions col)
+         BLOCK: INGREDIENTS LIST
          ========================================================= */
       .ingredient-list{
         display: grid;
@@ -287,18 +244,13 @@
 
       .ingredient-row{
         display: grid;
-        grid-template-columns: 140px 1.4fr 2fr 140px; /* PSI | INCI | DESC | actions */
+        grid-template-columns: 140px 1.4fr 2fr 140px;
         gap: 12px;
         align-items: center;
         padding: 12px 14px;
         border: 1px solid var(--line);
         border-radius: 12px;
         background: #fff;
-        box-shadow: none;
-      }
-
-      .ingredient-row:hover{
-        border-color: rgba(184,154,91,.35);
       }
 
       .ingredient-cell{
@@ -416,29 +368,21 @@
       <div id="appBox" style="display:none;">
         <div class="appLayout">
 
-          <!-- =====================================================
-               BLOCK: MENU CONTAINER (JS renders buttons here)
-               ===================================================== -->
+          <!-- MENU -->
           <div class="card menu">
             <h2 style="margin-top:0;">Menu</h2>
             <div id="menuItems"></div>
           </div>
 
-                    <!-- =====================================================
-               BLOCK: VIEWS CONTAINER (only one shown at a time)
-               ===================================================== -->
+          <!-- VIEWS -->
           <div>
 
-            <!-- ===================================================
-                 BLOCK: WELCOME VIEW
-                 =================================================== -->
+            <!-- WELCOME -->
             <div id="viewWelcome" class="card" style="display:none;">
               <div id="welcomeContent"></div>
             </div>
 
-            <!-- ===================================================
-                 BLOCK: AGENT MANAGEMENT VIEW
-                 =================================================== -->
+            <!-- AGENT MANAGEMENT -->
             <div id="viewAgentMgmt" class="card" style="display:none;">
               <h2>Agent Management</h2>
 
@@ -472,9 +416,7 @@
               </div>
             </div>
 
-            <!-- ===================================================
-                 BLOCK: CUSTOMER MANAGEMENT VIEW
-                 =================================================== -->
+            <!-- CUSTOMER MANAGEMENT -->
             <div id="viewCustomerMgmt" class="card" style="display:none;">
               <h2>Customer Management</h2>
 
@@ -524,9 +466,41 @@
               </div>
             </div>
 
-            <!-- ===================================================
-                 BLOCK: LAB MANAGEMENT VIEW
-                 =================================================== -->
+            <!-- PRODUCT TYPES -->
+            <div id="viewProductTypes" class="card" style="display:none;">
+              <h2>Product Types</h2>
+
+              <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+                <div style="min-width:220px;">
+                  <label class="subtle" style="display:block; margin-bottom:6px;">Type Code</label>
+                  <input id="pt_code" placeholder="e.g. SKIN_BASE" />
+                </div>
+
+                <div style="min-width:220px;">
+                  <label class="subtle" style="display:block; margin-bottom:6px;">Type Name</label>
+                  <input id="pt_name" placeholder="e.g. Skin Base" />
+                </div>
+
+                <button id="pt_addBtn" class="btn-primary" type="button">Add</button>
+              </div>
+
+              <div style="margin-top:16px;">
+                <table style="width:100%; border-collapse:collapse;">
+                  <thead>
+                    <tr>
+                      <th style="text-align:left;">Type Code</th>
+                      <th style="text-align:left;">Type Name</th>
+                      <th style="width:120px;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="pt_tbody"></tbody>
+                </table>
+              </div>
+
+              <p id="pt_status" class="subtle" style="margin-top:10px;"></p>
+            </div>
+
+            <!-- LAB MANAGEMENT -->
             <div id="viewLabMgmt" class="card" style="display:none;">
               <h2>Lab Management</h2>
 
@@ -577,9 +551,7 @@
               </div>
             </div>
 
-            <!-- ===================================================
-                 BLOCK: EXACT FORMULARY VIEW
-                 =================================================== -->
+            <!-- EXACT FORMULARY -->
             <div id="viewFormulary" class="card" style="display:none;">
               <h2>EXACT Formulary</h2>
 
@@ -638,252 +610,13 @@
               </div>
             </div>
 
-          </div>
+          </div> <!-- end views column -->
 
-        
-
-
-            <!-- ===================================================
-                 BLOCK: AGENT MANAGEMENT VIEW
-                 =================================================== -->
-            <div id="viewAgentMgmt" class="card" style="display:none;">
-              <h2>Agent Management</h2>
-
-              <div class="cm-actions">
-                <button id="amViewBtn" class="btn-gold" type="button">View agents</button>
-                <button id="amAddBtn" type="button">Add agent</button>
-                <button id="amClearBtn" type="button" style="display:none;">Clear</button>
-                <p id="agentMsg" class="subtle" style="margin:0;"></p>
-              </div>
-
-              <div id="amViewPanel" style="display:none; margin-top:6px;">
-                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-                  <div style="flex:1; min-width:240px;">
-                    <label class="subtle" for="amSearch" style="display:block; margin-bottom:6px;">Search (name)</label>
-                    <input id="amSearch" placeholder="Agent / clinic name…" />
-                  </div>
-                  <div style="display:flex; gap:10px;">
-                    <button id="amSearchBtn" class="btn-primary" type="button">Search</button>
-                    <button id="amShowAllBtn" type="button">Show all</button>
-                  </div>
-                </div>
-                <div id="agentList" class="customer-list"></div>
-              </div>
-
-              <div id="amAddPanel" style="display:none; margin-top:6px;">
-                <div style="margin-bottom:10px;">
-                  <label class="subtle" for="agentName" style="display:block; margin-bottom:6px;">Agent / clinic name</label>
-                  <input id="agentName" placeholder="e.g. Dubai Aesthetics Clinic" />
-                </div>
-                <button id="addAgentBtn" class="btn-primary" type="button">Save agent</button>
-              </div>
-            </div>
-
-           
-            <!-- ===================================================
-                 BLOCK: CUSTOMER MANAGEMENT VIEW
-                 =================================================== -->
-            <div id="viewCustomerMgmt" class="card" style="display:none;">
-              <h2>Customer Management</h2>
-
-              <div class="cm-actions">
-                <button id="cmViewBtn" class="btn-gold" type="button">View customers</button>
-                <button id="cmAddBtn" type="button">Add customer</button>
-                <button id="cmClearBtn" type="button" style="display:none;">Clear</button>
-                <p id="custMsg" class="subtle" style="margin:0;"></p>
-              </div>
-
-              <div id="cmViewPanel" style="display:none; margin-top:6px;">
-                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-                  <div style="flex:1; min-width:240px;">
-                    <label class="subtle" for="cmSearch" style="display:block; margin-bottom:6px;">Search (any field)</label>
-                    <input id="cmSearch" placeholder="Name, email, phone…" />
-                  </div>
-                  <div style="display:flex; gap:10px;">
-                    <button id="cmSearchBtn" class="btn-primary" type="button">Search</button>
-                    <button id="cmShowAllBtn" type="button">Show all</button>
-                  </div>
-                </div>
-                <div id="customerList" class="customer-list"></div>
-              </div>
-
-              <div id="cmAddPanel" style="display:none; margin-top:6px;">
-                <div id="assignClinicRow" style="display:none; margin-bottom:12px;">
-                  <label class="subtle" for="assignClinicSelect" style="display:block; margin-bottom:6px;">Assign to clinic</label>
-                  <select id="assignClinicSelect"></select>
-                </div>
-
-                <div id="agentClinicRow" style="display:none; margin-bottom:12px;">
-                  <label class="subtle" style="display:block; margin-bottom:6px;">Assigned clinic</label>
-                  <input id="agentClinicName" readonly />
-                </div>
-
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                  <input id="firstName" placeholder="First name" />
-                  <input id="lastName" placeholder="Last name" />
-                </div>
-
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                  <input id="custEmail" placeholder="Email (optional)" />
-                  <input id="custPhone" placeholder="Phone (optional)" />
-                </div>
-
-                <button id="addCustomerBtn" class="btn-primary" type="button">Save customer</button>
-              </div>
-            </div>
-<!-- ===================================================
-     BLOCK: LAB MANAGEMENT VIEW
-     =================================================== -->
-<div id="viewLabMgmt" class="card" style="display:none;">
-  <h2>Lab Management</h2>
-
-  <div class="cm-actions">
-    <button id="lmViewBtn" class="btn-gold" type="button">View labs</button>
-    <button id="lmAddBtn" type="button">Add lab</button>
-    <button id="lmClearBtn" type="button" style="display:none;">Clear</button>
-    <p id="labMsg" class="subtle" style="margin:0;"></p>
-  </div>
-
-  <div id="lmViewPanel" style="display:none; margin-top:6px;">
-    <div id="labList" class="customer-list"></div>
-  </div>
-
-  <div id="lmAddPanel" style="display:none; margin-top:6px;">
-
-    <div style="margin-bottom:10px;">
-      <label class="subtle" for="lmName" style="display:block; margin-bottom:6px;">Lab name</label>
-      <input id="lmName" placeholder="e.g. Revitalife Compounding" />
-    </div>
-
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-      <div>
-        <label class="subtle" for="lmEmail" style="display:block; margin-bottom:6px;">Email (optional)</label>
-        <input id="lmEmail" placeholder="lab@example.com" />
-      </div>
-      <div>
-        <label class="subtle" for="lmPhone" style="display:block; margin-bottom:6px;">Phone (optional)</label>
-        <input id="lmPhone" placeholder="+971..." />
-      </div>
-    </div>
-
-    <div style="margin-bottom:10px;">
-      <label class="subtle" for="lmOrdersEmail" style="display:block; margin-bottom:6px;">Orders / formulations email (required)</label>
-      <input id="lmOrdersEmail" placeholder="orders@lab.com" />
-    </div>
-
-    <div style="margin-bottom:10px;">
-      <label class="subtle" for="lmAddress" style="display:block; margin-bottom:6px;">Lab address (optional)</label>
-      <textarea id="lmAddress" placeholder="Full address for records…"></textarea>
-    </div>
-
-    <div style="margin-bottom:10px;">
-      <label class="subtle" for="lmShipping" style="display:block; margin-bottom:6px;">Shipping / dispatch notes (optional)</label>
-      <textarea id="lmShipping" placeholder="Where orders should be sent, delivery instructions, etc…"></textarea>
-    </div>
-
-    <button id="lmSaveBtn" class="btn-primary" type="button">Save lab</button>
-  </div>
-</div>
-
-<!-- ===================================================
-     BLOCK: EXACT FORMULARY VIEW
-     =================================================== -->
-<div id="viewFormulary" class="card" style="display:none;">
-  <h2>EXACT Formulary</h2>
-
- <div class="tab-row">
-  <button id="fxTabIngredients" class="tabBtn active" type="button">Ingredients</button>
-  <button id="fxTabProducts" class="tabBtn" type="button">Formulated Products</button>
-</div>
-
-  <!-- INGREDIENTS -->
-  <div id="fxSectionIngredients" class="tabSection" style="display:block;">
-    <div class="cm-actions">
-      <button id="fxIngViewBtn" class="btn-gold" type="button">View ingredients</button>
-      <button id="fxIngAddBtn" type="button">Add ingredient</button>
-      <button id="fxIngClearBtn" type="button" style="display:none;">Clear</button>
-      <p id="fxIngMsg" class="subtle" style="margin:0;"></p>
-    </div>
-
-    <div id="fxIngViewPanel" style="display:none; margin-top:6px;">
-      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-        <div style="flex:1; min-width:240px;">
-          <label class="subtle" for="fxIngSearch" style="display:block; margin-bottom:6px;">Search (PSI or INCI)</label>
-          <input id="fxIngSearch" placeholder="PSI-001, Niacinamide…" />
-        </div>
-        <div style="display:flex; gap:10px;">
-          <button id="fxIngSearchBtn" class="btn-primary" type="button">Search</button>
-          <button id="fxIngShowAllBtn" type="button">Show all</button>
-        </div>
-      </div>
-
-      <div id="fxIngList" class="ingredient-list"></div>
-    </div>
-
-    <div id="fxIngAddPanel" style="display:none; margin-top:6px;">
-      <div style="margin-bottom:10px;">
-        <label class="subtle" for="fxIngPsi" style="display:block; margin-bottom:6px;">PSI number</label>
-        <input id="fxIngPsi" placeholder="e.g. PSI-001" />
-      </div>
-
-      <div style="margin-bottom:10px;">
-        <label class="subtle" for="fxIngInci" style="display:block; margin-bottom:6px;">INCI name</label>
-        <input id="fxIngInci" placeholder="e.g. Niacinamide" />
-      </div>
-
-      <div style="margin-bottom:10px;">
-        <label class="subtle" for="fxIngDesc" style="display:block; margin-bottom:6px;">Short description</label>
-        <textarea id="fxIngDesc" placeholder="What it does (short)…"></textarea>
-      </div>
-
-      <button id="fxIngSaveBtn" class="btn-primary" type="button">Save ingredient</button>
-    </div>
-  </div>
-
-  <!-- FORMULATED PRODUCTS -->
-<div id="fxSectionProducts" class="tabSection">
-  <p class="subtle" style="margin:0;">Formulated Products: coming next step.</p>
-</div>
- <!-- ===================================================
-                 BLOCK: PRODUCT TYPES VIEW
-                 =================================================== -->
-  <section id="viewProductTypes" style="display:none;">
-  <div class="card">
-    <h2>Product Types</h2>
-
-    <div class="row" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-      <div style="min-width:220px;">
-        <label>Type Code</label>
-        <input id="pt_code" placeholder="e.g. SKIN_BASE" />
-      </div>
-
-      <div style="min-width:220px;">
-        <label>Type Name</label>
-        <input id="pt_name" placeholder="e.g. Skin Base" />
-      </div>
-
-      <button id="pt_addBtn" class="primaryBtn">Add</button>
-    </div>
-
-    <div style="margin-top:16px;">
-      <table class="table" style="width:100%; border-collapse:collapse;">
-        <thead>
-          <tr>
-            <th style="text-align:left;">Type Code</th>
-            <th style="text-align:left;">Type Name</th>
-            <th style="width:120px;"></th>
-          </tr>
-        </thead>
-        <tbody id="pt_tbody"></tbody>
-      </table>
-    </div>
-
-    <p id="pt_status" class="muted" style="margin-top:10px;"></p>
-  </div>
-</section>
+        </div> <!-- end appLayout -->
+      </div> <!-- end appBox -->
 
       <!-- =========================================================
-           BLOCK: CONFIRM DIALOG
+           CONFIRM DIALOG
            ========================================================= -->
       <dialog id="confirmDialog">
         <h3 style="margin:0 0 6px 0;">EXACT Agents Portal</h3>
@@ -895,10 +628,12 @@
       </dialog>
 
       <!-- =========================================================
-           BLOCK: SCRIPTS
+           SCRIPTS
            ========================================================= -->
       <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-      <script type="module" src="./app_v41.js?v=41"></script>
+
+      <!-- IMPORTANT: change this to the JS file you are actually using -->
+      <script type="module" src="./app_v42.js?v=42"></script>
 
     </div>
   </body>
