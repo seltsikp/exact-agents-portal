@@ -172,6 +172,7 @@ const lmPhone = document.getElementById("lmPhone");
 const lmAddress = document.getElementById("lmAddress");
 const lmShipping = document.getElementById("lmShipping");
 const lmSaveBtn = document.getElementById("lmSaveBtn");
+const lmOrdersEmail = document.getElementById("lmOrdersEmail");
 
 
   // Agent Mgmt UI
@@ -314,6 +315,7 @@ const labsModule = initLabManagement({
 
   lmName,
   lmEmail,
+  lmOrdersEmail,
   lmPhone,
   lmAddress,
   lmShipping,
