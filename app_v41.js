@@ -228,7 +228,7 @@ const viewLabMgmt = document.getElementById("viewLabMgmt");
 
   const fxIngList = document.getElementById("fxIngList");
 
-  const fxIngPsi = document.getElementById("fxIngPsi");
+  const fxIngPsiNum = document.getElementById("fxIngPsiNum");
   const fxIngInci = document.getElementById("fxIngInci");
   const fxIngDesc = document.getElementById("fxIngDesc");
   const fxIngSaveBtn = document.getElementById("fxIngSaveBtn");
@@ -371,7 +371,7 @@ const viewLabMgmt = document.getElementById("viewLabMgmt");
     editingIngredientId = null;
 
     if (fxIngSearch) fxIngSearch.value = "";
-    if (fxIngPsi) fxIngPsi.value = "";
+if (fxIngPsiNum) fxIngPsiNum.value = "";
     if (fxIngInci) fxIngInci.value = "";
     if (fxIngDesc) fxIngDesc.value = "";
     if (fxIngList) fxIngList.innerHTML = "";
@@ -421,7 +421,11 @@ const viewLabMgmt = document.getElementById("viewLabMgmt");
 
       if (action === "edit") {
         editingIngredientId = i.id;
-        if (fxIngPsi) fxIngPsi.value = i.psi_number || "";
+if (fxIngPsiNum) {
+  // Expecting PSI-001 etc
+  const m = String(i.psi_number || "").match(/(\d+)/);
+  fxIngPsiNum.value = m ? Number(m[1]) : "";
+}
         if (fxIngInci) fxIngInci.value = i.inci_name || "";
         if (fxIngDesc) fxIngDesc.value = i.short_description || "";
         showAddIngredientPanel();
@@ -475,7 +479,7 @@ const viewLabMgmt = document.getElementById("viewLabMgmt");
     show(fxIngClearBtn, true);
 
     setFxIngMsg("");
-    if (fxIngPsi) fxIngPsi.focus();
+if (fxIngPsiNum) fxIngPsiNum.focus();
   }
 
   // =========================================================
@@ -727,10 +731,12 @@ resetIngredientsScreen();
       nav.renderMenuForRole(profile.role);
 
       // keep screens neutral until user chooses
-      customerModule.resetCustomerScreen();
-      agentModule.resetAgentScreen();
-      labsModule.resetLabsScreen();
-      resetIngredientsScreen();
+customerModule.resetCustomerScreen();
+agentModule.resetAgentScreen();
+labsModule.resetLabsScreen();
+productTypesModule.resetProductTypesScreen();
+resetIngredientsScreen();
+
 
     } catch (e) {
       console.error("hydrateAfterLogin error:", e);
@@ -747,7 +753,7 @@ if (fxTabProducts) fxTabProducts.addEventListener("click", () => setActiveFormul
   if (fxIngViewBtn) fxIngViewBtn.addEventListener("click", () => showViewIngredientsPanel());
   if (fxIngAddBtn) fxIngAddBtn.addEventListener("click", () => {
     editingIngredientId = null;
-    if (fxIngPsi) fxIngPsi.value = "";
+if (fxIngPsiNum) fxIngPsiNum.value = "";
     if (fxIngInci) fxIngInci.value = "";
     if (fxIngDesc) fxIngDesc.value = "";
     showAddIngredientPanel();
@@ -757,58 +763,91 @@ if (fxTabProducts) fxTabProducts.addEventListener("click", () => setActiveFormul
   if (fxIngShowAllBtn) fxIngShowAllBtn.addEventListener("click", async () => { await runIngredientSearch(""); });
   if (fxIngSearch) fxIngSearch.addEventListener("keydown", async (e) => { if (e.key === "Enter") await runIngredientSearch(fxIngSearch.value || ""); });
 
-  // =========================================================
-  // BLOCK: SAVE INGREDIENT (ADD/EDIT)
-  // =========================================================
-  if (fxIngSaveBtn) {
-    fxIngSaveBtn.addEventListener("click", async () => {
-      setFxIngMsg("");
+  function formatPsiNumber(numStr) {
+  const n = Number(String(numStr || "").trim());
+  if (!Number.isInteger(n) || n < 1 || n > 999) return null;
+  return "PSI-" + String(n).padStart(3, "0");
+}
 
-      const psi_number = (fxIngPsi?.value || "").trim();
-      const inci_name = (fxIngInci?.value || "").trim();
-      const short_description = (fxIngDesc?.value || "").trim() || null;
+async function psiNumberExists(psi_number, excludeId = null) {
+  if (!psi_number) return false;
 
-      if (!psi_number) { setFxIngMsg("PSI number is required."); return; }
-      if (!inci_name) { setFxIngMsg("INCI name is required."); return; }
+  let q = supabaseClient
+    .from("ingredients")
+    .select("id")
+    .eq("psi_number", psi_number)
+    .limit(1);
 
-      // EDIT
-      if (editingIngredientId) {
-        const { data, error } = await supabaseClient
-          .from("ingredients")
-          .update({ psi_number, inci_name, short_description })
-          .eq("id", editingIngredientId)
-          .select("id");
+  if (excludeId) q = q.neq("id", excludeId);
 
-        if (error) { setFxIngMsg("Update error: " + error.message); return; }
-        if (!data || data.length === 0) { setFxIngMsg("Update blocked (RLS) — no rows updated."); return; }
+  const { data, error } = await q;
+  if (error) {
+    // If RLS prevents reading, you STILL should enforce uniqueness at DB level (see note below)
+    console.warn("psiNumberExists check failed:", error.message);
+    return false;
+  }
 
-        setFxIngMsg("Saved ✅");
-        editingIngredientId = null;
+  return (data || []).length > 0;
+}
 
-        if (fxIngPsi) fxIngPsi.value = "";
-        if (fxIngInci) fxIngInci.value = "";
-        if (fxIngDesc) fxIngDesc.value = "";
+ // =========================================================
+// BLOCK: SAVE INGREDIENT (ADD/EDIT)
+// =========================================================
+if (fxIngSaveBtn) {
+  fxIngSaveBtn.addEventListener("click", async () => {
+    setFxIngMsg("");
 
-        showViewIngredientsPanel();
-        return;
-      }
+    const psi_number = formatPsiNumber(fxIngPsiNum?.value);
+    const inci_name = (fxIngInci?.value || "").trim();
+    const short_description = (fxIngDesc?.value || "").trim() || null;
 
-      // ADD
-      const { error } = await supabaseClient
+    if (!psi_number) { setFxIngMsg("Enter a PSI number between 1 and 999."); return; }
+    if (!inci_name) { setFxIngMsg("INCI name is required."); return; }
+
+    const exists = await psiNumberExists(psi_number, editingIngredientId);
+    if (exists) {
+      setFxIngMsg(`Duplicate PSI number: ${psi_number} already exists.`);
+      return;
+    }
+
+    // EDIT
+    if (editingIngredientId) {
+      const { data, error } = await supabaseClient
         .from("ingredients")
-        .insert([{ psi_number, inci_name, short_description }]);
+        .update({ psi_number, inci_name, short_description })
+        .eq("id", editingIngredientId)
+        .select("id");
 
-      if (error) { setFxIngMsg("Insert error: " + error.message); return; }
+      if (error) { setFxIngMsg("Update error: " + error.message); return; }
+      if (!data || data.length === 0) { setFxIngMsg("Update blocked (RLS) — no rows updated."); return; }
 
-      setFxIngMsg("Ingredient added ✅");
-      if (fxIngPsi) fxIngPsi.value = "";
+      setFxIngMsg("Saved ✅");
+      editingIngredientId = null;
+
+      if (fxIngPsiNum) fxIngPsiNum.value = "";
       if (fxIngInci) fxIngInci.value = "";
       if (fxIngDesc) fxIngDesc.value = "";
 
       showViewIngredientsPanel();
-      await runIngredientSearch("");
-    });
-  }
+      return;
+    }
+
+    // ADD
+    const { error } = await supabaseClient
+      .from("ingredients")
+      .insert([{ psi_number, inci_name, short_description }]);
+
+    if (error) { setFxIngMsg("Insert error: " + error.message); return; }
+
+    setFxIngMsg("Ingredient added ✅");
+    if (fxIngPsiNum) fxIngPsiNum.value = "";
+    if (fxIngInci) fxIngInci.value = "";
+    if (fxIngDesc) fxIngDesc.value = "";
+
+    showViewIngredientsPanel();
+    await runIngredientSearch("");
+  });
+}
 
   // =========================================================
   // BLOCK: LOGIN / LOGOUT
