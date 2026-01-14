@@ -544,9 +544,37 @@
   </div>
 
   <div id="lmAddPanel" style="display:none; margin-top:6px;">
-    <p class="subtle" style="margin:0;">Add/edit lab form will go here next.</p>
+
+  <div style="margin-bottom:10px;">
+    <label class="subtle" for="lmName" style="display:block; margin-bottom:6px;">Lab name</label>
+    <input id="lmName" placeholder="e.g. Revitalife Compounding" />
   </div>
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+    <div>
+      <label class="subtle" for="lmEmail" style="display:block; margin-bottom:6px;">Email (optional)</label>
+      <input id="lmEmail" placeholder="lab@example.com" />
+    </div>
+    <div>
+      <label class="subtle" for="lmPhone" style="display:block; margin-bottom:6px;">Phone (optional)</label>
+      <input id="lmPhone" placeholder="+971..." />
+    </div>
+  </div>
+
+  <div style="margin-bottom:10px;">
+    <label class="subtle" for="lmAddress" style="display:block; margin-bottom:6px;">Lab address (optional)</label>
+    <textarea id="lmAddress" placeholder="Full address for records…"></textarea>
+  </div>
+
+  <div style="margin-bottom:10px;">
+    <label class="subtle" for="lmShipping" style="display:block; margin-bottom:6px;">Shipping / dispatch notes (optional)</label>
+    <textarea id="lmShipping" placeholder="Where orders should be sent, delivery instructions, etc…"></textarea>
+  </div>
+
+  <button id="lmSaveBtn" class="btn-primary" type="button">Save lab</button>
+
 </div>
+
 
             <!-- ===================================================
                  BLOCK: EXACT FORMULARY VIEW
