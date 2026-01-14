@@ -597,35 +597,57 @@
                 </div>
 
                 <div id="fxIngAddPanel" style="display:none; margin-top:6px;">
-                  <div style="margin-bottom:10px;">
-              <label class="subtle" for="fxIngPsiNum" style="display:block; margin-bottom:6px;">PSI number</label>
 
-<div style="display:flex; gap:10px; align-items:center;">
-  <div style="
-    padding: 10px 12px;
-    border-radius: 12px;
-    border: 1px solid var(--line);
-    background:#fff;
-    font-weight:700;
-    white-space:nowrap;
-  ">PSI-</div>
+  <!-- PSI number (controlled) -->
+  <div style="margin-bottom:10px;">
+    <label class="subtle" for="fxIngPsiNum" style="display:block; margin-bottom:6px;">PSI number</label>
 
-  <input
-    id="fxIngPsiNum"
-    type="number"
-    min="1"
-    max="999"
-    step="1"
-    placeholder="001"
-    inputmode="numeric"
-  />
-</div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <div style="
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background:#fff;
+        font-weight:700;
+        white-space:nowrap;
+      ">PSI-</div>
 
-<p class="subtle" style="margin:6px 0 0 0;">
-  Enter a number 1–999. It will be saved as PSI-001, PSI-002, etc.
-</p>
+      <input
+        id="fxIngPsiNum"
+        type="number"
+        min="1"
+        max="999"
+        step="1"
+        placeholder="1–999"
+        inputmode="numeric"
+        style="flex:1;"
+      />
+    </div>
 
-              </div>
+    <p class="subtle" style="margin:6px 0 0 0;">
+      Enter a number 1–999. It will be saved as PSI-001, PSI-002, etc.
+    </p>
+  </div>
+
+  <!-- INCI -->
+  <div style="margin-bottom:10px;">
+    <label class="subtle" for="fxIngInci" style="display:block; margin-bottom:6px;">INCI name</label>
+    <input id="fxIngInci" placeholder="e.g. Niacinamide" />
+  </div>
+
+  <!-- Description -->
+  <div style="margin-bottom:10px;">
+    <label class="subtle" for="fxIngDesc" style="display:block; margin-bottom:6px;">Short description</label>
+    <textarea id="fxIngDesc" placeholder="What it does (short)…"></textarea>
+  </div>
+
+   <button id="fxIngSaveBtn" class="btn-primary" type="button">Save ingredient</button>
+</div> <!-- end fxIngAddPanel -->
+
+</div> <!-- end fxSectionIngredients -->
+
+<!-- FORMULATED PRODUCTS -->
+
 
               <!-- FORMULATED PRODUCTS -->
               <div id="fxSectionProducts" class="tabSection">
