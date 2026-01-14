@@ -470,29 +470,26 @@
             <div id="viewProductTypes" class="card" style="display:none;">
               <h2>Product Types</h2>
 
-              <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-                <div style="min-width:220px;">
-                  <label class="subtle" style="display:block; margin-bottom:6px;">Type Code</label>
-                  <input id="pt_code" placeholder="e.g. SKIN_BASE" />
-                </div>
+             <div style="min-width:260px; flex:1;">
+  <label class="subtle" style="display:block; margin-bottom:6px;">Type Name</label>
+  <input id="pt_name" placeholder="e.g. Skin Base" />
+</div>
 
-                <div style="min-width:220px;">
-                  <label class="subtle" style="display:block; margin-bottom:6px;">Type Name</label>
-                  <input id="pt_name" placeholder="e.g. Skin Base" />
-                </div>
 
                 <button id="pt_addBtn" class="btn-primary" type="button">Add</button>
+
               </div>
 
-              <div style="margin-top:16px;">
+              <dv style="margin-top:16px;">
                 <table style="width:100%; border-collapse:collapse;">
-                  <thead>
-                    <tr>
-                      <th style="text-align:left;">Type Code</th>
-                      <th style="text-align:left;">Type Name</th>
-                      <th style="width:120px;"></th>
-                    </tr>
-                  </thead>
+                 <thead>
+  <tr>
+    <th style="text-align:left;">Code</th>
+    <th style="text-align:left;">Type Name</th>
+    <th style="width:180px;"></th>
+  </tr>
+</thead>
+
                   <tbody id="pt_tbody"></tbody>
                 </table>
               </div>
