@@ -638,7 +638,7 @@ const agentModule = initAgentManagement({
   if (msg) msg.textContent = "Lab Management loaded ✅ (module next)";
   if (viewPanel) viewPanel.style.display = "none";
   if (addPanel) addPanel.style.display = "none";
-  if (clearBtn) clearBtn.style.display = "none";
+  if (clearBtn) clearBtn.style.display = "inline-block";
 },
 
       formulary: () => {
