@@ -18,12 +18,20 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
   let productsById = {};       // { [id]: product }
 
   const setMsg = (t) => { if (fpMsg) fpMsg.textContent = t || ""; };
-    
-function resetScreen() {
-  setMsg("");
-  editingProductId = null;
-  setActivePill("view");
 
+  function setActivePill(which) {
+    // which = "view" or "add"
+    if (fpViewBtn) fpViewBtn.classList.toggle("btn-gold", which === "view");
+    if (fpViewBtn) fpViewBtn.classList.toggle("btn-primary", which !== "view");
+
+    if (fpAddBtn) fpAddBtn.classList.toggle("btn-gold", which === "add");
+    if (fpAddBtn) fpAddBtn.classList.toggle("btn-primary", which !== "add");
+  }
+
+  function resetScreen() {
+    setMsg("");
+    editingProductId = null;
+    setActivePill("view");
 
     show(fpViewPanel, false);
     show(fpAddPanel, false);
@@ -37,16 +45,9 @@ function resetScreen() {
     if (fpNotes) fpNotes.value = "";
     if (fpLines) fpLines.innerHTML = "";
   }
-function setActivePill(which) {
-  if (fpViewBtn) fpViewBtn.classList.toggle("btn-gold", which === "view");
-  if (fpViewBtn) fpViewBtn.classList.toggle("btn-primary", which !== "view");
-
-  if (fpAddBtn) fpAddBtn.classList.toggle("btn-gold", which === "add");
-  if (fpAddBtn) fpAddBtn.classList.toggle("btn-primary", which !== "add");
-}
 
   async function loadLookups() {
-    // Product Types
+    // Product Types (UUID id + labels)
     {
       const { data, error } = await supabaseClient
         .from("product_types")
@@ -144,55 +145,59 @@ function setActivePill(which) {
   }
 
   async function getNextEXCode() {
-  // Gets the highest EX#### and returns the next one
-  const { data, error } = await supabaseClient
-    .from("formulated_products")
-    .select("product_code")
-    .ilike("product_code", "EX%")
-    .order("product_code", { ascending: false })
-    .limit(1);
+    // Uses 'code' (NOT product_code)
+    const { data, error } = await supabaseClient
+      .from("formulated_products")
+      .select("code")
+      .ilike("code", "EX%")
+      .order("code", { ascending: false })
+      .limit(1);
 
-  if (error) {
-    console.warn("getNextEXCode failed:", error.message);
-    return "EX0001";
+    if (error) {
+      console.warn("getNextEXCode failed:", error.message);
+      return "EX0001";
+    }
+
+    const last = data?.[0]?.code || "";
+    const m = String(last).match(/^EX(\d{4})$/);
+    const nextNum = m ? (Number(m[1]) + 1) : 1;
+
+    return "EX" + String(nextNum).padStart(4, "0");
   }
 
-  const last = data?.[0]?.product_code || "";
-  const m = String(last).match(/^EX(\d{4})$/);
-  const nextNum = m ? (Number(m[1]) + 1) : 1;
-
-  return "EX" + String(nextNum).padStart(4, "0");
-}
-
-   function showView() {
+  function showView() {
     setActivePill("view");
     show(fpViewPanel, true);
     show(fpAddPanel, false);
-
     show(fpClearBtn, true);
     setMsg("");
     loadProducts("");
   }
 
   async function showAdd() {
-  setActivePill("add");
-  show(fpViewPanel, false);
-  show(fpAddPanel, true);
-  show(fpClearBtn, true);
-  setMsg("");
+    setActivePill("add");
+    show(fpViewPanel, false);
+    show(fpAddPanel, true);
+    show(fpClearBtn, true);
+    setMsg("");
 
-  editingProductId = null;
+    editingProductId = null;
 
-  // auto-fill next code
-  if (fpCode) fpCode.value = await getNextEXCode();
+    // auto-fill next code
+    if (fpCode) fpCode.value = await getNextEXCode();
 
-  if (fpName) fpName.value = "";
-  if (fpNotes) fpNotes.value = "";
-  if (fpLines) fpLines.innerHTML = "";
+    // ensure dropdown has a value
+    if (fpType && fpType.options.length > 0 && !fpType.value) {
+      fpType.value = fpType.options[0].value;
+    }
 
-  addLine();
-  fpName?.focus();
-}
+    if (fpName) fpName.value = "";
+    if (fpNotes) fpNotes.value = "";
+    if (fpLines) fpLines.innerHTML = "";
+
+    addLine();
+    fpName?.focus();
+  }
 
   async function loadProducts(term) {
     setMsg("Loading…");
@@ -201,13 +206,13 @@ function setActivePill(which) {
 
     let q = supabaseClient
       .from("formulated_products")
-      .select("id, product_code, name, notes, product_type_id, created_at")
-      .order("product_code", { ascending: true });
+      .select("id, code, name, notes, product_type_id, created_at")
+      .order("code", { ascending: true });
 
     const t = (term || "").trim();
     if (t) {
       const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
-      q = q.or(`product_code.ilike.%${esc}%,name.ilike.%${esc}%`);
+      q = q.or(`code.ilike.%${esc}%,name.ilike.%${esc}%`);
     }
 
     const { data, error } = await q;
@@ -233,7 +238,7 @@ function setActivePill(which) {
       return `
         <div class="customer-row" data-id="${escapeHtml(p.id)}">
           <div class="customer-main">
-            <div class="name">${escapeHtml(p.product_code || "")} — ${escapeHtml(p.name || "")}</div>
+            <div class="name">${escapeHtml(p.code || "")} — ${escapeHtml(p.name || "")}</div>
             <div class="meta"><span>${escapeHtml(typeLabel)}</span></div>
           </div>
 
@@ -269,7 +274,8 @@ function setActivePill(which) {
   async function editProduct(productId) {
     const p = productsById[productId];
     if (!p) return;
-setActivePill("add");
+
+    setActivePill("add");
     editingProductId = p.id;
 
     show(fpViewPanel, false);
@@ -277,7 +283,7 @@ setActivePill("add");
     show(fpClearBtn, true);
     setMsg("Editing — change and Save product.");
 
-    if (fpCode) fpCode.value = p.product_code || "";
+    if (fpCode) fpCode.value = p.code || "";
     if (fpName) fpName.value = p.name || "";
     if (fpNotes) fpNotes.value = p.notes || "";
     if (fpType) fpType.value = p.product_type_id || "";
@@ -298,12 +304,12 @@ setActivePill("add");
     if (lines.length === 0) addLine();
     else lines.forEach(l => addLine({ ingredient_id: l.ingredient_id, pct: l.pct }));
 
-    fpCode?.focus();
+    fpName?.focus();
   }
 
   async function deleteProduct(productId) {
     const p = productsById[productId];
-    const label = p ? `${p.product_code} — ${p.name}` : "this product";
+    const label = p ? `${p.code} — ${p.name}` : "this product";
 
     const ok = await confirmExact(`Delete "${label}"? This cannot be undone.`);
     if (!ok) return;
@@ -324,13 +330,13 @@ setActivePill("add");
   async function saveProduct() {
     setMsg("");
 
-    const product_code = (fpCode?.value || "").trim().toUpperCase();
-    const product_name = (fpName?.value || "").trim();
+    const code = (fpCode?.value || "").trim().toUpperCase();
+    const name = (fpName?.value || "").trim();
     const product_type_id = fpType?.value || "";
     const notes = (fpNotes?.value || "").trim() || null;
 
-    if (!product_code) return setMsg("Enter Product code.");
-    if (!product_name) return setMsg("Enter Product name.");
+    if (!code) return setMsg("Product code is missing (auto-code failed).");
+    if (!name) return setMsg("Enter Product name.");
     if (!product_type_id) return setMsg("Select Product type.");
 
     const { lines, error: linesErr } = getLinesFromUI();
@@ -339,34 +345,32 @@ setActivePill("add");
     let productId = editingProductId;
 
     if (productId) {
-const { data, error } = await supabaseClient
-  .from("formulated_products")
-  .update({
-    code: product_code,
-    product_code: product_code,
-    name: product_name,
-    type: "product",
-    notes
-  })
-  .eq("id", productId)
-  .select("id");
-
+      const { data, error } = await supabaseClient
+        .from("formulated_products")
+        .update({
+          code,
+          product_type_id,
+          name,
+          type: "product",
+          notes
+        })
+        .eq("id", productId)
+        .select("id");
 
       if (error) return setMsg("Save failed: " + error.message);
       if (!data || data.length === 0) return setMsg("Save blocked (RLS).");
     } else {
-const { data, error } = await supabaseClient
-  .from("formulated_products")
-  .insert([{
-    code: product_code,
-    product_code: product_code,
-    name: product_name,
-    type: "product",
-    notes
-  }])
-  .select("id")
-  .single();
-
+      const { data, error } = await supabaseClient
+        .from("formulated_products")
+        .insert([{
+          code,
+          product_type_id,
+          name,
+          type: "product",
+          notes
+        }])
+        .select("id")
+        .single();
 
       if (error) return setMsg("Save failed: " + error.message);
       productId = data.id;
