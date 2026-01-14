@@ -206,15 +206,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // Formulary tabs
   const fxTabIngredients = document.getElementById("fxTabIngredients");
-  const fxTabBases = document.getElementById("fxTabBases");
-  const fxTabBoosters = document.getElementById("fxTabBoosters");
-
-  const fxSectionIngredients = document.getElementById("fxSectionIngredients");
-  const fxSectionBases = document.getElementById("fxSectionBases");
-  const fxSectionBoosters = document.getElementById("fxSectionBoosters");
-
-  // Formulary tabs
-  const fxTabIngredients = document.getElementById("fxTabIngredients");
   const fxTabProducts = document.getElementById("fxTabProducts");
 
   const fxSectionIngredients = document.getElementById("fxSectionIngredients");
@@ -576,13 +567,14 @@ window.addEventListener("DOMContentLoaded", () => {
   // =========================================================
   // BLOCK: FORMULARY TABS
   // =========================================================
- function setActiveFormularyTab(tabKey) {
-  fxTabIngredients?.classList.toggle("active", tabKey === "ingredients");
-  fxTabProducts?.classList.toggle("active", tabKey === "products");
+   function setActiveFormularyTab(tabKey) {
+    fxTabIngredients?.classList.toggle("active", tabKey === "ingredients");
+    fxTabProducts?.classList.toggle("active", tabKey === "products");
 
-  show(fxSectionIngredients, tabKey === "ingredients");
-  show(fxSectionProducts, tabKey === "products");
-}
+    show(fxSectionIngredients, tabKey === "ingredients");
+    show(fxSectionProducts, tabKey === "products");
+  }
+
 
 
   // =========================================================
