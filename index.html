@@ -550,18 +550,22 @@
     <input id="lmName" placeholder="e.g. Revitalife Compounding" />
   </div>
 
-  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-    <div>
-      <label class="subtle" for="lmEmail" style="display:block; margin-bottom:6px;">Email (optional)</label>
-      <input id="lmEmail" placeholder="lab@example.com" />
-    </div>
-    <div>
-      <label class="subtle" for="lmPhone" style="display:block; margin-bottom:6px;">Phone (optional)</label>
-      <input id="lmPhone" placeholder="+971..." />
-      <div style="margin-bottom:10px;">
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+  <div>
+    <label class="subtle" for="lmEmail" style="display:block; margin-bottom:6px;">Email (optional)</label>
+    <input id="lmEmail" placeholder="lab@example.com" />
+  </div>
+  <div>
+    <label class="subtle" for="lmPhone" style="display:block; margin-bottom:6px;">Phone (optional)</label>
+    <input id="lmPhone" placeholder="+971..." />
+  </div>
+</div>
+
+<div style="margin-bottom:10px;">
   <label class="subtle" for="lmOrdersEmail" style="display:block; margin-bottom:6px;">Orders / formulations email (required)</label>
   <input id="lmOrdersEmail" placeholder="orders@lab.com" />
 </div>
+
 
     </div>
   </div>
@@ -576,9 +580,17 @@
     <textarea id="lmShipping" placeholder="Where orders should be sent, delivery instructions, etc…"></textarea>
   </div>
 
-  <button id="lmSaveBtn" class="btn-primary" type="button">Save lab</button>
+    <button id="lmSaveBtn" class="btn-primary" type="button">Save lab</button>
 
-</div>
+</div> <!-- end lmAddPanel -->
+</div> <!-- ✅ end viewLabMgmt -->
+
+
+            <!-- ===================================================
+                 BLOCK: EXACT FORMULARY VIEW
+                 =================================================== -->
+            <div id="viewFormulary" class="card" style="display:none;">
+
 
 
             <!-- ===================================================
