@@ -18,10 +18,18 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
   let productsById = {};       // { [id]: product }
 
   const setMsg = (t) => { if (fpMsg) fpMsg.textContent = t || ""; };
+    function setActivePill(which) {
+    // which = "view" or "add"
+    if (fpViewBtn) fpViewBtn.classList.toggle("btn-gold", which === "view");
+    if (fpAddBtn) fpAddBtn.classList.toggle("btn-gold", which === "add");
+  }
 
-  function resetScreen() {
-    setMsg("");
-    editingProductId = null;
+
+function resetScreen() {
+  setMsg("");
+  editingProductId = null;
+  setActivePill("view");
+
 
     show(fpViewPanel, false);
     show(fpAddPanel, false);
@@ -134,15 +142,18 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     return { lines };
   }
 
-  function showView() {
+   function showView() {
+    setActivePill("view");
     show(fpViewPanel, true);
     show(fpAddPanel, false);
+
     show(fpClearBtn, true);
     setMsg("");
     loadProducts("");
   }
 
   async function showAdd() {
+    setActivePill("add");
     show(fpViewPanel, false);
     show(fpAddPanel, true);
     show(fpClearBtn, true);
@@ -233,7 +244,7 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
   async function editProduct(productId) {
     const p = productsById[productId];
     if (!p) return;
-
+setActivePill("add");
     editingProductId = p.id;
 
     show(fpViewPanel, false);
