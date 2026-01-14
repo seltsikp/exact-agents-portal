@@ -1,6 +1,6 @@
 // modules/labs.js
-export function initLabManagement({ ui, helpers }) {
-  const { show } = helpers;
+export function initLabManagement({ supabaseClient, ui, helpers }) {
+  const { show, confirmExact } = helpers;
 
   const {
     lmViewBtn,
@@ -22,11 +22,9 @@ export function initLabManagement({ ui, helpers }) {
 
   const setLabMsg = (t) => { if (labMsg) labMsg.textContent = t || ""; };
 
-  // temporary in-memory storage (we will replace with Supabase next step)
-  let labs = [];
-  let editingLabIndex = null;
+  let labsById = {};
+  let editingLabId = null;
 
-  // simple html escape (so user input can’t break layout)
   function escapeHtml(str) {
     return String(str ?? "")
       .replaceAll("&", "&amp;")
@@ -45,38 +43,61 @@ export function initLabManagement({ ui, helpers }) {
     if (lmShipping) lmShipping.value = "";
   }
 
-  function renderLabList() {
+  async function loadLabs() {
     if (!labList) return;
 
-    if (labs.length === 0) {
+    setLabMsg("Loading labs…");
+    labList.innerHTML = "";
+    labsById = {};
+
+    const { data, error } = await supabaseClient
+      .from("labs")
+      .select("id, lab_code, name, orders_email, admin_email, phone, address, shipping_address, created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      setLabMsg("Load error: " + error.message);
+      labList.innerHTML = `<p class="subtle" style="margin:0;">Could not load labs.</p>`;
+      return;
+    }
+
+    const rows = data || [];
+    rows.forEach(r => { labsById[r.id] = r; });
+
+    if (rows.length === 0) {
+      setLabMsg("No labs yet. Click “Add lab”.");
       labList.innerHTML = `<p class="subtle" style="margin:0;">No labs yet. Click “Add lab”.</p>`;
       return;
     }
 
-    labList.innerHTML = labs.map((l, idx) => `
-      <div class="customer-row" data-lab-idx="${idx}">
+    setLabMsg(`Found ${rows.length} lab${rows.length === 1 ? "" : "s"}.`);
+
+    labList.innerHTML = rows.map(r => `
+      <div class="customer-row" data-lab-id="${escapeHtml(r.id)}">
         <div class="customer-main">
-          <div class="name">${escapeHtml(l.name || "")}</div>
+          <div class="name">${escapeHtml(r.name || "")}</div>
           <div class="meta">
-            <span><b>Orders:</b> ${escapeHtml(l.ordersEmail || "")}</span>
+            <span style="opacity:.75;"><b>${escapeHtml(r.lab_code || "")}</b></span>
             <span class="customer-dot">•</span>
-            ${l.email
-              ? `<span>Admin: ${escapeHtml(l.email)}</span>`
+            <span><b>Orders:</b> ${escapeHtml(r.orders_email || "")}</span>
+            <span class="customer-dot">•</span>
+            ${r.admin_email
+              ? `<span>Admin: ${escapeHtml(r.admin_email)}</span>`
               : `<span style="opacity:.65;">No admin email</span>`}
             <span class="customer-dot">•</span>
-            ${l.phone
-              ? `<span>${escapeHtml(l.phone)}</span>`
+            ${r.phone
+              ? `<span>${escapeHtml(r.phone)}</span>`
               : `<span style="opacity:.65;">No phone</span>`}
           </div>
         </div>
 
         <div class="customer-context">
-          <span class="pill-soft pill-soft-gold">Local (not saved to DB yet)</span>
+          <span class="pill-soft">Created: ${escapeHtml(new Date(r.created_at).toLocaleDateString())}</span>
         </div>
 
         <div class="customer-actions">
-          <button class="btn btn-soft action-pill edit-pill" type="button" data-action="edit" data-idx="${idx}">Edit</button>
-          <button class="btn action-pill delete-pill" type="button" data-action="delete" data-idx="${idx}">Delete</button>
+          <button class="btn btn-soft action-pill edit-pill" type="button" data-action="edit">Edit</button>
+          <button class="btn action-pill delete-pill" type="button" data-action="delete">Delete</button>
         </div>
       </div>
     `).join("");
@@ -88,15 +109,14 @@ export function initLabManagement({ ui, helpers }) {
     show(lmClearBtn, false);
     setLabMsg("");
     clearLabForm();
-    editingLabIndex = null;
+    editingLabId = null;
   }
 
-  function showViewLabsPanel() {
+  async function showViewLabsPanel() {
     show(lmViewPanel, true);
     show(lmAddPanel, false);
     show(lmClearBtn, true);
-    setLabMsg("Viewing labs (local list for now).");
-    renderLabList();
+    await loadLabs();
   }
 
   function showAddLabPanel() {
@@ -104,91 +124,120 @@ export function initLabManagement({ ui, helpers }) {
     show(lmAddPanel, true);
     show(lmClearBtn, true);
 
-    if (editingLabIndex !== null) {
-      setLabMsg("Editing lab — update fields and click Save lab.");
-    } else {
-      setLabMsg("Add a lab and click Save.");
-    }
+    if (editingLabId) setLabMsg("Editing lab — update fields and click Save lab.");
+    else setLabMsg("Add a lab and click Save.");
 
     if (lmName) lmName.focus();
   }
 
-  // buttons
+  // Buttons
   if (lmViewBtn) lmViewBtn.addEventListener("click", showViewLabsPanel);
+
   if (lmAddBtn) lmAddBtn.addEventListener("click", () => {
-    editingLabIndex = null;
+    editingLabId = null;
     clearLabForm();
     showAddLabPanel();
   });
+
   if (lmClearBtn) lmClearBtn.addEventListener("click", resetLabsScreen);
 
-  // save lab (local)
+  // Save (insert/update)
   if (lmSaveBtn) {
-    lmSaveBtn.addEventListener("click", () => {
+    lmSaveBtn.addEventListener("click", async () => {
+      setLabMsg("");
+
       const name = (lmName?.value || "").trim();
       if (!name) { setLabMsg("Lab name is required."); return; }
 
-      const ordersEmail = (lmOrdersEmail?.value || "").trim();
-      if (!ordersEmail) { setLabMsg("Orders / formulations email is required."); return; }
+      const orders_email = (lmOrdersEmail?.value || "").trim();
+      if (!orders_email) { setLabMsg("Orders / formulations email is required."); return; }
 
-      const email = (lmEmail?.value || "").trim() || "";
-      const phone = (lmPhone?.value || "").trim() || "";
-      const address = (lmAddress?.value || "").trim() || "";
-      const shipping = (lmShipping?.value || "").trim() || "";
+      const admin_email = (lmEmail?.value || "").trim() || null;
+      const phone = (lmPhone?.value || "").trim() || null;
+      const address = (lmAddress?.value || "").trim() || null;
+      const shipping_address = (lmShipping?.value || "").trim() || null;
 
-      const record = { name, email, ordersEmail, phone, address, shipping };
+      // UPDATE
+      if (editingLabId) {
+        const { data, error } = await supabaseClient
+          .from("labs")
+          .update({ name, orders_email, admin_email, phone, address, shipping_address })
+          .eq("id", editingLabId)
+          .select("id");
 
-      if (editingLabIndex !== null) {
-        labs[editingLabIndex] = record;
-        editingLabIndex = null;
-        setLabMsg("Updated ✅ (local only — database next)");
-      } else {
-        labs.unshift(record);
-        setLabMsg("Saved ✅ (local only — database next)");
+        if (error) { setLabMsg("Update error: " + error.message); return; }
+        if (!data || data.length === 0) { setLabMsg("Update blocked (RLS) — no rows updated."); return; }
+
+        setLabMsg("Updated ✅");
+        editingLabId = null;
+        clearLabForm();
+        await showViewLabsPanel();
+        return;
       }
 
+      // INSERT
+      const { error } = await supabaseClient
+        .from("labs")
+        .insert([{ name, orders_email, admin_email, phone, address, shipping_address }]);
+
+      if (error) { setLabMsg("Insert error: " + error.message); return; }
+
+      setLabMsg("Lab added ✅");
       clearLabForm();
-      showViewLabsPanel();
+      await showViewLabsPanel();
     });
   }
 
-  // edit/delete (local) — single click handler
+  // Edit/Delete delegation
   if (labList) {
-    labList.addEventListener("click", (e) => {
+    labList.addEventListener("click", async (e) => {
       const btn = e.target.closest("button[data-action]");
       if (!btn) return;
 
       const action = btn.getAttribute("data-action");
-      const idx = Number(btn.getAttribute("data-idx"));
-      if (Number.isNaN(idx)) return;
+      const row = e.target.closest(".customer-row");
+      if (!row) return;
 
-      const l = labs[idx];
-      if (!l) return;
+      const labId = row.getAttribute("data-lab-id");
+      const r = labsById[labId];
+      if (!r) return;
 
       if (action === "edit") {
-        editingLabIndex = idx;
+        editingLabId = r.id;
 
-        if (lmName) lmName.value = l.name || "";
-        if (lmEmail) lmEmail.value = l.email || "";
-        if (lmOrdersEmail) lmOrdersEmail.value = l.ordersEmail || "";
-        if (lmPhone) lmPhone.value = l.phone || "";
-        if (lmAddress) lmAddress.value = l.address || "";
-        if (lmShipping) lmShipping.value = l.shipping || "";
+        if (lmName) lmName.value = r.name || "";
+        if (lmOrdersEmail) lmOrdersEmail.value = r.orders_email || "";
+        if (lmEmail) lmEmail.value = r.admin_email || "";
+        if (lmPhone) lmPhone.value = r.phone || "";
+        if (lmAddress) lmAddress.value = r.address || "";
+        if (lmShipping) lmShipping.value = r.shipping_address || "";
 
         showAddLabPanel();
         return;
       }
 
       if (action === "delete") {
-        labs.splice(idx, 1);
-        setLabMsg("Deleted ✅ (local only)");
-        renderLabList();
-        return;
+        const label = (r.lab_code || r.name || "this lab").toString();
+        const ok = await confirmExact(`Delete ${label}? This cannot be undone.`);
+        if (!ok) return;
+
+        const { data, error } = await supabaseClient
+          .from("labs")
+          .delete()
+          .eq("id", r.id)
+          .select("id");
+
+        if (error) { setLabMsg("Delete error: " + error.message); return; }
+        if (!data || data.length === 0) { setLabMsg("Delete blocked (RLS) — no rows deleted."); return; }
+
+        setLabMsg("Deleted ✅");
+        await loadLabs();
       }
     });
   }
 
   return {
-    resetLabsScreen
+    resetLabsScreen,
+    showViewLabsPanel
   };
 }
