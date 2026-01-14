@@ -3,6 +3,8 @@ import { initNavigation } from "./modules/navigation.js";
 import { initCustomerManagement } from "./modules/customers.js";
 import { initAgentManagement } from "./modules/agents.js";
 import { initLabManagement } from "./modules/labs.js";
+import { initProductTypesManagement } from "./modules/productTypes.js";
+
 
 console.log("EXACT Agents Portal loaded (v42)");
 
@@ -234,6 +236,13 @@ window.addEventListener("DOMContentLoaded", () => {
   const fxIngDesc = document.getElementById("fxIngDesc");
   const fxIngSaveBtn = document.getElementById("fxIngSaveBtn");
 
+  // Product Types view + UI
+  const viewProductTypes = document.getElementById("viewProductTypes");
+  const ptCode = document.getElementById("pt_code");
+  const ptName = document.getElementById("pt_name");
+  const ptAddBtn = document.getElementById("pt_addBtn");
+  const ptTbody = document.getElementById("pt_tbody");
+  const ptStatus = document.getElementById("pt_status");
 
   // =========================================================
   // BLOCK: STATE
@@ -346,6 +355,12 @@ window.addEventListener("DOMContentLoaded", () => {
     },
     helpers: { show, confirmExact }
   });
+    const productTypesModule = initProductTypesManagement({
+    supabaseClient,
+    ui: { ptCode, ptName, ptAddBtn, ptTbody, ptStatus },
+    helpers: { confirmExact }
+  });
+
 
   // =========================================================
   // BLOCK: RESET INGREDIENTS SCREEN (MISSING BEFORE)
@@ -585,21 +600,24 @@ window.addEventListener("DOMContentLoaded", () => {
   // =========================================================
   const nav = initNavigation({
     menuItems,
-    views: {
+       views: {
       welcome: viewWelcome,
       customers: viewCustomerMgmt,
       agents: viewAgentMgmt,
+      productTypes: viewProductTypes,
       labs: viewLabMgmt,
       formulary: viewFormulary
     },
+
     show,
     canAccess: (viewKey) => {
       if (viewKey === "agents" && currentProfile?.role !== "admin") return false;
       if (viewKey === "formulary" && currentProfile?.role !== "admin") return false;
       if (viewKey === "labs" && currentProfile?.role !== "admin") return false;
+      if (viewKey === "productTypes" && currentProfile?.role !== "admin") return false;
       return true;
     },
-    onEnter: {
+       onEnter: {
       welcome: () => {
         showWelcomePanel({ containerEl: welcomeContent });
       },
@@ -609,6 +627,10 @@ window.addEventListener("DOMContentLoaded", () => {
       agents: () => {
         agentModule.resetAgentScreen();
       },
+      productTypes: async () => {
+        productTypesModule.resetProductTypesScreen();
+        await productTypesModule.loadProductTypes();
+      },
       labs: () => {
         labsModule.resetLabsScreen();
       },
@@ -617,6 +639,7 @@ window.addEventListener("DOMContentLoaded", () => {
         resetIngredientsScreen();
       }
     }
+
   });
 
   // =========================================================
