@@ -1,20 +1,33 @@
+// modules/productTypes.js
 export function initProductTypesManagement({ supabaseClient, ui, helpers }) {
-  const { ptCode, ptName, ptAddBtn, ptTbody, ptStatus } = ui;
+  const { ptName, ptAddBtn, ptTbody, ptStatus } = ui;
   const { confirmExact } = helpers;
+
+  let editingId = null;
 
   function setStatus(msg) {
     if (ptStatus) ptStatus.textContent = msg || "";
   }
 
+  function resetProductTypesScreen() {
+    editingId = null;
+    setStatus("");
+    if (ptName) ptName.value = "";
+    if (ptAddBtn) ptAddBtn.textContent = "Add";
+    if (ptTbody) ptTbody.innerHTML = "";
+  }
+
   async function loadProductTypes() {
     if (!ptTbody) return;
+
     setStatus("Loading...");
     ptTbody.innerHTML = "";
 
     const { data, error } = await supabaseClient
       .from("product_types")
-      .select("id, type_code, type_name")
-      .order("type_code", { ascending: true });
+      // IMPORTANT: use new PRD code column
+      .select("id, type_code2, type_name")
+      .order("type_code2", { ascending: true });
 
     if (error) {
       console.error(error);
@@ -32,21 +45,35 @@ export function initProductTypesManagement({ supabaseClient, ui, helpers }) {
 
     for (const r of rows) {
       const tr = document.createElement("tr");
+      tr.dataset.id = r.id;
 
       const tdCode = document.createElement("td");
-      tdCode.textContent = r.type_code;
+      tdCode.textContent = r.type_code2 || "";
 
       const tdName = document.createElement("td");
-      tdName.textContent = r.type_name;
+      tdName.textContent = r.type_name || "";
 
       const tdActions = document.createElement("td");
       tdActions.style.textAlign = "right";
 
+      const editBtn = document.createElement("button");
+      editBtn.textContent = "Edit";
+      editBtn.type = "button";
+      editBtn.addEventListener("click", () => {
+        editingId = r.id;
+        if (ptName) ptName.value = r.type_name || "";
+        if (ptAddBtn) ptAddBtn.textContent = "Save";
+        setStatus("Editing — change name then click Save.");
+        ptName?.focus();
+      });
+
       const delBtn = document.createElement("button");
-      delBtn.className = "dangerBtn";
+      delBtn.className = "btn-danger"; // match your global button style
       delBtn.textContent = "Delete";
+      delBtn.type = "button";
+      delBtn.style.marginLeft = "8px";
       delBtn.addEventListener("click", async () => {
-        const ok = await confirmExact(`Delete "${r.type_name}"?`);
+        const ok = await confirmExact(`Delete "${r.type_name}"? This cannot be undone.`);
         if (!ok) return;
 
         const { data: delData, error: delErr } = await supabaseClient
@@ -57,17 +84,25 @@ export function initProductTypesManagement({ supabaseClient, ui, helpers }) {
 
         if (delErr) {
           console.error(delErr);
-          alert("Delete failed: " + delErr.message);
+          setStatus("Delete failed: " + delErr.message);
           return;
         }
         if (!delData || delData.length === 0) {
-          alert("Delete blocked (RLS) — no rows deleted.");
+          setStatus("Delete blocked (RLS) — no rows deleted.");
           return;
+        }
+
+        // if you deleted the thing you were editing, reset
+        if (editingId === r.id) {
+          editingId = null;
+          if (ptName) ptName.value = "";
+          if (ptAddBtn) ptAddBtn.textContent = "Add";
         }
 
         await loadProductTypes();
       });
 
+      tdActions.appendChild(editBtn);
       tdActions.appendChild(delBtn);
 
       tr.appendChild(tdCode);
@@ -78,46 +113,65 @@ export function initProductTypesManagement({ supabaseClient, ui, helpers }) {
     }
   }
 
-  function resetProductTypesScreen() {
-    setStatus("");
-    if (ptCode) ptCode.value = "";
-    if (ptName) ptName.value = "";
-    if (ptTbody) ptTbody.innerHTML = "";
-  }
-
-  async function addProductType() {
-    const type_code = (ptCode?.value || "").trim().toUpperCase();
+  async function saveProductType() {
     const type_name = (ptName?.value || "").trim();
 
-    if (!type_code || !type_name) {
-      alert("Enter Type Code and Type Name.");
+    if (!type_name) {
+      setStatus("Enter Type Name.");
       return;
     }
 
+    // EDIT
+    if (editingId) {
+      const { data: updData, error: updErr } = await supabaseClient
+        .from("product_types")
+        .update({ type_name })
+        .eq("id", editingId)
+        .select("id");
+
+      if (updErr) {
+        console.error(updErr);
+        setStatus("Update failed: " + updErr.message);
+        return;
+      }
+      if (!updData || updData.length === 0) {
+        setStatus("Update blocked (RLS) — no rows updated.");
+        return;
+      }
+
+      editingId = null;
+      if (ptAddBtn) ptAddBtn.textContent = "Add";
+      if (ptName) ptName.value = "";
+      setStatus("Updated ✅");
+
+      await loadProductTypes();
+      return;
+    }
+
+    // ADD (code is auto-generated in DB trigger)
     const { error } = await supabaseClient
       .from("product_types")
-      .insert([{ type_code, type_name }]);
+      .insert([{ type_name }]);
 
     if (error) {
       console.error(error);
-      alert("Add failed: " + error.message);
+      setStatus("Add failed: " + error.message);
       return;
     }
 
-    if (ptCode) ptCode.value = "";
     if (ptName) ptName.value = "";
+    setStatus("Added ✅");
 
     await loadProductTypes();
   }
 
   function bind() {
     if (ptAddBtn && ptAddBtn.dataset.bound !== "1") {
-      ptAddBtn.addEventListener("click", addProductType);
+      ptAddBtn.addEventListener("click", saveProductType);
       ptAddBtn.dataset.bound = "1";
     }
   }
 
-  // Bind once
   bind();
 
   return {
