@@ -4,6 +4,8 @@ import { initCustomerManagement } from "./modules/customers.js";
 import { initAgentManagement } from "./modules/agents.js";
 import { initLabManagement } from "./modules/labs.js";
 import { initProductTypesManagement } from "./modules/productTypes.js";
+import { initFormulatedProductsManagement } from "./modules/formulatedProducts.js";
+
 
 
 console.log("EXACT Agents Portal loaded (v42)");
@@ -240,6 +242,32 @@ const viewLabMgmt = document.getElementById("viewLabMgmt");
   const ptTbody = document.getElementById("pt_tbody");
   const ptStatus = document.getElementById("pt_status");
 
+  // Formulated Products UI
+const fpViewBtn = document.getElementById("fpViewBtn");
+const fpAddBtn = document.getElementById("fpAddBtn");
+const fpClearBtn = document.getElementById("fpClearBtn");
+const fpMsg = document.getElementById("fpMsg");
+
+const fpViewPanel = document.getElementById("fpViewPanel");
+const fpAddPanel = document.getElementById("fpAddPanel");
+
+const fpSearch = document.getElementById("fpSearch");
+const fpSearchBtn = document.getElementById("fpSearchBtn");
+const fpShowAllBtn = document.getElementById("fpShowAllBtn");
+const fpList = document.getElementById("fpList");
+
+const fpCode = document.getElementById("fpCode");
+const fpName = document.getElementById("fpName");
+const fpType = document.getElementById("fpType");
+const fpNotes = document.getElementById("fpNotes");
+
+const fpAddLineBtn = document.getElementById("fpAddLineBtn");
+const fpLines = document.getElementById("fpLines");
+
+const fpSaveBtn = document.getElementById("fpSaveBtn");
+const fpCancelEditBtn = document.getElementById("fpCancelEditBtn");
+
+
   // =========================================================
   // BLOCK: STATE
   // =========================================================
@@ -357,6 +385,19 @@ const viewLabMgmt = document.getElementById("viewLabMgmt");
   helpers: { confirmExact }
 });
 
+const formulatedProductsModule = initFormulatedProductsManagement({
+  supabaseClient,
+  ui: {
+    fpViewBtn, fpAddBtn, fpClearBtn, fpMsg,
+    fpViewPanel, fpAddPanel,
+    fpSearch, fpSearchBtn, fpShowAllBtn,
+    fpList,
+    fpCode, fpName, fpType, fpNotes,
+    fpAddLineBtn, fpLines,
+    fpSaveBtn, fpCancelEditBtn
+  },
+  helpers: { show, escapeHtml, confirmExact }
+});
 
 
   // =========================================================
@@ -747,8 +788,15 @@ resetIngredientsScreen();
   // =========================================================
   // BLOCK: BIND BUTTONS (FORMULARY / ING)
   // =========================================================
-  if (fxTabIngredients) fxTabIngredients.addEventListener("click", () => setActiveFormularyTab("ingredients"));
-if (fxTabProducts) fxTabProducts.addEventListener("click", () => setActiveFormularyTab("products"));
+if (fxTabIngredients) fxTabIngredients.addEventListener("click", () => {
+  setActiveFormularyTab("ingredients");
+});
+
+if (fxTabProducts) fxTabProducts.addEventListener("click", async () => {
+  setActiveFormularyTab("products");
+  await formulatedProductsModule.enter();
+});
+
 
   if (fxIngViewBtn) fxIngViewBtn.addEventListener("click", () => showViewIngredientsPanel());
   if (fxIngAddBtn) fxIngAddBtn.addEventListener("click", () => {
