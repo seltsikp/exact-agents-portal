@@ -1,6 +1,8 @@
 import { showWelcomePanel } from "./modules/welcome.js";
 import { initNavigation } from "./modules/navigation.js";
 import { initCustomerManagement } from "./modules/customers.js";
+import { initAgentManagement } from "./modules/agents.js";
+
 
 console.log("EXACT Agents Portal loaded (v41)");
 
@@ -252,6 +254,35 @@ const customerModule = initCustomerManagement({
     get agentNameMap() { return agentNameMap; }
   }
 });
+const agentModule = initAgentManagement({
+  supabaseClient,
+  ui: {
+    amViewBtn,
+    amAddBtn,
+    amClearBtn,
+    agentMsg,
+    amViewPanel,
+    amAddPanel,
+    amSearch,
+    amSearchBtn,
+    amShowAllBtn,
+    agentList,
+    agentNameInput,
+    addAgentBtn
+  },
+  helpers: {
+    show,
+    escapeHtml,
+    formatDateShort,
+    confirmExact
+  },
+  state: {
+    async refreshAgents() {
+      await loadAgentNameMap();
+      await loadAgentsForAssignDropdown();
+    }
+  }
+});
 
   // =========================================================
   // BLOCK: STATE
@@ -433,56 +464,7 @@ const customerModule = initCustomerManagement({
   // =========================================================
   // BLOCK: SCREEN STATE HELPERS (AGENTS / CUSTOMERS / INGREDIENTS)
   // =========================================================
-  function resetAgentScreen() {
-    show(amViewPanel, false);
-    show(amAddPanel, false);
-    show(amClearBtn, false);
-
-    if (agentList) agentList.innerHTML = "";
-    agentsById = {};
-    editingAgentId = null;
-
-    if (agentNameInput) agentNameInput.value = "";
-    setAgentMsg("");
-  }
-
-  function showViewAgentsPanel() {
-    show(amViewPanel, true);
-    show(amAddPanel, false);
-    show(amClearBtn, true);
-
-    if (amSearch) amSearch.focus();
-    setAgentMsg("Enter a search term or click “Show all”.");
-  }
-
-  function showAddAgentPanel() {
-    show(amViewPanel, false);
-    show(amAddPanel, true);
-    show(amClearBtn, true);
-
-    setAgentMsg("");
-    if (agentNameInput) agentNameInput.focus();
-  }
-
-  function resetIngredientsScreen() {
-    show(fxIngViewPanel, false);
-    show(fxIngAddPanel, false);
-    show(fxIngClearBtn, false);
-
-    if (fxIngList) fxIngList.innerHTML = "";
-    if (fxIngList) fxIngList.className = "ingredient-list";
-
-    ingredientsById = {};
-    editingIngredientId = null;
-
-    if (fxIngPsi) fxIngPsi.value = "";
-    if (fxIngInci) fxIngInci.value = "";
-    if (fxIngDesc) fxIngDesc.value = "";
-
-    setFxIngMsg("");
-  }
-
-  function showViewIngredientsPanel() {
+   function showViewIngredientsPanel() {
     show(fxIngViewPanel, true);
     show(fxIngAddPanel, false);
     show(fxIngClearBtn, true);
@@ -505,29 +487,6 @@ const customerModule = initCustomerManagement({
   // =========================================================
   // BLOCK: LIST DELEGATIONS (AGENTS / CUSTOMERS)
   // =========================================================
-  function ensureAgentListDelegation() {
-    if (!agentList) return;
-    if (agentList.dataset.bound === "1") return;
-
-    agentList.addEventListener("click", async (e) => {
-      const btn = e.target.closest("button[data-action]");
-      if (!btn) return;
-
-      const row = e.target.closest(".customer-row");
-      if (!row) return;
-
-      const agentId = row.getAttribute("data-agent-id");
-      const action = btn.getAttribute("data-action");
-      const a = agentsById[agentId];
-      if (!a) return;
-
-      if (action === "edit") {
-        editingAgentId = a.id;
-        if (agentNameInput) agentNameInput.value = a.name || "";
-        showAddAgentPanel();
-        setAgentMsg("Editing agent — click Save agent to update.");
-        return;
-      }
 
       if (action === "delete") {
         setAgentMsg("");
@@ -583,26 +542,7 @@ const customerModule = initCustomerManagement({
   // =========================================================
   // BLOCK: QUERIES (AGENTS / CUSTOMERS / INGREDIENTS)
   // =========================================================
-  async function runAgentSearch(term) {
-    if (!agentList) return;
-
-    ensureAgentListDelegation();
-
-    agentList.innerHTML = "";
-    agentsById = {};
-    setAgentMsg("Searching…");
-
-    let q = supabaseClient
-      .from("agents")
-      .select("id, agent_code, name, created_at")
-      .order("created_at", { ascending: false });
-
-    const t = (term || "").trim();
-    if (t) {
-      const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
-      q = q.ilike("name", `%${esc}%`);
-    }
-
+  
     const { data, error } = await q;
 
     if (error) {
@@ -771,8 +711,8 @@ const customerModule = initCustomerManagement({
   customerModule.resetCustomerScreen();
 },
       agents: () => {
-        resetAgentScreen();
-      },
+  agentModule.resetAgentScreen();
+},
       formulary: () => {
         setActiveFormularyTab("ingredients");
         resetIngredientsScreen();
@@ -882,14 +822,7 @@ const customerModule = initCustomerManagement({
   // BLOCK: BIND BUTTONS (CUSTOMERS / AGENTS / FORMULARY / ING)
   // =========================================================
  
-  if (amViewBtn) amViewBtn.addEventListener("click", () => showViewAgentsPanel());
-  if (amAddBtn) amAddBtn.addEventListener("click", () => { editingAgentId = null; if (agentNameInput) agentNameInput.value = ""; showAddAgentPanel(); });
-  if (amClearBtn) amClearBtn.addEventListener("click", () => resetAgentScreen());
-  if (amSearchBtn) amSearchBtn.addEventListener("click", async () => { await runAgentSearch(amSearch?.value || ""); });
-  if (amShowAllBtn) amShowAllBtn.addEventListener("click", async () => { await runAgentSearch(""); });
-  if (amSearch) amSearch.addEventListener("keydown", async (e) => { if (e.key === "Enter") await runAgentSearch(amSearch.value || ""); });
-
-  if (fxTabIngredients) fxTabIngredients.addEventListener("click", () => setActiveFormularyTab("ingredients"));
+    if (fxTabIngredients) fxTabIngredients.addEventListener("click", () => setActiveFormularyTab("ingredients"));
   if (fxTabBases) fxTabBases.addEventListener("click", () => setActiveFormularyTab("bases"));
   if (fxTabBoosters) fxTabBoosters.addEventListener("click", () => setActiveFormularyTab("boosters"));
 
@@ -956,54 +889,6 @@ const customerModule = initCustomerManagement({
 
       showViewIngredientsPanel();
       await runIngredientSearch("");
-    });
-  }
-
-  // =========================================================
-  // BLOCK: SAVE AGENT (ADD/EDIT)
-  // =========================================================
-  if (addAgentBtn) {
-    addAgentBtn.addEventListener("click", async () => {
-      setAgentMsg("");
-
-      const name = (agentNameInput?.value || "").trim();
-      if (!name) { setAgentMsg("Agent name is required."); return; }
-
-      if (editingAgentId) {
-        const { data, error } = await supabaseClient
-          .from("agents")
-          .update({ name })
-          .eq("id", editingAgentId)
-          .select("id");
-
-        if (error) { setAgentMsg("Update error: " + error.message); return; }
-        if (!data || data.length === 0) { setAgentMsg("Update blocked (RLS) — no rows updated."); return; }
-
-        setAgentMsg("Saved ✅");
-        editingAgentId = null;
-        if (agentNameInput) agentNameInput.value = "";
-
-        await loadAgentNameMap();
-        await loadAgentsForAssignDropdown();
-
-        showViewAgentsPanel();
-        await runAgentSearch(amSearch?.value || "");
-        return;
-      }
-
-      const { error } = await supabaseClient
-        .from("agents")
-        .insert([{ name }]);
-
-      if (error) { setAgentMsg("Insert error: " + error.message); return; }
-
-      setAgentMsg("Agent added ✅");
-      if (agentNameInput) agentNameInput.value = "";
-
-      await loadAgentNameMap();
-      await loadAgentsForAssignDropdown();
-
-      showViewAgentsPanel();
     });
   }
 
