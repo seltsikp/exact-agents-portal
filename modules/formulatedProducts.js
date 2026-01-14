@@ -18,13 +18,7 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
   let productsById = {};       // { [id]: product }
 
   const setMsg = (t) => { if (fpMsg) fpMsg.textContent = t || ""; };
-    function setActivePill(which) {
-    // which = "view" or "add"
-    if (fpViewBtn) fpViewBtn.classList.toggle("btn-gold", which === "view");
-    if (fpAddBtn) fpAddBtn.classList.toggle("btn-gold", which === "add");
-  }
-
-
+    
 function resetScreen() {
   setMsg("");
   editingProductId = null;
@@ -43,6 +37,13 @@ function resetScreen() {
     if (fpNotes) fpNotes.value = "";
     if (fpLines) fpLines.innerHTML = "";
   }
+function setActivePill(which) {
+  if (fpViewBtn) fpViewBtn.classList.toggle("btn-gold", which === "view");
+  if (fpViewBtn) fpViewBtn.classList.toggle("btn-primary", which !== "view");
+
+  if (fpAddBtn) fpAddBtn.classList.toggle("btn-gold", which === "add");
+  if (fpAddBtn) fpAddBtn.classList.toggle("btn-primary", which !== "add");
+}
 
   async function loadLookups() {
     // Product Types
@@ -142,6 +143,27 @@ function resetScreen() {
     return { lines };
   }
 
+  async function getNextEXCode() {
+  // Gets the highest EX#### and returns the next one
+  const { data, error } = await supabaseClient
+    .from("formulated_products")
+    .select("product_code")
+    .ilike("product_code", "EX%")
+    .order("product_code", { ascending: false })
+    .limit(1);
+
+  if (error) {
+    console.warn("getNextEXCode failed:", error.message);
+    return "EX0001";
+  }
+
+  const last = data?.[0]?.product_code || "";
+  const m = String(last).match(/^EX(\d{4})$/);
+  const nextNum = m ? (Number(m[1]) + 1) : 1;
+
+  return "EX" + String(nextNum).padStart(4, "0");
+}
+
    function showView() {
     setActivePill("view");
     show(fpViewPanel, true);
@@ -153,21 +175,24 @@ function resetScreen() {
   }
 
   async function showAdd() {
-    setActivePill("add");
-    show(fpViewPanel, false);
-    show(fpAddPanel, true);
-    show(fpClearBtn, true);
-    setMsg("");
+  setActivePill("add");
+  show(fpViewPanel, false);
+  show(fpAddPanel, true);
+  show(fpClearBtn, true);
+  setMsg("");
 
-    editingProductId = null;
-    if (fpCode) fpCode.value = ""; // allow manual EX0001 etc
-    if (fpName) fpName.value = "";
-    if (fpNotes) fpNotes.value = "";
-    if (fpLines) fpLines.innerHTML = "";
+  editingProductId = null;
 
-    addLine();
-    fpCode?.focus();
-  }
+  // auto-fill next code
+  if (fpCode) fpCode.value = await getNextEXCode();
+
+  if (fpName) fpName.value = "";
+  if (fpNotes) fpNotes.value = "";
+  if (fpLines) fpLines.innerHTML = "";
+
+  addLine();
+  fpName?.focus();
+}
 
   async function loadProducts(term) {
     setMsg("Loading…");
