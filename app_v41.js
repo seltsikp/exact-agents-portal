@@ -671,10 +671,11 @@ const labsModule = initLabManagement({
   labsModule.resetLabsScreen();
 },
 
-      formulary: () => {
-        setActiveFormularyTab("ingredients");
-        resetIngredientsScreen();
-      }
+formulary: () => {
+  setActiveFormularyTab("ingredients");
+  resetIngredientsScreen();
+}
+
     }
   });
 
