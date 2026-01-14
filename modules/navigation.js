@@ -9,6 +9,9 @@ export function initNavigation({
   let activeViewKey = null;
 
   function setActiveView(viewKey) {
+console.log("[NAV] setActiveView:", viewKey);
+if (!views || !views[viewKey]) console.warn("[NAV] Missing view element for:", viewKey);
+
     // permissions gate
     if (typeof canAccess === "function" && !canAccess(viewKey)) return;
 
