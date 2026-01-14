@@ -489,33 +489,6 @@ const agentModule = initAgentManagement({
   // =========================================================
 
       if (action === "delete") {
-        setAgentMsg("");
-
-        const agentName = (a.name || "").trim() || "this agent";
-        const ok = await confirmExact(`Delete ${agentName}? This cannot be undone.`);
-        if (!ok) return;
-
-        const { data, error } = await supabaseClient
-          .from("agents")
-          .delete()
-          .eq("id", a.id)
-          .select("id");
-
-        if (error) { setAgentMsg("Delete error: " + error.message); return; }
-        if (!data || data.length === 0) { setAgentMsg("Delete blocked (RLS) — no rows deleted."); return; }
-
-        setAgentMsg("Deleted ✅");
-
-        await loadAgentNameMap();
-        await loadAgentsForAssignDropdown();
-        await runAgentSearch(amSearch?.value || "");
-      }
-    });
-
-    agentList.dataset.bound = "1";
-  }
-
-      if (action === "delete") {
         setCustMsg("");
 
         const customerName = `${c.first_name || ""} ${c.last_name || ""}`.trim() || "this customer";
