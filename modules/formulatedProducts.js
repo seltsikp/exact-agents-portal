@@ -18,6 +18,12 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
 
   const setMsg = (t) => { if (fpMsg) fpMsg.textContent = t || ""; };
 
+  function setActiveBtn(which) {
+    // which: "view" | "add" | ""
+    if (fpViewBtn) fpViewBtn.classList.toggle("active", which === "view");
+    if (fpAddBtn) fpAddBtn.classList.toggle("active", which === "add");
+  }
+
   function resetScreen() {
     setMsg("");
     editingProductId = null;
@@ -25,6 +31,8 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     show(fpViewPanel, false);
     show(fpAddPanel, false);
     show(fpClearBtn, false);
+
+    setActiveBtn("");
 
     if (fpSearch) fpSearch.value = "";
     if (fpList) fpList.innerHTML = "";
@@ -133,29 +141,39 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     return { lines };
   }
 
-  function showView() {
+  async function showView() {
     show(fpViewPanel, true);
     show(fpAddPanel, false);
     show(fpClearBtn, true);
+    setActiveBtn("view");
     setMsg("");
-    loadProducts("");
+    await loadProducts(fpSearch?.value || "");
   }
 
   async function showAdd() {
     show(fpViewPanel, false);
     show(fpAddPanel, true);
     show(fpClearBtn, true);
+    setActiveBtn("add");
     setMsg("");
 
     editingProductId = null;
-    fpCode.value = "";
-    fpName.value = "";
-    fpNotes.value = "";
-    fpLines.innerHTML = "";
+
+    // IMPORTANT: code is auto-generated (EX0001, EX0002...), so don't ask user to type it.
+    if (fpCode) {
+      fpCode.value = "";
+      fpCode.placeholder = "Auto (EX0001...)";
+      fpCode.readOnly = true;
+    }
+
+    if (fpName) fpName.value = "";
+    if (fpNotes) fpNotes.value = "";
+    if (fpLines) fpLines.innerHTML = "";
 
     // start with one empty line
     addLine();
-    fpCode.focus();
+
+    fpName?.focus();
   }
 
   async function loadProducts(term) {
@@ -163,6 +181,8 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     productsById = {};
     fpList.innerHTML = "";
 
+    // IMPORTANT: your DB must have formulated_products.product_code (EX0001 etc).
+    // If you renamed it, change this select accordingly.
     let q = supabaseClient
       .from("formulated_products")
       .select("id, product_code, product_name, notes, product_type_id, created_at")
@@ -190,18 +210,15 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
 
     setMsg(`Found ${rows.length} product${rows.length === 1 ? "" : "s"}.`);
 
-    // render cards (reuse the customer card style you already have)
     fpList.innerHTML = rows.map(p => {
-      const typeLabel =
-        productTypesCache.find(x => x.id === p.product_type_id)?.type_name || "Unknown type";
+      const pt = productTypesCache.find(x => x.id === p.product_type_id);
+      const typeLabel = pt ? `${pt.type_code} — ${pt.type_name}` : "Unknown type";
 
       return `
         <div class="customer-row" data-id="${escapeHtml(p.id)}">
           <div class="customer-main">
-            <div class="name">${escapeHtml(p.product_code)} — ${escapeHtml(p.product_name)}</div>
-            <div class="meta">
-              <span>${escapeHtml(typeLabel)}</span>
-            </div>
+            <div class="name">${escapeHtml(p.product_code || "")} — ${escapeHtml(p.product_name || "")}</div>
+            <div class="meta"><span>${escapeHtml(typeLabel)}</span></div>
           </div>
 
           <div class="customer-context">
@@ -216,7 +233,6 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
       `;
     }).join("");
 
-    // bind edit/delete
     fpList.querySelectorAll(".fp-edit").forEach(btn => {
       btn.addEventListener("click", () => {
         const row = btn.closest(".customer-row");
@@ -243,15 +259,20 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     show(fpViewPanel, false);
     show(fpAddPanel, true);
     show(fpClearBtn, true);
+    setActiveBtn("add");
     setMsg("Editing — change and Save product.");
 
-    fpCode.value = p.product_code || "";
-    fpName.value = p.product_name || "";
-    fpNotes.value = p.notes || "";
-    fpType.value = p.product_type_id || "";
-    fpLines.innerHTML = "";
+    // code stays read-only (still shown)
+    if (fpCode) {
+      fpCode.value = p.product_code || "";
+      fpCode.readOnly = true;
+    }
 
-    // load existing ingredient lines
+    if (fpName) fpName.value = p.product_name || "";
+    if (fpNotes) fpNotes.value = p.notes || "";
+    if (fpType) fpType.value = p.product_type_id || "";
+    if (fpLines) fpLines.innerHTML = "";
+
     const { data, error } = await supabaseClient
       .from("formulated_product_ingredients")
       .select("ingredient_id, pct, sort_order")
@@ -267,7 +288,7 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     if (lines.length === 0) addLine();
     else lines.forEach(l => addLine({ ingredient_id: l.ingredient_id, pct: l.pct }));
 
-    fpCode.focus();
+    fpName?.focus();
   }
 
   async function deleteProduct(productId) {
@@ -293,42 +314,44 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
   async function saveProduct() {
     setMsg("");
 
-    const product_code = (fpCode.value || "").trim().toUpperCase();
     const product_name = (fpName.value || "").trim();
     const product_type_id = fpType.value || "";
     const notes = (fpNotes.value || "").trim() || null;
 
-    if (!product_code) return setMsg("Enter Product code.");
     if (!product_name) return setMsg("Enter Product name.");
     if (!product_type_id) return setMsg("Select Product type.");
 
     const { lines, error: linesErr } = getLinesFromUI();
     if (linesErr) return setMsg(linesErr);
 
-    // Upsert product
     let productId = editingProductId;
 
     if (productId) {
+      // Update existing (do NOT update product_code here)
       const { data, error } = await supabaseClient
         .from("formulated_products")
-        .update({ product_code, product_name, product_type_id, notes })
+        .update({ product_name, product_type_id, notes })
         .eq("id", productId)
         .select("id");
 
       if (error) return setMsg("Save failed: " + error.message);
       if (!data || data.length === 0) return setMsg("Save blocked (RLS).");
     } else {
+      // Insert new WITHOUT product_code (DB generates EX0001 automatically)
       const { data, error } = await supabaseClient
         .from("formulated_products")
-        .insert([{ product_code, product_name, product_type_id, notes }])
-        .select("id")
+        .insert([{ product_name, product_type_id, notes }])
+        .select("id, product_code")
         .single();
 
       if (error) return setMsg("Save failed: " + error.message);
       productId = data.id;
+
+      // show generated code back in UI
+      if (fpCode) fpCode.value = data.product_code || "";
     }
 
-    // Replace ingredient lines (simple + reliable)
+    // Replace ingredient lines
     {
       const { error: delErr } = await supabaseClient
         .from("formulated_product_ingredients")
@@ -352,10 +375,8 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     }
 
     setMsg("Saved ✅");
-
-    // back to list
     editingProductId = null;
-    showView();
+    await showView();
   }
 
   function bindOnce() {
@@ -407,7 +428,6 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     }
   }
 
-  // call once on init
   bindOnce();
 
   return {
@@ -415,7 +435,7 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     enter: async () => {
       resetScreen();
       await loadLookups();
-      showView();
+      await showView();
     }
   };
 }
