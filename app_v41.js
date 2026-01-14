@@ -212,6 +212,46 @@ window.addEventListener("DOMContentLoaded", () => {
   const fxIngInci = document.getElementById("fxIngInci");
   const fxIngDesc = document.getElementById("fxIngDesc");
   const fxIngSaveBtn = document.getElementById("fxIngSaveBtn");
+const customerModule = initCustomerManagement({
+  supabaseClient,
+  ui: {
+    cmViewBtn,
+    cmAddBtn,
+    cmClearBtn,
+    custMsg,
+    cmViewPanel,
+    cmAddPanel,
+    cmSearch,
+    cmSearchBtn,
+    cmShowAllBtn,
+    customerList,
+
+    firstNameInput,
+    lastNameInput,
+    custEmailInput,
+    custPhoneInput,
+    addCustomerBtn,
+
+    assignClinicRow,
+    assignClinicSelect,
+    agentClinicRow,
+    agentClinicName
+  },
+  helpers: {
+    show,
+    escapeHtml,
+    formatDateShort,
+    confirmExact,
+    isValidEmail,
+    isValidPhone,
+    markField,
+    clearFieldMarks
+  },
+  state: {
+    get currentProfile() { return currentProfile; },
+    get agentNameMap() { return agentNameMap; }
+  }
+});
 
   // =========================================================
   // BLOCK: STATE
@@ -728,8 +768,8 @@ window.addEventListener("DOMContentLoaded", () => {
         showWelcomePanel({ containerEl: welcomeContent });
       },
       customers: () => {
-        resetCustomerScreen();
-      },
+  customerModule.resetCustomerScreen();
+},
       agents: () => {
         resetAgentScreen();
       },
@@ -768,7 +808,7 @@ window.addEventListener("DOMContentLoaded", () => {
     editingIngredientId = null;
     activeViewKey = null;
 
-    resetCustomerScreen();
+    customerModule.resetCustomerScreen();
     resetAgentScreen();
     resetIngredientsScreen();
 
@@ -828,7 +868,7 @@ window.addEventListener("DOMContentLoaded", () => {
         nav.renderMenuForRole(profile.role);
 
       // keep screens neutral until user chooses
-      resetCustomerScreen();
+      customerModule.resetCustomerScreen();
       resetAgentScreen();
       resetIngredientsScreen();
 
