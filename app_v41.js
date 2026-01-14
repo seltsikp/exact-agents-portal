@@ -4,7 +4,7 @@ import { initCustomerManagement } from "./modules/customers.js";
 import { initAgentManagement } from "./modules/agents.js";
 import { initLabManagement } from "./modules/labs.js";
 
-console.log("EXACT Agents Portal loaded (v41)");
+console.log("EXACT Agents Portal loaded (v42)");
 
 // =========================================================
 // BLOCK: SUPABASE CLIENT
@@ -133,14 +133,13 @@ window.addEventListener("DOMContentLoaded", () => {
   const appBox = document.getElementById("appBox");
   const menuItems = document.getElementById("menuItems");
 
-  // ✅ Views (IMPORTANT: include Welcome)
+  // Views
   const viewWelcome = document.getElementById("viewWelcome");
   const welcomeContent = document.getElementById("welcomeContent");
   const viewCustomerMgmt = document.getElementById("viewCustomerMgmt");
   const viewAgentMgmt = document.getElementById("viewAgentMgmt");
   const viewFormulary = document.getElementById("viewFormulary");
   const viewLabMgmt = document.getElementById("viewLabMgmt");
-
 
   // Customer Mgmt UI
   const cmViewBtn = document.getElementById("cmViewBtn");
@@ -158,22 +157,21 @@ window.addEventListener("DOMContentLoaded", () => {
   const customerList = document.getElementById("customerList");
 
   // Lab Mgmt UI
-const lmViewBtn = document.getElementById("lmViewBtn");
-const lmAddBtn = document.getElementById("lmAddBtn");
-const lmClearBtn = document.getElementById("lmClearBtn");
-const labMsg = document.getElementById("labMsg");
-const lmViewPanel = document.getElementById("lmViewPanel");
-const lmAddPanel = document.getElementById("lmAddPanel");
-const labList = document.getElementById("labList");
+  const lmViewBtn = document.getElementById("lmViewBtn");
+  const lmAddBtn = document.getElementById("lmAddBtn");
+  const lmClearBtn = document.getElementById("lmClearBtn");
+  const labMsg = document.getElementById("labMsg");
+  const lmViewPanel = document.getElementById("lmViewPanel");
+  const lmAddPanel = document.getElementById("lmAddPanel");
+  const labList = document.getElementById("labList");
 
-const lmName = document.getElementById("lmName");
-const lmEmail = document.getElementById("lmEmail");
-const lmPhone = document.getElementById("lmPhone");
-const lmAddress = document.getElementById("lmAddress");
-const lmShipping = document.getElementById("lmShipping");
-const lmSaveBtn = document.getElementById("lmSaveBtn");
-const lmOrdersEmail = document.getElementById("lmOrdersEmail");
-
+  const lmName = document.getElementById("lmName");
+  const lmEmail = document.getElementById("lmEmail");
+  const lmOrdersEmail = document.getElementById("lmOrdersEmail");
+  const lmPhone = document.getElementById("lmPhone");
+  const lmAddress = document.getElementById("lmAddress");
+  const lmShipping = document.getElementById("lmShipping");
+  const lmSaveBtn = document.getElementById("lmSaveBtn");
 
   // Agent Mgmt UI
   const amViewBtn = document.getElementById("amViewBtn");
@@ -234,96 +232,6 @@ const lmOrdersEmail = document.getElementById("lmOrdersEmail");
   const fxIngInci = document.getElementById("fxIngInci");
   const fxIngDesc = document.getElementById("fxIngDesc");
   const fxIngSaveBtn = document.getElementById("fxIngSaveBtn");
-const customerModule = initCustomerManagement({
-  supabaseClient,
-  ui: {
-    cmViewBtn,
-    cmAddBtn,
-    cmClearBtn,
-    custMsg,
-    cmViewPanel,
-    cmAddPanel,
-    cmSearch,
-    cmSearchBtn,
-    cmShowAllBtn,
-    customerList,
-
-    firstNameInput,
-    lastNameInput,
-    custEmailInput,
-    custPhoneInput,
-    addCustomerBtn,
-
-    assignClinicRow,
-    assignClinicSelect,
-    agentClinicRow,
-    agentClinicName
-  },
-  helpers: {
-    show,
-    escapeHtml,
-    formatDateShort,
-    confirmExact,
-    isValidEmail,
-    isValidPhone,
-    markField,
-    clearFieldMarks
-  },
-  state: {
-    get currentProfile() { return currentProfile; },
-    get agentNameMap() { return agentNameMap; }
-  }
-});
-const agentModule = initAgentManagement({
-  supabaseClient,
-  ui: {
-    amViewBtn,
-    amAddBtn,
-    amClearBtn,
-    agentMsg,
-    amViewPanel,
-    amAddPanel,
-    amSearch,
-    amSearchBtn,
-    amShowAllBtn,
-    agentList,
-    agentNameInput,
-    addAgentBtn
-  },
-  helpers: {
-    show,
-    escapeHtml,
-    formatDateShort,
-    confirmExact
-  },
-  state: {
-    async refreshAgents() {
-      await loadAgentNameMap();
-      await loadAgentsForAssignDropdown();
-    }
-  }
-});
-const labsModule = initLabManagement({
-  supabaseClient,
-  ui: {
-    lmViewBtn,
-    lmAddBtn,
-    lmClearBtn,
-    labMsg,
-    lmViewPanel,
-    lmAddPanel,
-    labList,
-
-    lmName,
-    lmEmail,
-    lmOrdersEmail,
-    lmPhone,
-    lmAddress,
-    lmShipping,
-    lmSaveBtn
-  },
-  helpers: { show, confirmExact }
-});
 
   // =========================================================
   // BLOCK: STATE
@@ -332,14 +240,9 @@ const labsModule = initLabManagement({
   let currentProfile = null;
   let hydratedUserId = null;
 
-  let activeViewKey = null;
-
   let agentNameMap = {};
   let customersById = {};
   let agentsById = {};
-
-  let editingCustomerId = null;
-  let editingAgentId = null;
 
   let ingredientsById = {};
   let editingIngredientId = null;
@@ -350,83 +253,119 @@ const labsModule = initLabManagement({
   const setFxIngMsg = (t) => { if (fxIngMsg) fxIngMsg.textContent = t || ""; };
 
   // =========================================================
+  // BLOCK: MODULE INITS
+  // =========================================================
+  const customerModule = initCustomerManagement({
+    supabaseClient,
+    ui: {
+      cmViewBtn,
+      cmAddBtn,
+      cmClearBtn,
+      custMsg,
+      cmViewPanel,
+      cmAddPanel,
+      cmSearch,
+      cmSearchBtn,
+      cmShowAllBtn,
+      customerList,
+      firstNameInput,
+      lastNameInput,
+      custEmailInput,
+      custPhoneInput,
+      addCustomerBtn,
+      assignClinicRow,
+      assignClinicSelect,
+      agentClinicRow,
+      agentClinicName
+    },
+    helpers: {
+      show,
+      escapeHtml,
+      formatDateShort,
+      confirmExact,
+      isValidEmail,
+      isValidPhone,
+      markField,
+      clearFieldMarks
+    },
+    state: {
+      get currentProfile() { return currentProfile; },
+      get agentNameMap() { return agentNameMap; }
+    }
+  });
+
+  const agentModule = initAgentManagement({
+    supabaseClient,
+    ui: {
+      amViewBtn,
+      amAddBtn,
+      amClearBtn,
+      agentMsg,
+      amViewPanel,
+      amAddPanel,
+      amSearch,
+      amSearchBtn,
+      amShowAllBtn,
+      agentList,
+      agentNameInput,
+      addAgentBtn
+    },
+    helpers: {
+      show,
+      escapeHtml,
+      formatDateShort,
+      confirmExact
+    },
+    state: {
+      async refreshAgents() {
+        await loadAgentNameMap();
+        await loadAgentsForAssignDropdown();
+      }
+    }
+  });
+
+  const labsModule = initLabManagement({
+    supabaseClient,
+    ui: {
+      lmViewBtn,
+      lmAddBtn,
+      lmClearBtn,
+      labMsg,
+      lmViewPanel,
+      lmAddPanel,
+      labList,
+      lmName,
+      lmEmail,
+      lmOrdersEmail,
+      lmPhone,
+      lmAddress,
+      lmShipping,
+      lmSaveBtn
+    },
+    helpers: { show, confirmExact }
+  });
+
+  // =========================================================
+  // BLOCK: RESET INGREDIENTS SCREEN (MISSING BEFORE)
+  // =========================================================
+  function resetIngredientsScreen() {
+    show(fxIngViewPanel, false);
+    show(fxIngAddPanel, false);
+    show(fxIngClearBtn, false);
+    setFxIngMsg("");
+    ingredientsById = {};
+    editingIngredientId = null;
+
+    if (fxIngSearch) fxIngSearch.value = "";
+    if (fxIngPsi) fxIngPsi.value = "";
+    if (fxIngInci) fxIngInci.value = "";
+    if (fxIngDesc) fxIngDesc.value = "";
+    if (fxIngList) fxIngList.innerHTML = "";
+  }
+
+  // =========================================================
   // BLOCK: ROW RENDERERS
   // =========================================================
-  function buildCustomerRowHTML(c, { role, agentNameMap }) {
-    const id = escapeHtml(c.id);
-    const code = escapeHtml(c.customer_code || "");
-
-    const first = (c.first_name ?? "").trim();
-    const last = (c.last_name ?? "").trim();
-    const fullName = `${first} ${last}`.trim() || "Unnamed Customer";
-
-    const name = escapeHtml(fullName);
-    const email = escapeHtml((c.email || "").trim());
-    const phone = escapeHtml((c.phone || "").trim());
-    const created = formatDateShort(c.created_at);
-
-    let metaLine = "";
-    const codePart = code ? `<span>${code}</span><span class="customer-dot">•</span>` : "";
-
-    if (email && phone) metaLine = `${codePart}<span>${email}</span><span class="customer-dot">•</span><span>${phone}</span>`;
-    else if (email) metaLine = `${codePart}<span>${email}</span>`;
-    else if (phone) metaLine = `${codePart}<span>${phone}</span>`;
-    else metaLine = codePart || `<span style="opacity:.65;">No contact details</span>`;
-
-    let clinicPill = "";
-    if (role === "admin") {
-      const clinicName = agentNameMap?.[c.agent_id] || "Unknown clinic";
-      clinicPill = `<span class="pill-soft pill-soft-gold">Clinic: ${escapeHtml(clinicName)}</span>`;
-    }
-
-    const createdPill = created ? `<span class="pill-soft">Created: ${escapeHtml(created)}</span>` : "";
-
-    return `
-      <div class="customer-row" data-customer-id="${id}">
-        <div class="customer-main">
-          <div class="name">${name}</div>
-          <div class="meta">${metaLine}</div>
-        </div>
-
-        <div class="customer-context">
-          ${clinicPill}
-          ${createdPill}
-        </div>
-
-        <div class="customer-actions">
-          <button class="btn btn-soft action-pill edit-pill" data-action="edit" type="button">Edit</button>
-          <button class="btn action-pill delete-pill" data-action="delete" type="button">Delete</button>
-        </div>
-      </div>
-    `.trim();
-  }
-
-  function buildAgentRowHTML(a) {
-    const id = escapeHtml(a.id);
-    const code = escapeHtml(a.agent_code || "");
-    const name = escapeHtml((a.name || "").trim() || "Unnamed agent");
-    const created = formatDateShort(a.created_at);
-    const createdPill = created ? `<span class="pill-soft">Created: ${escapeHtml(created)}</span>` : "";
-
-    return `
-      <div class="customer-row" data-agent-id="${id}">
-        <div class="customer-main">
-          <div class="name">${name}</div>
-          <div class="meta"><span style="opacity:.75;">${code}</span></div>
-        </div>
-
-        <div class="customer-context">
-          ${createdPill}
-        </div>
-
-        <div class="customer-actions">
-          <button class="btn btn-soft action-pill edit-pill" data-action="edit" type="button">Edit</button>
-          <button class="btn action-pill delete-pill" data-action="delete" type="button">Delete</button>
-        </div>
-      </div>
-    `.trim();
-  }
-
   function buildIngredientRowHTML(i) {
     const id = escapeHtml(i.id);
     const psi = escapeHtml((i.psi_number || "").trim());
@@ -503,9 +442,9 @@ const labsModule = initLabManagement({
   }
 
   // =========================================================
-  // BLOCK: SCREEN STATE HELPERS (AGENTS / CUSTOMERS / INGREDIENTS)
+  // BLOCK: SCREEN HELPERS (INGREDIENTS)
   // =========================================================
-   function showViewIngredientsPanel() {
+  function showViewIngredientsPanel() {
     show(fxIngViewPanel, true);
     show(fxIngAddPanel, false);
     show(fxIngClearBtn, true);
@@ -525,7 +464,9 @@ const labsModule = initLabManagement({
     if (fxIngPsi) fxIngPsi.focus();
   }
 
-
+  // =========================================================
+  // BLOCK: INGREDIENT QUERY
+  // =========================================================
   async function runIngredientSearch(term) {
     if (!fxIngList) return;
 
@@ -636,6 +577,7 @@ const labsModule = initLabManagement({
     show(fxSectionBases, tabKey === "bases");
     show(fxSectionBoosters, tabKey === "boosters");
   }
+
   // =========================================================
   // BLOCK: VIEWS + MENU (MODULE)
   // =========================================================
@@ -648,10 +590,8 @@ const labsModule = initLabManagement({
       labs: viewLabMgmt,
       formulary: viewFormulary
     },
-
     show,
     canAccess: (viewKey) => {
-      // permissions
       if (viewKey === "agents" && currentProfile?.role !== "admin") return false;
       if (viewKey === "formulary" && currentProfile?.role !== "admin") return false;
       if (viewKey === "labs" && currentProfile?.role !== "admin") return false;
@@ -662,20 +602,18 @@ const labsModule = initLabManagement({
         showWelcomePanel({ containerEl: welcomeContent });
       },
       customers: () => {
-  customerModule.resetCustomerScreen();
-},
+        customerModule.resetCustomerScreen();
+      },
       agents: () => {
-  agentModule.resetAgentScreen();
-},
-   labs: () => {
-  labsModule.resetLabsScreen();
-},
-
-formulary: () => {
-  setActiveFormularyTab("ingredients");
-  resetIngredientsScreen();
-}
-
+        agentModule.resetAgentScreen();
+      },
+      labs: () => {
+        labsModule.resetLabsScreen();
+      },
+      formulary: () => {
+        setActiveFormularyTab("ingredients");
+        resetIngredientsScreen();
+      }
     }
   });
 
@@ -689,7 +627,6 @@ formulary: () => {
 
     if (topBarTitle) topBarTitle.textContent = "";
     if (topBarSub) topBarSub.textContent = "";
-
     if (menuItems) menuItems.innerHTML = "";
 
     setAuthMsg(message);
@@ -698,20 +635,19 @@ formulary: () => {
     currentSession = null;
     currentProfile = null;
     hydratedUserId = null;
+
     agentNameMap = {};
     customersById = {};
     agentsById = {};
+
     ingredientsById = {};
-    editingAgentId = null;
-    editingCustomerId = null;
     editingIngredientId = null;
-    activeViewKey = null;
 
     customerModule.resetCustomerScreen();
-    resetAgentScreen();
+    agentModule.resetAgentScreen();
+    labsModule.resetLabsScreen();
     resetIngredientsScreen();
 
-    // ensure welcome not shown while logged out
     show(viewWelcome, false);
   }
 
@@ -745,8 +681,8 @@ formulary: () => {
       if (!profile) {
         if (topBarTitle) topBarTitle.textContent = "Logged in";
         if (topBarSub) topBarSub.textContent = "Profile lookup failed (agent_users). Check RLS / row exists.";
-        renderMenuForRole("agent");
-          nav.setActiveView("welcome");
+        nav.renderMenuForRole("agent");
+        nav.setActiveView("welcome");
         return;
       }
 
@@ -764,11 +700,12 @@ formulary: () => {
         if (agentClinicName) agentClinicName.value = agentName || "Unknown clinic";
       }
 
-        nav.renderMenuForRole(profile.role);
+      nav.renderMenuForRole(profile.role);
 
       // keep screens neutral until user chooses
       customerModule.resetCustomerScreen();
-      resetAgentScreen();
+      agentModule.resetAgentScreen();
+      labsModule.resetLabsScreen();
       resetIngredientsScreen();
 
     } catch (e) {
@@ -778,10 +715,9 @@ formulary: () => {
   }
 
   // =========================================================
-  // BLOCK: BIND BUTTONS (CUSTOMERS / AGENTS / FORMULARY / ING)
+  // BLOCK: BIND BUTTONS (FORMULARY / ING)
   // =========================================================
- 
-    if (fxTabIngredients) fxTabIngredients.addEventListener("click", () => setActiveFormularyTab("ingredients"));
+  if (fxTabIngredients) fxTabIngredients.addEventListener("click", () => setActiveFormularyTab("ingredients"));
   if (fxTabBases) fxTabBases.addEventListener("click", () => setActiveFormularyTab("bases"));
   if (fxTabBoosters) fxTabBoosters.addEventListener("click", () => setActiveFormularyTab("boosters"));
 
