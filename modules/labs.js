@@ -43,14 +43,13 @@ export function initLabManagement({ supabaseClient, ui, helpers }) {
     if (lmShipping) lmShipping.value = "";
   }
 
- async function loadLabs() {
+async function loadLabs() {
   if (!labList) return;
 
   setLabMsg("Loading labs…");
   labsById = {};
   labList.innerHTML = "";
 
-  // --- load rows ---
   const { data, error } = await supabaseClient
     .from("labs")
     .select("id, lab_code, name, orders_email, admin_email, phone, address, shipping_address, created_at")
@@ -74,7 +73,7 @@ export function initLabManagement({ supabaseClient, ui, helpers }) {
   setLabMsg(`Found ${rows.length} lab${rows.length === 1 ? "" : "s"}.`);
 
   labList.innerHTML = `
-    <div class="lab-table">
+    <div class="labs-wrap">
       <div class="lab-head">
         <div class="lab-cell">Code</div>
         <div class="lab-cell">Name</div>
@@ -85,7 +84,9 @@ export function initLabManagement({ supabaseClient, ui, helpers }) {
       </div>
 
       ${rows.map(r => {
-        const created = r.created_at ? new Date(r.created_at).toLocaleDateString() : "";
+        const created = r.created_at
+          ? new Date(r.created_at).toLocaleDateString()
+          : "";
 
         return `
           <div class="lab-row" data-lab-id="${escapeHtml(r.id)}">
@@ -97,15 +98,21 @@ export function initLabManagement({ supabaseClient, ui, helpers }) {
             </div>
 
             <div class="lab-cell">
-              <span class="lab-clip" title="${escapeHtml(r.orders_email || "")}">${escapeHtml(r.orders_email || "")}</span>
+              <span class="lab-clip" title="${escapeHtml(r.orders_email || "")}">
+                ${escapeHtml(r.orders_email || "")}
+              </span>
             </div>
 
             <div class="lab-cell">
-              <span class="lab-clip" title="${escapeHtml(r.admin_email || "")}">${escapeHtml(r.admin_email || "")}</span>
+              <span class="lab-clip" title="${escapeHtml(r.admin_email || "")}">
+                ${escapeHtml(r.admin_email || "")}
+              </span>
             </div>
 
             <div class="lab-cell">
-              <span class="lab-clip" title="${escapeHtml(r.phone || "")}">${escapeHtml(r.phone || "")}</span>
+              <span class="lab-clip" title="${escapeHtml(r.phone || "")}">
+                ${escapeHtml(r.phone || "")}
+              </span>
             </div>
 
             <div class="lab-actions">
@@ -118,6 +125,7 @@ export function initLabManagement({ supabaseClient, ui, helpers }) {
     </div>
   `;
 }
+
 
 
 
