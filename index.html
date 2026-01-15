@@ -887,6 +887,53 @@
                 <button id="addCustomerBtn" class="btn-primary" type="button">Save customer</button>
               </div>
             </div>
+<!-- ACCOUNT MANAGERS -->
+<div id="viewAccountManagers" class="card" style="display:none;">
+  <div class="cardHeader">
+    <h2>Account Managers</h2>
+    <div class="cardHeaderRight"></div>
+  </div>
+
+  <div class="cm-actions">
+    <button id="amgrViewBtn" class="btn-gold" type="button">View account managers</button>
+    <button id="amgrAddBtn" type="button">Add account manager</button>
+    <button id="amgrClearBtn" type="button" style="display:none;">Clear</button>
+    <p id="amgrMsg" class="subtle" style="margin:0;"></p>
+  </div>
+
+  <div id="amgrViewPanel" style="display:none; margin-top:8px;">
+    <div id="amgrList" class="customer-list"></div>
+  </div>
+
+  <div id="amgrAddPanel" style="display:none; margin-top:10px;">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+      <input id="amgrFirstName" placeholder="First name *" />
+      <input id="amgrLastName" placeholder="Last name *" />
+    </div>
+
+    <div style="margin-top:10px;">
+      <input id="amgrEmail" placeholder="Email *" />
+    </div>
+
+    <div style="margin-top:10px;">
+      <input id="amgrPhone" placeholder="Phone (optional)" />
+    </div>
+
+    <div style="margin-top:10px;">
+      <textarea id="amgrAddress" placeholder="Address (optional)"></textarea>
+    </div>
+
+    <div style="margin-top:10px;">
+      <textarea id="amgrNotes" placeholder="Notes (optional)"></textarea>
+    </div>
+
+    <div class="cm-actions" style="margin-top:12px;">
+      <button id="amgrSaveBtn" class="btn-primary" type="button">
+        Save Account Manager
+      </button>
+    </div>
+  </div>
+</div>
 
             <!-- PRODUCT TYPES -->
             <div id="viewProductTypes" class="card" style="display:none;">
