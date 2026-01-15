@@ -379,6 +379,13 @@ const umPerms = document.getElementById("umPerms");
 const umSaveBtn = document.getElementById("umSaveBtn");
 const umCancelBtn = document.getElementById("umCancelBtn");
 
+const umAddBtn = document.getElementById("umAddBtn");
+const umSearch = document.getElementById("umSearch");
+const umSearchBtn = document.getElementById("umSearchBtn");
+const umShowAllBtn = document.getElementById("umShowAllBtn");
+const umAuthUserId = document.getElementById("umAuthUserId");
+
+
 
   // =========================================================
   // BLOCK: STATE
@@ -533,12 +540,15 @@ const formulatedProductsModule = initFormulatedProductsManagement({
 });
 const userMgmtModule = initUserManagement({
   supabaseClient,
-  ui: {
-    umViewBtn, umClearBtn, umMsg,
-    umViewPanel, umEditPanel, umList,
-    umFullName, umEmail, umRole, umStatus,
-    umPerms, umSaveBtn, umCancelBtn
-  },
+ui: {
+  umViewBtn, umAddBtn, umClearBtn, umMsg,
+  umViewPanel, umEditPanel, umList,
+  umSearch, umSearchBtn, umShowAllBtn,
+  umAuthUserId,
+  umFullName, umEmail, umRole, umStatus,
+  umPerms, umSaveBtn, umCancelBtn
+},
+
   helpers: { show, escapeHtml, confirmExact }
 });
 
