@@ -52,12 +52,14 @@ Object.entries(views).forEach(([key, el]) => {
     addMenuBtn("Welcome", "welcome");
 
     if (role === "admin") {
-  addMenuBtn("Agent Management", "agents");
+  addMenuBtn("Agents", "agents");
   addMenuBtn("Account Managers", "accountManagers");
-  addMenuBtn("Customer Management", "customers");
-  addMenuBtn("Product Types", "productTypes");
-  addMenuBtn("EXACT Formulary", "formulary");
-  addMenuBtn("Lab Management", "labs");
+  addMenuBtn("Customers", "customers");
+  addMenuBtn("Product Categories", "productTypes");
+  addMenuBtn("Formulary", "formulary");
+  addMenuBtn("Labs", "labs");
+  addMenuBtn("Users", "userMgmt");
+
 }
 
 
