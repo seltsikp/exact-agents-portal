@@ -318,10 +318,20 @@ if (addingNew) {
     }
   });
 
-  if (error) {
-    setMsg("Create user failed: " + (error.message || JSON.stringify(error)));
-    return;
-  }
+ if (error) {
+  // supabase-js puts the function JSON error in error.context
+  const status = error.context?.status ?? "";
+  const body = error.context?.body ?? error.context ?? error;
+
+  let details = "";
+  try { details = typeof body === "string" ? body : JSON.stringify(body); }
+  catch { details = String(body); }
+
+  setMsg(`Create user failed (${status}): ${details}`);
+  console.error("create-user error:", error);
+  return;
+}
+
 
   setMsg("User created ✅");
   clearForm();
