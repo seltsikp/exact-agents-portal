@@ -302,24 +302,28 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
         });
 
 if (error) {
-  const status =
-    error?.context?.response?.status ??
-    error?.context?.status ??
-    "";
+  // For FunctionsHttpError / non-2xx, Supabase provides the Response on error.context.response
+  const res = error?.context?.response;
 
-  let details = "";
+  let status = "";
+  let text = "";
 
   try {
-    if (error?.context?.response) {
-      details = await error.context.response.text();
-    } else if (error?.context?.body) {
-      details = typeof error.context.body === "string"
-        ? error.context.body
-        : JSON.stringify(error.context.body);
-    }
+    status = String(res?.status ?? error?.context?.status ?? "");
+    if (res) text = await res.text();
   } catch (e) {
-    details = "Could not read response body: " + String(e);
+    text = "Could not read error response: " + String(e);
   }
+
+  // fallback info
+  const msg = error?.message || "(no message)";
+  if (!text) text = "(no response body)";
+
+  setMsg(`Create user failed (${status}): ${msg} ${text}`);
+  console.error("create-user error FULL:", error);
+  return;
+}
+
 
   // ALWAYS include error.message and error.name (this is what you're missing)
   const name = error?.name || "Error";
