@@ -26,7 +26,7 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
   auth: {
     storage: window.localStorage,
     persistSession: true,
-    autoRefreshToken: false,
+    autoRefreshToken: true,
     detectSessionInUrl: false
   }
 });
