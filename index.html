@@ -314,6 +314,25 @@
         justify-content:flex-end;
       }
 
+      /* ===== FIX: prevent list rows from overflowing and blocking clicks ===== */
+.appLayout { overflow-x: hidden; }      /* prevents right column from spilling over menu */
+.card { overflow: hidden; }            /* keeps content inside card bounds */
+
+.customer-row { max-width: 100%; }     /* never exceed container width */
+.customer-row > * { min-width: 0; }    /* CRITICAL: allows grid children to shrink */
+.customer-row .subtle,
+.customer-row div,
+.customer-row span { min-width: 0; }   /* extra safety for long text */
+
+/* Optional: make long text truncate instead of expanding the grid */
+.customer-row .lab-clip,
+.customer-row .clip {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
       @media (max-width: 768px){
         .customer-row{ grid-template-columns: 1fr; gap:10px; }
         .customer-actions{ justify-content:flex-start; }
