@@ -5,6 +5,8 @@ import { initAgentManagement } from "./modules/agents.js";
 import { initLabManagement } from "./modules/labs.js";
 import { initProductTypesManagement } from "./modules/productTypes.js";
 import { initFormulatedProductsManagement } from "./modules/formulatedProducts.js";
+import { initAccountManagersManagement } from "./modules/accountManagers.js";
+
 
 
 
@@ -267,6 +269,22 @@ const fpLines = document.getElementById("fpLines");
 const fpSaveBtn = document.getElementById("fpSaveBtn");
 const fpCancelEditBtn = document.getElementById("fpCancelEditBtn");
 
+   // Account Managers UI
+const amgrViewBtn = document.getElementById("amgrViewBtn");
+const amgrAddBtn = document.getElementById("amgrAddBtn");
+const amgrClearBtn = document.getElementById("amgrClearBtn");
+const amgrMsg = document.getElementById("amgrMsg");
+const amgrViewPanel = document.getElementById("amgrViewPanel");
+const amgrAddPanel = document.getElementById("amgrAddPanel");
+const amgrList = document.getElementById("amgrList");
+
+const amgrFirstName = document.getElementById("amgrFirstName");
+const amgrLastName = document.getElementById("amgrLastName");
+const amgrEmail = document.getElementById("amgrEmail");
+const amgrPhone = document.getElementById("amgrPhone");
+const amgrAddress = document.getElementById("amgrAddress");
+const amgrNotes = document.getElementById("amgrNotes");
+const amgrSaveBtn = document.getElementById("amgrSaveBtn");
 
   // =========================================================
   // BLOCK: STATE
@@ -397,6 +415,27 @@ const formulatedProductsModule = initFormulatedProductsManagement({
     fpSaveBtn, fpCancelEditBtn
   },
   helpers: { show, escapeHtml, confirmExact }
+});
+
+  const accountManagersModule = initAccountManagersManagement({
+  supabaseClient,
+  ui: {
+    amgrViewBtn,
+    amgrAddBtn,
+    amgrClearBtn,
+    amgrMsg,
+    amgrViewPanel,
+    amgrAddPanel,
+    amgrList,
+    amgrFirstName,
+    amgrLastName,
+    amgrEmail,
+    amgrPhone,
+    amgrAddress,
+    amgrNotes,
+    amgrSaveBtn
+  },
+  helpers: { show, confirmExact }
 });
 
 
@@ -646,6 +685,7 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
       welcome: viewWelcome,
       customers: viewCustomerMgmt,
       agents: viewAgentMgmt,
+      accountManagers: viewAccountManagers,
       productTypes: viewProductTypes,
       labs: viewLabMgmt,
       formulary: viewFormulary
@@ -657,6 +697,8 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
       if (viewKey === "formulary" && currentProfile?.role !== "admin") return false;
       if (viewKey === "labs" && currentProfile?.role !== "admin") return false;
       if (viewKey === "productTypes" && currentProfile?.role !== "admin") return false;
+      if (viewKey === "accountManagers" && currentProfile?.role !== "admin") return false;
+
       return true;
     },
        onEnter: {
@@ -675,6 +717,8 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
       },
       labs: () => {
         labsModule.resetLabsScreen();
+        accountManagers: () => {
+        accountManagersModule.resetAccountManagersScreen();
       },
       formulary: () => {
         setActiveFormularyTab("ingredients");
