@@ -99,7 +99,8 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
     show(umViewPanel, true);
     show(umEditPanel, false);
     show(umClearBtn, true);
-    setMsg("Enter a search term or click “Show all”.");
+    setMsg("Loading users…");
+    runSearch("");
     if (umSearch) umSearch.focus();
   }
 
