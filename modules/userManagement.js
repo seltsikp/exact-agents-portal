@@ -113,7 +113,8 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
     addingNew = true;
     
     showEditPanel();
-    setMsg("Adding user — paste Auth User ID, choose role/status, set permissions, then Save.");
+   setMsg("Adding user — enter email, password, role/status, permissions, then Save.");
+
 
   }
 
@@ -278,17 +279,30 @@ if (!role) { setMsg("Role is required."); return; }
 if (!status) { setMsg("Status is required."); return; }
 
       // ADD
-      if (addingNew) {
-               const { error } = await supabaseClient
-          .from("agent_users")
-          .insert([{
-            auth_user_id,
-            full_name,
-            email,
-            role,
-            status,
-            permissions
-          }]);
+    if (addingNew) {
+  const password = (ui.umPassword?.value || "").trim(); // see note below
+
+  if (!password || password.length < 8) {
+    setMsg("Password is required for new users (min 8 chars).");
+    return;
+  }
+
+  const { data, error } = await supabaseClient.functions.invoke("create-user", {
+    body: { email, password, full_name, role, status, permissions }
+  });
+
+  if (error) {
+    setMsg("Create user failed: " + (error.message || JSON.stringify(error)));
+    return;
+  }
+
+  setMsg("User created ✅");
+  clearForm();
+  showViewUsersPanel();
+  await runSearch("");
+  return;
+}
+
 
         if (error) { setMsg("Insert error: " + error.message); return; }
 
