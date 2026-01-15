@@ -110,9 +110,40 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
       </div>
     `;
 
-    row.querySelector(".ing-delete").addEventListener("click", () => row.remove());
+row.querySelector(".ing-delete").addEventListener("click", () => {
+  row.remove();
+  updateTotalPct();
+});
+
+row.querySelector(".fp-pct").addEventListener("input", updateTotalPct);
     fpLines.appendChild(row);
   }
+function updateTotalPct() {
+  if (!fpLines) return;
+
+  const rows = Array.from(fpLines.querySelectorAll(".ingredient-row"));
+  let total = 0;
+
+  rows.forEach(r => {
+    const v = Number(r.querySelector(".fp-pct")?.value || 0);
+    total += v;
+  });
+
+  const rounded = Math.round(total * 1000) / 1000;
+  const el = document.getElementById("fpTotalPct");
+  if (!el) return;
+
+  el.textContent = `Total: ${rounded}%`;
+
+  // colour feedback
+  if (Math.abs(rounded - 100) <= 0.001) {
+    el.style.color = "green";
+    el.style.fontWeight = "700";
+  } else {
+    el.style.color = "red";
+    el.style.fontWeight = "700";
+  }
+}
 
   function getLinesFromUI() {
     const rows = Array.from(fpLines.querySelectorAll(".ingredient-row"));
@@ -197,6 +228,8 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
 
     addLine();
     fpName?.focus();
+    updateTotalPct();
+
   }
 
 async function loadProducts(term) {
