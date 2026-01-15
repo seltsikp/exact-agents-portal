@@ -123,8 +123,10 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
   function openEditUser(u) {
     editingId = u.id;
     addingNew = false;
-
    
+
+
+    if (umPassword) umPassword.value = "";
     if (umFullName) umFullName.value = u.full_name || "";
     if (umEmail) umEmail.value = u.email || "";
     if (umRole) umRole.value = u.role || "agent";
@@ -289,32 +291,32 @@ if (addingNew) {
     return;
   }
 
-// get current session JWT (best for calling functions)
-const { data: sessionData, error: sessionErr } = await supabaseClient.auth.getSession();
-if (sessionErr) {
-  setMsg("Session error: " + sessionErr.message);
-  return;
-}
-
-const accessToken = sessionData?.session?.access_token;
-if (!accessToken) {
-  setMsg("Not logged in (no access token). Please log in again.");
-  return;
-}
-
-// IMPORTANT: use your actual anon key here (see note below)
-const ANON_KEY = window.SUPABASE_ANON_KEY || "";  // or replace with your constant
-
-const { data, error } = await supabaseClient.functions.invoke("create-user", {
-  body: { email, password, full_name, role, status, permissions },
-  headers: {
-    apikey: ANON_KEY,
-    Authorization: `Bearer ${accessToken}`
+  // get current session JWT (must be logged in)
+  const { data: sessionData, error: sessionErr } = await supabaseClient.auth.getSession();
+  if (sessionErr) {
+    setMsg("Session error: " + sessionErr.message);
+    return;
   }
-});
 
+  const accessToken = sessionData?.session?.access_token;
+  if (!accessToken) {
+    setMsg("Not logged in (no access token). Please log in again.");
+    return;
+  }
 
+  const anonKey = window.SUPABASE_ANON_KEY || "";
+  if (!anonKey) {
+    setMsg("Missing SUPABASE_ANON_KEY. Check main app JS sets window.SUPABASE_ANON_KEY.");
+    return;
+  }
 
+  const { data, error } = await supabaseClient.functions.invoke("create-user", {
+    body: { email, password, full_name, role, status, permissions },
+    headers: {
+      apikey: anonKey,
+      Authorization: `Bearer ${accessToken}`
+    }
+  });
 
   if (error) {
     setMsg("Create user failed: " + (error.message || JSON.stringify(error)));
@@ -327,7 +329,6 @@ const { data, error } = await supabaseClient.functions.invoke("create-user", {
   await runSearch("");
   return;
 }
-
 
       // EDIT
       if (!editingId) { setMsg("No user selected."); return; }
