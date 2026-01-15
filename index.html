@@ -1037,9 +1037,16 @@
 
   <div class="cm-actions">
     <button id="umViewBtn" class="btn-gold" type="button">View users</button>
+    <button id="umAddBtn" class="btn-soft" type="button">Add user</button>
     <button id="umClearBtn" type="button" style="display:none;">Clear</button>
     <p id="umMsg" class="subtle" style="margin:0;"></p>
   </div>
+  <div style="display:flex; gap:10px; align-items:center; margin-top:10px;">
+  <input id="umSearch" type="text" placeholder="Name, email, role..." style="flex:1;" />
+  <button id="umSearchBtn" type="button">Search</button>
+  <button id="umShowAllBtn" type="button">Show all</button>
+</div>
+
 
   <div id="umViewPanel" style="display:none; margin-top:8px;">
     <div id="umList" class="customer-list"></div>
@@ -1054,6 +1061,11 @@
       <div>
         <label class="subtle" style="display:block; margin-bottom:6px;">Email</label>
         <input id="umEmail" />
+<div>
+  <label>Auth User ID (from Supabase Auth)</label>
+  <input id="umAuthUserId" type="text" placeholder="uuid" />
+</div>
+
       </div>
     </div>
 
