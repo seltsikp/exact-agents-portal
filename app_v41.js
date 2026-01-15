@@ -833,10 +833,6 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
     userMgmt: () => {
     userMgmtModule.resetUserScreen();
 },
-
-}
-
-
   });
 
   // =========================================================
