@@ -159,25 +159,6 @@ async function confirmExact(message) {
   });
 }
 
-    txt.textContent = message;
-
-    return await new Promise((resolve) => {
-      const cleanup = () => {
-        okBtn.removeEventListener("click", onOk);
-        cancelBtn.removeEventListener("click", onCancel);
-        dlg.removeEventListener("cancel", onCancel);
-        dlg.close();
-      };
-      const onOk = () => { cleanup(); resolve(true); };
-      const onCancel = () => { cleanup(); resolve(false); };
-
-      okBtn.addEventListener("click", onOk);
-      cancelBtn.addEventListener("click", onCancel);
-      dlg.addEventListener("cancel", onCancel);
-
-      dlg.showModal();
-    });
-  }
 
   // =========================================================
   // BLOCK: VALIDATION
