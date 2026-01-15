@@ -793,6 +793,43 @@
 
 /* Keep the buttons tidy */
 .customer-actions { white-space: nowrap; }
+/* =========================================================
+   CUSTOMER ROW — CLEAN, READABLE LAYOUT
+   ========================================================= */
+
+.customer-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1.4fr auto;
+  gap: 14px;
+}
+
+/* Email spans full width under the row */
+.customer-email {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.customer-email a {
+  color: var(--muted);
+  text-decoration: underline;
+  word-break: normal;
+  white-space: nowrap;
+}
+
+/* Buttons stay tidy */
+.customer-actions {
+  display: flex;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .customer-row {
+    grid-template-columns: 1fr;
+  }
+}
 
     </style>
   </head>
