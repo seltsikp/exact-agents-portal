@@ -19,6 +19,7 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
 
     umFullName,
     umEmail,
+    umPassword,
     umRole,
     umStatus,
     umPerms,
@@ -72,6 +73,7 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
 
     if (umFullName) umFullName.value = "";
     if (umEmail) umEmail.value = "";
+    if (umPassword) umPassword.value = "";
     if (umRole) umRole.value = "agent";
     if (umStatus) umStatus.value = "active";
     renderPerms({});
