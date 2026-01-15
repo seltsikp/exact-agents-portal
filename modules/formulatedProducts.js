@@ -199,95 +199,94 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
     fpName?.focus();
   }
 
-  async function loadProducts(term) {
-    setMsg("Loading…");
-    productsById = {};
-    if (fpList) fpList.innerHTML = "";
+async function loadProducts(term) {
+  setMsg("Loading…");
+  productsById = {};
+  if (fpList) fpList.innerHTML = "";
 
-    let q = supabaseClient
-      .from("formulated_products")
-      .select("id, code, name, notes, product_type_id, created_at")
-      .order("code", { ascending: true });
+  let q = supabaseClient
+    .from("formulated_products")
+    .select("id, code, name, notes, product_type_id, created_at")
+    .order("code", { ascending: true });
 
-    const t = (term || "").trim();
-    if (t) {
-      const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
-      q = q.or(`code.ilike.%${esc}%,name.ilike.%${esc}%`);
-    }
-
-    const { data, error } = await q;
-    if (error) {
-      setMsg("Load failed: " + error.message);
-      return;
-    }
-
-    const rows = data || [];
-    rows.forEach(p => { productsById[p.id] = p; });
-
-    if (rows.length === 0) {
-      setMsg("No products found.");
-      return;
-    }
-
-    setMsg(`Found ${rows.length} product${rows.length === 1 ? "" : "s"}.`);
-
-    fpList.innerHTML = rows.map(p => {
-      const typeObj = productTypesCache.find(x => x.id === p.product_type_id);
-      const typeLabel = typeObj ? `${typeObj.type_code} — ${typeObj.type_name}` : "Unknown type";
-
-      return `
-        <div class="customer-row" data-id="${escapeHtml(p.id)}">
-          <div class="customer-main">
-            <div class="name">${escapeHtml(p.code || "")} — ${escapeHtml(p.name || "")}</div>
-            <div class="meta"><span>${escapeHtml(typeLabel)}</span></div>
-          </div>
-
-          <div class="customer-context">
-            <span class="pill-soft">${escapeHtml(typeLabel)}</span>
-          </div>
-
-          <div class="customer-actions">
-            <button class="btn-primary fp-edit" type="button">Edit</button>
-            <button class="btn-danger fp-del" type="button">Delete</button>
-          </div>
-        </div>
-      `;
-    }).join("");
-
-    // --- row click = open formulation (edit) ---
-fpList.querySelectorAll(".customer-row").forEach(row => {
-  row.style.cursor = "pointer";
-
-  row.addEventListener("click", (e) => {
-    // If user clicked a button (Edit/Delete), don't trigger row click
-    if (e.target.closest("button")) return;
-
-    const id = row.getAttribute("data-id");
-    if (id) editProduct(id);
-  });
-});
-
-// --- keep Edit button working ---
-fpList.querySelectorAll(".fp-edit").forEach(btn => {
-  btn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const row = btn.closest(".customer-row");
-    const id = row?.getAttribute("data-id");
-    if (id) editProduct(id);
-  });
-});
-
-// --- keep Delete button working ---
-fpList.querySelectorAll(".fp-del").forEach(btn => {
-  btn.addEventListener("click", async (e) => {
-    e.stopPropagation();
-    const row = btn.closest(".customer-row");
-    const id = row?.getAttribute("data-id");
-    if (id) deleteProduct(id);
-  });
-});
-
+  const t = (term || "").trim();
+  if (t) {
+    const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
+    q = q.or(`code.ilike.%${esc}%,name.ilike.%${esc}%`);
   }
+
+  const { data, error } = await q;
+  if (error) {
+    setMsg("Load failed: " + error.message);
+    return;
+  }
+
+  const rows = data || [];
+  rows.forEach(p => { productsById[p.id] = p; });
+
+  if (rows.length === 0) {
+    setMsg("No products found.");
+    return;
+  }
+
+  setMsg(`Found ${rows.length} product${rows.length === 1 ? "" : "s"}.`);
+
+  fpList.innerHTML = rows.map(p => {
+    const typeObj = productTypesCache.find(x => x.id === p.product_type_id);
+    const typeLabel = typeObj ? `${typeObj.type_code} — ${typeObj.type_name}` : "Unknown type";
+
+    return `
+      <div class="customer-row" data-id="${escapeHtml(p.id)}">
+        <div class="customer-main">
+          <div class="name">${escapeHtml(p.code || "")} — ${escapeHtml(p.name || "")}</div>
+          <div class="meta"><span>${escapeHtml(typeLabel)}</span></div>
+        </div>
+
+        <div class="customer-context">
+          <span class="pill-soft">${escapeHtml(typeLabel)}</span>
+        </div>
+
+        <div class="customer-actions">
+          <button class="btn-primary fp-edit" type="button">Edit</button>
+          <button class="btn-danger fp-del" type="button">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  // --- row click = open formulation (edit) ---
+  fpList.querySelectorAll(".customer-row").forEach(row => {
+    row.style.cursor = "pointer";
+
+    row.addEventListener("click", (e) => {
+      // If user clicked a button (Edit/Delete), don't trigger row click
+      if (e.target.closest("button")) return;
+
+      const id = row.getAttribute("data-id");
+      if (id) editProduct(id);
+    });
+  });
+
+  // --- keep Edit button working ---
+  fpList.querySelectorAll(".fp-edit").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const row = btn.closest(".customer-row");
+      const id = row?.getAttribute("data-id");
+      if (id) editProduct(id);
+    });
+  });
+
+  // --- keep Delete button working ---
+  fpList.querySelectorAll(".fp-del").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const row = btn.closest(".customer-row");
+      const id = row?.getAttribute("data-id");
+      if (id) deleteProduct(id);
+    });
+  });
+}
 
   async function editProduct(productId) {
     const p = productsById[productId];
