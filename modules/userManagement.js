@@ -331,9 +331,11 @@ if (addingNew) {
   const { data, error } = await supabaseClient.functions.invoke("create-user", {
     body: { email, password, full_name, role, status, permissions },
     headers: {
-      apikey: anonKey,
-      Authorization: `Bearer ${anonKey}`
-    }
+  apikey: anonKey,
+  Authorization: `Bearer ${anonKey}`,
+  "x-exact-admin": "<exact_090-1c7b7785443-rkskl3f6d03aa3df7"
+}
+
   });
 
   if (error) {
