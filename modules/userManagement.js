@@ -301,28 +301,37 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
           }
         });
 
-        if (error) {
-          let statusCode = "";
-          let details = "";
+if (error) {
+  const status =
+    error?.context?.response?.status ??
+    error?.context?.status ??
+    "";
 
-          try {
-            const res = error.context?.response;
-            if (res) {
-              statusCode = String(res.status || "");
-              details = await res.text();
-            } else {
-              statusCode = String(error.context?.status || "");
-              const body = error.context?.body ?? error.context ?? error;
-              details = typeof body === "string" ? body : JSON.stringify(body);
-            }
-          } catch (e) {
-            details = String(e);
-          }
+  let details = "";
 
-          setMsg(`Create user failed (${statusCode}): ${details}`);
-          console.error("create-user error:", error);
-          return;
-        }
+  try {
+    if (error?.context?.response) {
+      details = await error.context.response.text();
+    } else if (error?.context?.body) {
+      details = typeof error.context.body === "string"
+        ? error.context.body
+        : JSON.stringify(error.context.body);
+    }
+  } catch (e) {
+    details = "Could not read response body: " + String(e);
+  }
+
+  // ALWAYS include error.message and error.name (this is what you're missing)
+  const name = error?.name || "Error";
+  const msg = error?.message || "(no message)";
+
+  if (!details) details = "(no response body)";
+
+  setMsg(`Create user failed (${status}): ${name}: ${msg} ${details}`);
+  console.error("create-user error FULL:", error);
+  return;
+}
+
 
         setMsg("User created ✅");
         clearForm();
