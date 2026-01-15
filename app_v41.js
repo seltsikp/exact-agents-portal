@@ -713,7 +713,7 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
  async function loadProfileForUser(userId) {
   const res = await supabaseClient
     .from("agent_users")
-    .select("agent_id, role, status, email, full_name")
+    .select("agent_id, role, status, email, full_name, permissions")
     .eq("auth_user_id", userId)
     .maybeSingle(); // IMPORTANT: avoids throwing when 0 rows
 
@@ -808,14 +808,26 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
   show,
 
   canAccess: (viewKey) => {
-    if (viewKey === "agents" && currentProfile?.role !== "admin") return false;
-    if (viewKey === "formulary" && currentProfile?.role !== "admin") return false;
-    if (viewKey === "labs" && currentProfile?.role !== "admin") return false;
-    if (viewKey === "productTypes" && currentProfile?.role !== "admin") return false;
-    if (viewKey === "accountManagers" && currentProfile?.role !== "admin") return false;
-    if (viewKey === "userMgmt" && currentProfile?.role !== "admin") return false;
-    return true;
-  },
+  // Always allow welcome
+  if (viewKey === "welcome") return true;
+
+  // must be logged in + active profile
+  if (!currentProfile) return false;
+  if (currentProfile.status !== "active") return false;
+
+  // Admin still gets everything (unless you want even admin governed by perms)
+  if (currentProfile.role === "admin") return true;
+
+  // Agent: use permissions JSON if present
+  const perms = currentProfile.permissions || {};
+
+  // If no permissions saved yet, lock down to customers only (safe default)
+  const fallback = { customers: true };
+
+  const effective = Object.keys(perms).length ? perms : fallback;
+
+  return !!effective[viewKey];
+},
 
   onEnter: {
     welcome: () => {
