@@ -274,48 +274,60 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
       if (!status) { setMsg("Status is required."); return; }
 
       // ADD
-      // Ensure we have a fresh session token (since autoRefreshToken=false in your app)
-await supabaseClient.auth.refreshSession();
+if (addingNew) {
+  const password = (umPassword?.value || "").trim();
+  if (!password || password.length < 8) {
+    setMsg("Password is required for new users (min 8 chars).");
+    return;
+  }
 
-const { data: sessionData, error: sessionErr } = await supabaseClient.auth.getSession();
-if (sessionErr) { setMsg("Session error: " + sessionErr.message); return; }
+  // Ensure we have a fresh session token (since autoRefreshToken=false in your app)
+  await supabaseClient.auth.refreshSession();
 
-const accessToken = sessionData?.session?.access_token;
-if (!accessToken) { setMsg("Not logged in. Please log in again."); return; }
+  const { data: sessionData, error: sessionErr } = await supabaseClient.auth.getSession();
+  if (sessionErr) { setMsg("Session error: " + sessionErr.message); return; }
 
-const anonKey = window.SUPABASE_ANON_KEY || "";
-if (!anonKey) { setMsg("Missing SUPABASE_ANON_KEY."); return; }
+  const accessToken = sessionData?.session?.access_token;
+  if (!accessToken) { setMsg("Not logged in. Please log in again."); return; }
 
-// Call Edge Function using the logged-in user's JWT
-const fnUrl = `${window.SUPABASE_URL}/functions/v1/create-user`;
+  const anonKey = window.SUPABASE_ANON_KEY || "";
+  const baseUrl = window.SUPABASE_URL || "";
+  if (!anonKey) { setMsg("Missing SUPABASE_ANON_KEY."); return; }
+  if (!baseUrl) { setMsg("Missing SUPABASE_URL."); return; }
 
-let res, text = "";
-try {
-  res = await fetch(fnUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: anonKey,
-      Authorization: `Bearer ${accessToken}`
-    },
-    body: JSON.stringify({ email, password, full_name, role, status, permissions })
-  });
-  text = await res.text();
-} catch (e) {
-  setMsg("Create user failed: network error: " + String(e));
+  // Call Edge Function using the logged-in user's JWT
+  const fnUrl = `${baseUrl}/functions/v1/create-user`;
+
+  let res, text = "";
+  try {
+    res = await fetch(fnUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: anonKey,
+        Authorization: `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({ email, password, full_name, role, status, permissions })
+    });
+    text = await res.text();
+  } catch (e) {
+    setMsg("Create user failed: network error: " + String(e));
+    return;
+  }
+
+  if (!res.ok) {
+    setMsg(`Create user failed (${res.status}): ${text || "(empty body)"}`);
+    return;
+  }
+
+  setMsg("User created ✅");
+  clearForm();
+  showViewUsersPanel();
+  await runSearch("");
   return;
 }
 
-if (!res.ok) {
-  setMsg(`Create user failed (${res.status}): ${text || "(empty body)"}`);
-  return;
-}
-setMsg("User created ✅");
-clearForm();
-showViewUsersPanel();
-await runSearch("");
-return;
-    }
+
       // EDIT
       if (!editingId) { setMsg("No user selected."); return; }
 
