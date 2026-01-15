@@ -219,6 +219,8 @@ const viewCustomerMgmt = document.getElementById("viewCustomerMgmt");
 const viewAgentMgmt = document.getElementById("viewAgentMgmt");
 const viewFormulary = document.getElementById("viewFormulary");
 const viewLabMgmt = document.getElementById("viewLabMgmt");
+const viewAccountManagers = document.getElementById("viewAccountManagers");
+
 
   // Customer Mgmt UI
   const cmViewBtn = document.getElementById("cmViewBtn");
@@ -782,58 +784,59 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
   // BLOCK: VIEWS + MENU (MODULE)
   // =========================================================
   const nav = initNavigation({
-    menuItems,
-      views: {
-      welcome: viewWelcome,
-      customers: viewCustomerMgmt,
-      agents: viewAgentMgmt,
-      accountManagers: viewAccountManagers,
-      productTypes: viewProductTypes,
-      labs: viewLabMgmt,
-      formulary: viewFormulary,
-      userMgmt: viewUserMgmt,
+  menuItems,
+  views: {
+    welcome: viewWelcome,
+    customers: viewCustomerMgmt,
+    agents: viewAgentMgmt,
+    accountManagers: viewAccountManagers,
+    productTypes: viewProductTypes,
+    labs: viewLabMgmt,
+    formulary: viewFormulary,
+    userMgmt: viewUserMgmt
+  },
 
+  show,
+
+  canAccess: (viewKey) => {
+    if (viewKey === "agents" && currentProfile?.role !== "admin") return false;
+    if (viewKey === "formulary" && currentProfile?.role !== "admin") return false;
+    if (viewKey === "labs" && currentProfile?.role !== "admin") return false;
+    if (viewKey === "productTypes" && currentProfile?.role !== "admin") return false;
+    if (viewKey === "accountManagers" && currentProfile?.role !== "admin") return false;
+    if (viewKey === "userMgmt" && currentProfile?.role !== "admin") return false;
+    return true;
+  },
+
+  onEnter: {
+    welcome: () => {
+      showWelcomePanel({ containerEl: welcomeContent });
     },
-
-    show,
-    canAccess: (viewKey) => {
-      if (viewKey === "agents" && currentProfile?.role !== "admin") return false;
-      if (viewKey === "formulary" && currentProfile?.role !== "admin") return false;
-      if (viewKey === "labs" && currentProfile?.role !== "admin") return false;
-      if (viewKey === "productTypes" && currentProfile?.role !== "admin") return false;
-      if (viewKey === "accountManagers" && currentProfile?.role !== "admin") return false;
-      if (viewKey === "userMgmt" && currentProfile?.role !== "admin") return false;
-
-      return true;
+    customers: () => {
+      customerModule.resetCustomerScreen();
     },
-      onEnter: {
-  welcome: () => {
-    showWelcomePanel({ containerEl: welcomeContent });
-  },
-  customers: () => {
-    customerModule.resetCustomerScreen();
-  },
-  agents: () => {
-    agentModule.resetAgentScreen();
-  },
-  accountManagers: () => {
-    accountManagersModule.resetAccountManagersScreen();
-  },
-  productTypes: async () => {
-    productTypesModule.resetProductTypesScreen();
-    await productTypesModule.loadProductTypes();
-  },
-  labs: () => {
-    labsModule.resetLabsScreen();
-  },
-  formulary: () => {
-    setActiveFormularyTab("ingredients");
-    resetIngredientsScreen();
-  },
+    agents: () => {
+      agentModule.resetAgentScreen();
+    },
+    accountManagers: () => {
+      accountManagersModule.resetAccountManagersScreen();
+    },
+    productTypes: async () => {
+      productTypesModule.resetProductTypesScreen();
+      await productTypesModule.loadProductTypes();
+    },
+    labs: () => {
+      labsModule.resetLabsScreen();
+    },
     userMgmt: () => {
-    userMgmtModule.resetUserScreen();
+      userMgmtModule.resetUserScreen();
+    },
+    formulary: () => {
+      setActiveFormularyTab("ingredients");
+      resetIngredientsScreen();
+    }
   }
-}  
+});
 
   // =========================================================
   // BLOCK: LOGIN/LOGOUT SHELL
