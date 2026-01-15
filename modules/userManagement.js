@@ -338,18 +338,29 @@ if (addingNew) {
 
   });
 
-  if (error) {
-    const status = error.context?.status ?? "";
-    const body = error.context?.body ?? error.context ?? error;
+ if (error) {
+  let status = "";
+  let details = "";
 
-    let details = "";
-    try { details = typeof body === "string" ? body : JSON.stringify(body); }
-    catch { details = String(body); }
-
-    setMsg(`Create user failed (${status}): ${details}`);
-    console.error("create-user error:", error);
-    return;
+  try {
+    const res = error.context?.response;
+    if (res) {
+      status = res.status;
+      details = await res.text();
+    } else {
+      status = error.context?.status ?? "";
+      const body = error.context?.body ?? error.context ?? error;
+      details = typeof body === "string" ? body : JSON.stringify(body);
+    }
+  } catch (e) {
+    details = String(e);
   }
+
+  setMsg(`Create user failed (${status}): ${details}`);
+  console.error("create-user error:", error);
+  return;
+}
+
 
   console.log("create-user success:", data);
 
