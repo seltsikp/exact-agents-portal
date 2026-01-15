@@ -17,7 +17,6 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
 
     umList,
 
-    umAuthUserId,   // NEW input
     umFullName,
     umEmail,
     umRole,
@@ -71,7 +70,6 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
     editingId = null;
     addingNew = false;
 
-    if (umAuthUserId) { umAuthUserId.value = ""; umAuthUserId.disabled = false; }
     if (umFullName) umFullName.value = "";
     if (umEmail) umEmail.value = "";
     if (umRole) umRole.value = "agent";
@@ -113,20 +111,17 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
   function openAddUser() {
     clearForm();
     addingNew = true;
-    if (umAuthUserId) umAuthUserId.disabled = false;
+    
     showEditPanel();
     setMsg("Adding user — paste Auth User ID, choose role/status, set permissions, then Save.");
-    if (umAuthUserId) umAuthUserId.focus();
+
   }
 
   function openEditUser(u) {
     editingId = u.id;
     addingNew = false;
 
-    if (umAuthUserId) {
-      umAuthUserId.value = u.auth_user_id || "";
-      umAuthUserId.disabled = true; // never change auth_user_id on edit
-    }
+   
     if (umFullName) umFullName.value = u.full_name || "";
     if (umEmail) umEmail.value = u.email || "";
     if (umRole) umRole.value = u.role || "agent";
@@ -263,14 +258,24 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
     umSaveBtn.addEventListener("click", async () => {
       setMsg("");
 
-      const full_name = (umFullName?.value || "").trim() || null;
-      const email = (umEmail?.value || "").trim() || null;
-      const role = (umRole?.value || "agent").trim();
-      const status = (umStatus?.value || "active").trim();
-      const permissions = readPermsFromUI();
+     const full_name = (umFullName?.value || "").trim() || null;
+const email = (umEmail?.value || "").trim() || null;
+const role = (umRole?.value || "agent").trim();
+const status = (umStatus?.value || "active").trim();
+const permissions = readPermsFromUI();
 
-      if (!role) { setMsg("Role is required."); return; }
-      if (!status) { setMsg("Status is required."); return; }
+if (!email) {
+  setMsg("Email is required (this is the login ID).");
+  return;
+}
+
+if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  setMsg("Please enter a valid email address.");
+  return;
+}
+
+if (!role) { setMsg("Role is required."); return; }
+if (!status) { setMsg("Status is required."); return; }
 
       // ADD
       if (addingNew) {
