@@ -302,7 +302,6 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
         });
 
 if (error) {
-  // For FunctionsHttpError / non-2xx, Supabase provides the Response on error.context.response
   const res = error?.context?.response;
 
   let status = "";
@@ -315,56 +314,12 @@ if (error) {
     text = "Could not read error response: " + String(e);
   }
 
-  // fallback info
+  const name = error?.name || "Error";
   const msg = error?.message || "(no message)";
   if (!text) text = "(no response body)";
 
-  setMsg(`Create user failed (${status}): ${msg} ${text}`);
+  setMsg(`Create user failed (${status}): ${name}: ${msg} ${text}`);
   console.error("create-user error FULL:", error);
   return;
 }
 
-
-  // ALWAYS include error.message and error.name (this is what you're missing)
-  const name = error?.name || "Error";
-  const msg = error?.message || "(no message)";
-
-  if (!details) details = "(no response body)";
-
-  setMsg(`Create user failed (${status}): ${name}: ${msg} ${details}`);
-  console.error("create-user error FULL:", error);
-  return;
-}
-
-
-        setMsg("User created ✅");
-        clearForm();
-        showViewUsersPanel();
-        await runSearch("");
-        return;
-      }
-
-      // EDIT
-      if (!editingId) { setMsg("No user selected."); return; }
-
-      const { data, error } = await supabaseClient
-        .from("agent_users")
-        .update({ full_name, email, role, status, permissions })
-        .eq("id", editingId)
-        .select("id");
-
-      if (error) { setMsg("Update error: " + error.message); return; }
-      if (!data || data.length === 0) { setMsg("Update blocked (RLS) — no rows updated."); return; }
-
-      setMsg("Saved ✅");
-      clearForm();
-      showViewUsersPanel();
-      await runSearch(umSearch?.value || "");
-    });
-  }
-
-  return {
-    resetUserScreen,
-    loadUsers: async () => { showViewUsersPanel(); await runSearch(""); }
-  };
-}
