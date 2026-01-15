@@ -790,7 +790,7 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
       accountManagers: viewAccountManagers,
       productTypes: viewProductTypes,
       labs: viewLabMgmt,
-      formulary: viewFormulary
+      formulary: viewFormulary,
       userMgmt: viewUserMgmt,
 
     },
