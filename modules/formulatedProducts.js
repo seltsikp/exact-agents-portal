@@ -231,28 +231,24 @@ async function loadProducts(term) {
 
   setMsg(`Found ${rows.length} product${rows.length === 1 ? "" : "s"}.`);
 
-  fpList.innerHTML = rows.map(p => {
-    const typeObj = productTypesCache.find(x => x.id === p.product_type_id);
-    const typeLabel = typeObj ? `${typeObj.type_code} — ${typeObj.type_name}` : "Unknown type";
+ fpList.innerHTML = rows.map(p => {
+  const typeObj = productTypesCache.find(x => x.id === p.product_type_id);
+  const typeLabel = typeObj ? `${typeObj.type_code} — ${typeObj.type_name}` : "Unknown type";
 
-    return `
-      <div class="customer-row" data-id="${escapeHtml(p.id)}">
-        <div class="customer-main">
-          <div class="name">${escapeHtml(p.code || "")} — ${escapeHtml(p.name || "")}</div>
-          <div class="meta"><span>${escapeHtml(typeLabel)}</span></div>
-        </div>
+  return `
+    <div class="customer-row" data-id="${escapeHtml(p.id)}">
+      <div>${escapeHtml(p.code || "")}</div>
+      <div>${escapeHtml(p.name || "")}</div>
+      <div>${escapeHtml(typeLabel)}</div>
 
-        <div class="customer-context">
-          <span class="pill-soft">${escapeHtml(typeLabel)}</span>
-        </div>
-
-        <div class="customer-actions">
-          <button class="btn-primary fp-edit" type="button">Edit</button>
-          <button class="btn-danger fp-del" type="button">Delete</button>
-        </div>
+      <div class="customer-actions">
+        <button class="btn-primary fp-edit" type="button">Edit</button>
+        <button class="btn-danger fp-del" type="button">Delete</button>
       </div>
-    `;
-  }).join("");
+    </div>
+  `;
+}).join("");
+
 
   // --- row click = open formulation (edit) ---
   fpList.querySelectorAll(".customer-row").forEach(row => {
