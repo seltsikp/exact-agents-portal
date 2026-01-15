@@ -254,21 +254,39 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
       `;
     }).join("");
 
-    fpList.querySelectorAll(".fp-edit").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const row = btn.closest(".customer-row");
-        const id = row?.getAttribute("data-id");
-        if (id) editProduct(id);
-      });
-    });
+    // --- row click = open formulation (edit) ---
+fpList.querySelectorAll(".customer-row").forEach(row => {
+  row.style.cursor = "pointer";
 
-    fpList.querySelectorAll(".fp-del").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const row = btn.closest(".customer-row");
-        const id = row?.getAttribute("data-id");
-        if (id) deleteProduct(id);
-      });
-    });
+  row.addEventListener("click", (e) => {
+    // If user clicked a button (Edit/Delete), don't trigger row click
+    if (e.target.closest("button")) return;
+
+    const id = row.getAttribute("data-id");
+    if (id) editProduct(id);
+  });
+});
+
+// --- keep Edit button working ---
+fpList.querySelectorAll(".fp-edit").forEach(btn => {
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const row = btn.closest(".customer-row");
+    const id = row?.getAttribute("data-id");
+    if (id) editProduct(id);
+  });
+});
+
+// --- keep Delete button working ---
+fpList.querySelectorAll(".fp-del").forEach(btn => {
+  btn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    const row = btn.closest(".customer-row");
+    const id = row?.getAttribute("data-id");
+    if (id) deleteProduct(id);
+  });
+});
+
   }
 
   async function editProduct(productId) {
