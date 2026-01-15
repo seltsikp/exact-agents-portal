@@ -288,41 +288,47 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
           return;
         }
 
-        const { data, error } = await supabaseClient.functions.invoke("create-user", {
-          body: { email, password, full_name, role, status, permissions },
-          headers: {
-            apikey: anonKey,
-            Authorization: `Bearer ${anonKey}`,
-            "x-exact-admin": EXACT_ADMIN_SECRET
-          }
-        });
+        const fnUrl = `${window.SUPABASE_URL}/functions/v1/create-user`;
 
-        if (error) {
-          const res = error?.context?.response;
-          let statusCode = "";
-          let text = "";
+let res;
+let text = "";
 
-          try {
-            statusCode = String(res?.status ?? error?.context?.status ?? "");
-            if (res) text = await res.text();
-          } catch (e) {
-            text = "Could not read error response: " + String(e);
-          }
+try {
+  res = await fetch(fnUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: anonKey,
+      Authorization: `Bearer ${anonKey}`,
+      "x-exact-admin": EXACT_ADMIN_SECRET
+    },
+    body: JSON.stringify({ email, password, full_name, role, status, permissions })
+  });
+} catch (e) {
+  setMsg("Create user failed: network error: " + String(e));
+  console.error("create-user network error:", e);
+  return;
+}
 
-          const name = error?.name || "Error";
-          const msg = error?.message || "(no message)";
-          if (!text) text = "(no response body)";
+try {
+  text = await res.text();
+} catch (e) {
+  text = "(could not read response body: " + String(e) + ")";
+}
 
-          setMsg(`Create user failed (${statusCode}): ${name}: ${msg} ${text}`);
-          console.error("create-user error FULL:", error);
-          return;
-        }
+if (!res.ok) {
+  setMsg(`Create user failed (${res.status}): ${text || "(empty body)"}`);
+  console.error("create-user http error:", res.status, text);
+  return;
+}
 
-        setMsg("User created ✅");
-        clearForm();
-        showViewUsersPanel();
-        await runSearch("");
-        return;
+// success
+setMsg("User created ✅");
+clearForm();
+showViewUsersPanel();
+await runSearch("");
+return;
+
       }
 
       // EDIT
