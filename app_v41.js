@@ -59,35 +59,60 @@ window.addEventListener("DOMContentLoaded", () => {
   // =========================================================
   // BLOCK: CONFIRM DIALOG
   // =========================================================
-  async function confirmExact(message) {
-    const dlg = document.getElementById("confirmDialog");
-    const txt = document.getElementById("confirmDialogText");
-    const okBtn = document.getElementById("confirmOkBtn");
-    const cancelBtn = document.getElementById("confirmCancelBtn");
+async function confirmExact(message) {
+  const dlg = document.getElementById("confirmDialog");
+  const txt = document.getElementById("confirmDialogText");
+  const okBtn = document.getElementById("confirmOkBtn");
+  const cancelBtn = document.getElementById("confirmCancelBtn");
 
-    if (!dlg || typeof dlg.showModal !== "function") {
-      return confirm(message);
-    }
-
-    txt.textContent = message;
-
-    return await new Promise((resolve) => {
-      const cleanup = () => {
-        okBtn.removeEventListener("click", onOk);
-        cancelBtn.removeEventListener("click", onCancel);
-        dlg.removeEventListener("cancel", onCancel);
-        dlg.close();
-      };
-      const onOk = () => { cleanup(); resolve(true); };
-      const onCancel = () => { cleanup(); resolve(false); };
-
-      okBtn.addEventListener("click", onOk);
-      cancelBtn.addEventListener("click", onCancel);
-      dlg.addEventListener("cancel", onCancel);
-
-      dlg.showModal();
-    });
+  // Fallback if dialog is missing
+  if (!dlg || typeof dlg.showModal !== "function") {
+    return window.confirm(message);
   }
+
+  // Ensure dialog is fully reset before use
+  try {
+    if (dlg.open) dlg.close();
+  } catch (e) {}
+
+  txt.textContent = String(message || "Are you sure?");
+
+  return new Promise((resolve) => {
+    let resolved = false;
+
+    const cleanup = (result) => {
+      if (resolved) return;
+      resolved = true;
+
+      okBtn.removeEventListener("click", onOk);
+      cancelBtn.removeEventListener("click", onCancel);
+      dlg.removeEventListener("cancel", onCancel);
+
+      try {
+        dlg.close();
+      } catch (e) {}
+
+      resolve(result);
+    };
+
+    const onOk = (e) => {
+      e.preventDefault();
+      cleanup(true);
+    };
+
+    const onCancel = (e) => {
+      e.preventDefault();
+      cleanup(false);
+    };
+
+    okBtn.addEventListener("click", onOk, { once: true });
+    cancelBtn.addEventListener("click", onCancel, { once: true });
+    dlg.addEventListener("cancel", onCancel, { once: true });
+
+    dlg.showModal();
+  });
+}
+
 
   // =========================================================
   // BLOCK: VALIDATION
