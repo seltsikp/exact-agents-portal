@@ -279,10 +279,7 @@ if (!status) { setMsg("Status is required."); return; }
 
       // ADD
       if (addingNew) {
-        const auth_user_id = (umAuthUserId?.value || "").trim();
-        if (!auth_user_id) { setMsg("Auth User ID is required (uuid from Supabase Auth)."); return; }
-
-        const { error } = await supabaseClient
+               const { error } = await supabaseClient
           .from("agent_users")
           .insert([{
             auth_user_id,
