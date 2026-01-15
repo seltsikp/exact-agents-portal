@@ -166,11 +166,17 @@ return `
     </div>
 
     <!-- FULL-WIDTH EMAIL ROW -->
-    ${c.email ? `
-      <div class="customer-email">
-        <a href="mailto:${c.email}">${c.email}</a>
-      </div>
-    ` : ""}
+    ${(c.email || "").trim() ? (() => {
+  const emailRaw = String(c.email || "").trim();
+  const emailText = escapeHtml(emailRaw);
+  const mailHref = "mailto:" + encodeURIComponent(emailRaw);
+  return `
+    <div class="customer-email">
+      <a href="${mailHref}">${emailText}</a>
+    </div>
+  `;
+})() : ""}
+
 
   </div>
 `;
