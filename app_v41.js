@@ -59,60 +59,125 @@ window.addEventListener("DOMContentLoaded", () => {
   // =========================================================
   // BLOCK: CONFIRM DIALOG
   // =========================================================
+  // =========================================================
+// BLOCK: CONFIRM DIALOG
+// =========================================================
 async function confirmExact(message) {
+  // Hard stop: never use <dialog> modal state (it can leave an invisible backdrop).
+  // We use a custom overlay that always removes itself.
+  const existing = document.getElementById("exactConfirmOverlay");
+  if (existing) existing.remove();
+
+  // If a native dialog exists and is open from a previous run, force-close it.
   const dlg = document.getElementById("confirmDialog");
-  const txt = document.getElementById("confirmDialogText");
-  const okBtn = document.getElementById("confirmOkBtn");
-  const cancelBtn = document.getElementById("confirmCancelBtn");
-
-  // Fallback if dialog is missing
-  if (!dlg || typeof dlg.showModal !== "function") {
-    return window.confirm(message);
-  }
-
-  // Ensure dialog is fully reset before use
   try {
-    if (dlg.open) dlg.close();
+    if (dlg && dlg.open && typeof dlg.close === "function") dlg.close();
   } catch (e) {}
 
-  txt.textContent = String(message || "Are you sure?");
+  return await new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.id = "exactConfirmOverlay";
+    overlay.style.position = "fixed";
+    overlay.style.inset = "0";
+    overlay.style.background = "rgba(0,0,0,0.35)";
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+    overlay.style.zIndex = "999999";
+    overlay.style.pointerEvents = "auto";
 
-  return new Promise((resolve) => {
-    let resolved = false;
+    const modal = document.createElement("div");
+    modal.style.width = "min(520px, calc(100vw - 32px))";
+    modal.style.background = "#fff";
+    modal.style.border = "1px solid rgba(0,0,0,0.12)";
+    modal.style.borderRadius = "16px";
+    modal.style.boxShadow = "0 20px 60px rgba(0,0,0,0.25)";
+    modal.style.padding = "16px";
 
-    const cleanup = (result) => {
-      if (resolved) return;
-      resolved = true;
+    const txt = document.createElement("div");
+    txt.textContent = String(message || "Are you sure?");
+    txt.style.margin = "0 0 14px 0";
+    txt.style.whiteSpace = "pre-wrap";
 
-      okBtn.removeEventListener("click", onOk);
-      cancelBtn.removeEventListener("click", onCancel);
-      dlg.removeEventListener("cancel", onCancel);
+    const actions = document.createElement("div");
+    actions.style.display = "flex";
+    actions.style.gap = "10px";
+    actions.style.justifyContent = "flex-end";
 
-      try {
-        dlg.close();
-      } catch (e) {}
+    const btnCancel = document.createElement("button");
+    btnCancel.className = "btn-primary";
+    btnCancel.type = "button";
+    btnCancel.textContent = "Cancel";
 
-      resolve(result);
+    const btnOk = document.createElement("button");
+    btnOk.className = "btn-danger";
+    btnOk.type = "button";
+    btnOk.textContent = "Confirm";
+
+    let done = false;
+    const cleanup = (val) => {
+      if (done) return;
+      done = true;
+      try { overlay.remove(); } catch (e) {}
+      window.removeEventListener("keydown", onKey);
+      resolve(val);
     };
 
-    const onOk = (e) => {
-      e.preventDefault();
-      cleanup(true);
+    const onKey = (e) => {
+      if (e.key === "Escape") cleanup(false);
+      if (e.key === "Enter") cleanup(true);
     };
 
-    const onCancel = (e) => {
+    btnCancel.addEventListener("click", (e) => {
       e.preventDefault();
+      e.stopPropagation();
       cleanup(false);
-    };
+    });
 
-    okBtn.addEventListener("click", onOk, { once: true });
-    cancelBtn.addEventListener("click", onCancel, { once: true });
-    dlg.addEventListener("cancel", onCancel, { once: true });
+    btnOk.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      cleanup(true);
+    });
 
-    dlg.showModal();
+    // Click outside = cancel
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) cleanup(false);
+    });
+
+    window.addEventListener("keydown", onKey);
+
+    actions.appendChild(btnCancel);
+    actions.appendChild(btnOk);
+
+    modal.appendChild(txt);
+    modal.appendChild(actions);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    setTimeout(() => btnOk.focus(), 0);
   });
 }
 
+    txt.textContent = message;
+
+    return await new Promise((resolve) => {
+      const cleanup = () => {
+        okBtn.removeEventListener("click", onOk);
+        cancelBtn.removeEventListener("click", onCancel);
+        dlg.removeEventListener("cancel", onCancel);
+        dlg.close();
+      };
+      const onOk = () => { cleanup(); resolve(true); };
+      const onCancel = () => { cleanup(); resolve(false); };
+
+      okBtn.addEventListener("click", onOk);
+      cancelBtn.addEventListener("click", onCancel);
+      dlg.addEventListener("cancel", onCancel);
+
+      dlg.showModal();
+    });
+  }
 
   // =========================================================
   // BLOCK: VALIDATION
