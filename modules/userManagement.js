@@ -289,9 +289,17 @@ if (addingNew) {
     return;
   }
 
-  const { data, error } = await supabaseClient.functions.invoke("create-user", {
-    body: { email, password, full_name, role, status, permissions }
-  });
+  const { data, error } = await supabaseClient.functions.invoke(
+  "create-user",
+  {
+    body: { email, password, full_name, role, status, permissions },
+    headers: {
+      apikey: supabaseClient.supabaseKey,
+      Authorization: `Bearer ${supabaseClient.supabaseKey}`
+    }
+  }
+);
+
 
   if (error) {
     setMsg("Create user failed: " + (error.message || JSON.stringify(error)));
