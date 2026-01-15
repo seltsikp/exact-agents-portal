@@ -318,6 +318,71 @@
         .customer-row{ grid-template-columns: 1fr; gap:10px; }
         .customer-actions{ justify-content:flex-start; }
       }
+/* ===== LAB TABLE (fixed columns, no overflow) ===== */
+
+.lab-table {
+  width: 100%;
+  overflow-x: auto;          /* allows scroll INSIDE if needed */
+  border-radius: 16px;
+}
+
+.lab-head,
+.lab-row {
+  display: grid;
+  grid-template-columns:
+    120px        /* Code */
+    minmax(220px, 1.2fr)   /* Name */
+    minmax(220px, 1fr)     /* Orders email */
+    minmax(220px, 1fr)     /* Admin email */
+    140px        /* Phone */
+    170px;       /* Actions */
+  gap: 12px;
+  align-items: center;
+}
+
+.lab-head {
+  font-weight: 700;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.lab-row {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  margin-top: 10px;
+}
+
+.lab-cell {
+  min-width: 0; /* IMPORTANT so truncation works */
+}
+
+.lab-name {
+  font-weight: 700;
+}
+
+.lab-muted {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.lab-clip {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* stops email wrap */
+}
+
+.lab-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  white-space: nowrap;
+}
 
       /* =========================================================
          BLOCK: INGREDIENTS LIST
