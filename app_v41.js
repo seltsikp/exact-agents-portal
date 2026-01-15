@@ -710,17 +710,26 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
   // =========================================================
   // BLOCK: AUTH + PROFILE LOOKUPS
   // =========================================================
-  async function loadProfileForUser(userId) {
-    const { data, error } = await supabaseClient
-      .from("agent_users")
-      .select("agent_id, role, status, email, full_name")
-      .eq("auth_user_id", userId)
-      .single();
+ async function loadProfileForUser(userId) {
+  const res = await supabaseClient
+    .from("agent_users")
+    .select("agent_id, role, status, email, full_name")
+    .eq("auth_user_id", userId)
+    .maybeSingle(); // IMPORTANT: avoids throwing when 0 rows
 
-    if (error) throw error;
-    if (!data || data.status !== "active") return null;
-    return data;
+  const { data, error } = res;
+
+  if (error) {
+    // This will print the REAL reason (RLS, multiple rows, etc.)
+    console.error("agent_users lookup error:", error);
+    throw error;
   }
+
+  if (!data) return null;                 // no row found
+  if (data.status !== "active") return null;
+  return data;
+}
+
 
   async function loadAgentName(agentId) {
     if (!agentId) return "";
@@ -898,8 +907,9 @@ resetIngredientsScreen();
       try {
         profile = await loadProfileForUser(session.user.id);
       } catch (e) {
-        console.error("loadProfileForUser failed:", e);
+  console.error("loadProfileForUser failed:", e?.message || e, e);
       }
+
 
       if (!profile) {
         if (topBarTitle) topBarTitle.textContent = "Logged in";
