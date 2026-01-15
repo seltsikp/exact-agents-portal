@@ -332,7 +332,7 @@ if (addingNew) {
     body: { email, password, full_name, role, status, permissions },
     headers: {
       apikey: anonKey,
-      Authorization: `Bearer ${accessToken}`
+      Authorization: `Bearer ${anonKey}`
     }
   });
 
