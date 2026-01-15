@@ -43,6 +43,10 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
     { key: "userMgmt", label: "User Management" }
   ];
 
+  // IMPORTANT: put your EXACT_ADMIN_SECRET value here (exactly as in Supabase Secrets)
+  // Example: const EXACT_ADMIN_SECRET = "exact_admin_......";
+  const EXACT_ADMIN_SECRET = "exact_090-1c7b7785443-rkskl3f6d03aa3df7";
+
   function renderPerms(permsObj) {
     if (!umPerms) return;
     const p = permsObj && typeof permsObj === "object" ? permsObj : {};
@@ -113,20 +117,15 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
   function openAddUser() {
     clearForm();
     addingNew = true;
-    
     showEditPanel();
-   setMsg("Adding user — enter email, password, role/status, permissions, then Save.");
-
-
+    setMsg("Adding user — enter email, password, role/status, permissions, then Save.");
   }
 
   function openEditUser(u) {
     editingId = u.id;
     addingNew = false;
-   
 
-
-    if (umPassword) umPassword.value = "";
+    if (umPassword) umPassword.value = ""; // never show old password
     if (umFullName) umFullName.value = u.full_name || "";
     if (umEmail) umEmail.value = u.email || "";
     if (umRole) umRole.value = u.role || "agent";
@@ -263,113 +262,74 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
     umSaveBtn.addEventListener("click", async () => {
       setMsg("");
 
-     const full_name = (umFullName?.value || "").trim() || null;
-const email = (umEmail?.value || "").trim() || null;
-const role = (umRole?.value || "agent").trim();
-const status = (umStatus?.value || "active").trim();
-const permissions = readPermsFromUI();
+      const full_name = (umFullName?.value || "").trim() || null;
+      const email = (umEmail?.value || "").trim() || null;
+      const role = (umRole?.value || "agent").trim();
+      const status = (umStatus?.value || "active").trim();
+      const permissions = readPermsFromUI();
 
-if (!email) {
-  setMsg("Email is required (this is the login ID).");
-  return;
-}
+      if (!email) { setMsg("Email is required (this is the login ID)."); return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setMsg("Please enter a valid email address."); return; }
+      if (!role) { setMsg("Role is required."); return; }
+      if (!status) { setMsg("Status is required."); return; }
 
-if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-  setMsg("Please enter a valid email address.");
-  return;
-}
+      // ADD
+      if (addingNew) {
+        const password = (umPassword?.value || "").trim();
+        if (!password || password.length < 8) {
+          setMsg("Password is required for new users (min 8 chars).");
+          return;
+        }
 
-if (!role) { setMsg("Role is required."); return; }
-if (!status) { setMsg("Status is required."); return; }
+        const anonKey = window.SUPABASE_ANON_KEY || "";
+        if (!anonKey) {
+          setMsg("Missing SUPABASE_ANON_KEY. Check main app JS sets window.SUPABASE_ANON_KEY.");
+          return;
+        }
 
-// ADD
-if (addingNew) {
-  const password = (umPassword?.value || "").trim();
+        if (!EXACT_ADMIN_SECRET || EXACT_ADMIN_SECRET === "PASTE_YOUR_EXACT_ADMIN_SECRET_VALUE_HERE") {
+          setMsg("EXACT_ADMIN_SECRET not set in userManagement.js");
+          return;
+        }
 
-  if (!password || password.length < 8) {
-    setMsg("Password is required for new users (min 8 chars).");
-    return;
-  }
+        const { data, error } = await supabaseClient.functions.invoke("create-user", {
+          body: { email, password, full_name, role, status, permissions },
+          headers: {
+            apikey: anonKey,
+            Authorization: `Bearer ${anonKey}`,
+            "x-exact-admin": EXACT_ADMIN_SECRET
+          }
+        });
 
-  // Force refresh and CHECK errors (important when autoRefreshToken=false)
-  const { data: refreshed, error: refreshErr } = await supabaseClient.auth.refreshSession();
-  if (refreshErr) {
-    setMsg("Refresh session failed: " + refreshErr.message);
-    console.error("refreshSession error:", refreshErr);
-    return;
-  }
+        if (error) {
+          let statusCode = "";
+          let details = "";
 
-  // Get current session token
-  const { data: sessionData, error: sessionErr } = await supabaseClient.auth.getSession();
-  if (sessionErr) {
-    setMsg("Get session failed: " + sessionErr.message);
-    console.error("getSession error:", sessionErr);
-    return;
-  }
+          try {
+            const res = error.context?.response;
+            if (res) {
+              statusCode = String(res.status || "");
+              details = await res.text();
+            } else {
+              statusCode = String(error.context?.status || "");
+              const body = error.context?.body ?? error.context ?? error;
+              details = typeof body === "string" ? body : JSON.stringify(body);
+            }
+          } catch (e) {
+            details = String(e);
+          }
 
-  const accessToken = sessionData?.session?.access_token;
-  const expiresAt = sessionData?.session?.expires_at;
+          setMsg(`Create user failed (${statusCode}): ${details}`);
+          console.error("create-user error:", error);
+          return;
+        }
 
-  if (!accessToken) {
-    setMsg("Not logged in (no access token). Please log in again.");
-    console.error("No access token. Session is:", sessionData);
-    return;
-  }
-
-  const anonKey = window.SUPABASE_ANON_KEY || "";
-  if (!anonKey) {
-    setMsg("Missing SUPABASE_ANON_KEY. Check main app JS sets window.SUPABASE_ANON_KEY.");
-    return;
-  }
-
-  // TEMP DEBUG (leave until it works)
-  console.log("Calling create-user with JWT...", {
-    jwt_start: accessToken.slice(0, 20),
-    expires_at: expiresAt
-  });
-
-  const { data, error } = await supabaseClient.functions.invoke("create-user", {
-    body: { email, password, full_name, role, status, permissions },
-    headers: {
-  apikey: anonKey,
-  Authorization: `Bearer ${anonKey}`,
-  "x-exact-admin": "<exact_090-1c7b7785443-rkskl3f6d03aa3df7"
-}
-
-  });
-
- if (error) {
-  let status = "";
-  let details = "";
-
-  try {
-    const res = error.context?.response;
-    if (res) {
-      status = res.status;
-      details = await res.text();
-    } else {
-      status = error.context?.status ?? "";
-      const body = error.context?.body ?? error.context ?? error;
-      details = typeof body === "string" ? body : JSON.stringify(body);
-    }
-  } catch (e) {
-    details = String(e);
-  }
-
-  setMsg(`Create user failed (${status}): ${details}`);
-  console.error("create-user error:", error);
-  return;
-}
-
-
-  console.log("create-user success:", data);
-
-  setMsg("User created ✅");
-  clearForm();
-  showViewUsersPanel();
-  await runSearch("");
-  return;
-}
+        setMsg("User created ✅");
+        clearForm();
+        showViewUsersPanel();
+        await runSearch("");
+        return;
+      }
 
       // EDIT
       if (!editingId) { setMsg("No user selected."); return; }
@@ -391,7 +351,7 @@ if (addingNew) {
   }
 
   return {
-    resetUserScreen: resetUserScreen,
+    resetUserScreen,
     loadUsers: async () => { showViewUsersPanel(); await runSearch(""); }
   };
 }
