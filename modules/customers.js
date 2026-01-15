@@ -184,13 +184,6 @@ export function initCustomerManagement({
 
       </div>
     `;
-
-})() : ""}
-
-
-  </div>
-`;
-
   }
 
   function ensureCustomerListDelegation() {
