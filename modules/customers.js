@@ -144,37 +144,47 @@ export function initCustomerManagement({
 
     const createdPill = created ? `<span class="pill-soft">Created: ${escapeHtml(created)}</span>` : "";
 
-return `
-  <div class="customer-row" data-id="${c.id}">
-    
-    <!-- LEFT: NAME + CODE -->
-    <div>
-      <div style="font-weight:700;">${fullName}</div>
-      <div class="subtle">${customerCode || ""}</div>
-    </div>
+    const clinicName =
+      role === "admin"
+        ? (agentNameMap?.[c.agent_id] || "Unknown clinic")
+        : (agentNameMap?.[state.currentProfile?.agent_id] || "Clinic");
 
-    <!-- MIDDLE: CLINIC + CREATED -->
-    <div>
-      <div>Clinic: ${clinicName || "—"}</div>
-      <div class="subtle">Created: ${created || "—"}</div>
-    </div>
+    return `
+      <div class="customer-row" data-customer-id="${escapeHtml(c.id)}">
 
-    <!-- RIGHT: ACTIONS -->
-    <div class="customer-actions">
-      <button data-action="edit">Edit</button>
-      <button data-action="delete">Delete</button>
-    </div>
+        <!-- LEFT: NAME + CODE -->
+        <div>
+          <div style="font-weight:700;">${name}</div>
+          <div class="subtle">${code || ""}</div>
+        </div>
 
-    <!-- FULL-WIDTH EMAIL ROW -->
-    ${(c.email || "").trim() ? (() => {
-  const emailRaw = String(c.email || "").trim();
-  const emailText = escapeHtml(emailRaw);
-  const mailHref = "mailto:" + encodeURIComponent(emailRaw);
-  return `
-    <div class="customer-email">
-      <a href="${mailHref}">${emailText}</a>
-    </div>
-  `;
+        <!-- MIDDLE: CLINIC + CREATED -->
+        <div>
+          <div>Clinic: ${escapeHtml(clinicName || "—")}</div>
+          <div class="subtle">Created: ${escapeHtml(created || "—")}</div>
+        </div>
+
+        <!-- RIGHT: ACTIONS -->
+        <div class="customer-actions">
+          <button data-action="edit" type="button">Edit</button>
+          <button data-action="delete" type="button">Delete</button>
+        </div>
+
+        <!-- EMAIL (FULL WIDTH, LAST ROW) -->
+        ${(c.email || "").trim() ? (() => {
+          const emailRaw = String(c.email || "").trim();
+          const emailText = escapeHtml(emailRaw);
+          const mailHref = "mailto:" + encodeURIComponent(emailRaw);
+          return `
+            <div class="customer-email">
+              <a href="${mailHref}">${emailText}</a>
+            </div>
+          `;
+        })() : ""}
+
+      </div>
+    `;
+
 })() : ""}
 
 
