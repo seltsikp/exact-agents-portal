@@ -1028,6 +1028,64 @@
   </div>
 </div>
 
+            <!-- USER MANAGEMENT -->
+<div id="viewUserMgmt" class="card" style="display:none;">
+  <div class="cardHeader">
+    <h2>User Management</h2>
+    <div class="cardHeaderRight"></div>
+  </div>
+
+  <div class="cm-actions">
+    <button id="umViewBtn" class="btn-gold" type="button">View users</button>
+    <button id="umClearBtn" type="button" style="display:none;">Clear</button>
+    <p id="umMsg" class="subtle" style="margin:0;"></p>
+  </div>
+
+  <div id="umViewPanel" style="display:none; margin-top:8px;">
+    <div id="umList" class="customer-list"></div>
+  </div>
+
+  <div id="umEditPanel" style="display:none; margin-top:10px;">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+      <div>
+        <label class="subtle" style="display:block; margin-bottom:6px;">Full name</label>
+        <input id="umFullName" />
+      </div>
+      <div>
+        <label class="subtle" style="display:block; margin-bottom:6px;">Email</label>
+        <input id="umEmail" />
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+      <div>
+        <label class="subtle" style="display:block; margin-bottom:6px;">Role</label>
+        <select id="umRole">
+          <option value="admin">admin</option>
+          <option value="agent">agent</option>
+        </select>
+      </div>
+      <div>
+        <label class="subtle" style="display:block; margin-bottom:6px;">Status</label>
+        <select id="umStatus">
+          <option value="active">active</option>
+          <option value="inactive">inactive</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <label class="subtle" style="display:block; margin-bottom:6px;">Module access</label>
+      <div id="umPerms" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;"></div>
+    </div>
+
+    <div class="cm-actions" style="margin-top:12px;">
+      <button id="umSaveBtn" class="btn-primary" type="button">Save user</button>
+      <button id="umCancelBtn" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
             <!-- PRODUCT TYPES -->
             <div id="viewProductTypes" class="card" style="display:none;">
               <div class="cardHeader">
