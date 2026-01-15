@@ -53,6 +53,7 @@ Object.entries(views).forEach(([key, el]) => {
 
     if (role === "admin") {
   addMenuBtn("Agent Management", "agents");
+  addMenuBtn("Account Managers", "accountManagers");
   addMenuBtn("Customer Management", "customers");
   addMenuBtn("Product Types", "productTypes");
   addMenuBtn("EXACT Formulary", "formulary");
