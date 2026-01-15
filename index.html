@@ -756,6 +756,22 @@
 .lab-row {
   min-width: 1100px;                /* adjust if you want */
 }
+/* ================================
+   FIX: customer rows overlap (long email)
+   ================================ */
+
+.customer-row > * { min-width: 0; }  /* critical for grid shrink */
+
+.customer-row .subtle {
+  display: block;                    /* force onto its own line */
+  white-space: nowrap;               /* no wrapping */
+  overflow: hidden;                  /* prevent spill */
+  text-overflow: ellipsis;           /* show ... */
+}
+
+.customer-row div, .customer-row span {
+  min-width: 0;                      /* extra safety */
+}
 
     </style>
   </head>
