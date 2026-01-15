@@ -35,37 +35,48 @@ Object.entries(views).forEach(([key, el]) => {
     }
   }
 
-  function renderMenuForRole(role) {
-    if (!menuItems) return;
-    menuItems.innerHTML = "";
+function renderMenuForRole(role, permissions = {}) {
+  if (!menuItems) return;
+  menuItems.innerHTML = "";
 
-    const addMenuBtn = (label, viewKey) => {
-      const b = document.createElement("button");
-      b.className = "menuBtn";
-      b.textContent = label;
-      b.setAttribute("data-view", viewKey);
-      b.addEventListener("click", () => setActiveView(viewKey));
-      menuItems.appendChild(b);
-    };
+  const addMenuBtn = (label, viewKey) => {
+    const b = document.createElement("button");
+    b.className = "menuBtn";
+    b.textContent = label;
+    b.setAttribute("data-view", viewKey);
+    b.addEventListener("click", () => setActiveView(viewKey));
+    menuItems.appendChild(b);
+  };
 
-    // Always show Welcome first
-    addMenuBtn("Welcome", "welcome");
+  // Always show Welcome
+  addMenuBtn("Welcome", "welcome");
 
-    if (role === "admin") {
-  addMenuBtn("Agents", "agents");
-  addMenuBtn("Account Managers", "accountManagers");
-  addMenuBtn("Customers", "customers");
-  addMenuBtn("Product Categories", "productTypes");
-  addMenuBtn("Formulary", "formulary");
-  addMenuBtn("Labs", "labs");
-  addMenuBtn("Users", "userMgmt");
+  // Admin gets everything
+  if (role === "admin") {
+    addMenuBtn("Agents", "agents");
+    addMenuBtn("Account Managers", "accountManagers");
+    addMenuBtn("Customers", "customers");
+    addMenuBtn("Product Categories", "productTypes");
+    addMenuBtn("Formulary", "formulary");
+    addMenuBtn("Labs", "labs");
+    addMenuBtn("Users", "userMgmt");
+    setActiveView("welcome");
+    return;
+  }
 
+  // Non-admin: show only what permissions allow
+  const p = permissions || {};
+  if (p.customers) addMenuBtn("Customers", "customers");
+  if (p.accountManagers) addMenuBtn("Account Managers", "accountManagers");
+  if (p.productTypes) addMenuBtn("Product Categories", "productTypes");
+  if (p.formulary) addMenuBtn("Formulary", "formulary");
+  if (p.labs) addMenuBtn("Labs", "labs");
+  if (p.userMgmt) addMenuBtn("Users", "userMgmt");
+  if (p.agents) addMenuBtn("Agents", "agents");
+
+  setActiveView("welcome");
 }
 
-
-    // Default view after login
-    setActiveView("welcome");
-  }
 
   return { setActiveView, renderMenuForRole };
 }
