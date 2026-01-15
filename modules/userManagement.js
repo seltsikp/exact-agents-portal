@@ -290,6 +290,7 @@ if (addingNew) {
     setMsg("Password is required for new users (min 8 chars).");
     return;
   }
+await supabaseClient.auth.refreshSession();
 
   // get current session JWT (must be logged in)
   const { data: sessionData, error: sessionErr } = await supabaseClient.auth.getSession();
