@@ -628,6 +628,77 @@
         gap:10px;
         justify-content:flex-end;
       }
+/* =========================================================
+   LAB MANAGEMENT — AUTHORITATIVE OVERRIDE (PUT LAST)
+   ========================================================= */
+
+#labList {
+  width: 100%;
+}
+
+.labs-wrap {
+  width: 100%;
+  overflow-x: auto;                 /* scroll inside card if needed */
+  -webkit-overflow-scrolling: touch;
+}
+
+.lab-head,
+.lab-row {
+  display: grid;
+  grid-template-columns:
+    120px                           /* Code */
+    minmax(260px, 1.4fr)            /* Name */
+    minmax(260px, 1.2fr)            /* Orders email */
+    minmax(260px, 1.2fr)            /* Admin email */
+    140px                           /* Phone */
+    170px;                          /* Actions */
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  min-width: 1100px;                /* prevents squashing; scrolls instead */
+}
+
+.lab-head {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fafafa;
+  font-weight: 700;
+  margin: 0;                        /* avoid odd spacing */
+}
+
+.lab-row {
+  padding: 14px;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 10px 22px rgba(15,20,25,.06);
+}
+
+.lab-cell {
+  min-width: 0;                     /* REQUIRED for ellipsis */
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.lab-name { font-weight: 700; }
+.lab-muted { color: var(--muted); font-size: 12px; }
+
+.lab-clip {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lab-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
     </style>
   </head>
 
