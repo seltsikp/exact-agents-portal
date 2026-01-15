@@ -232,8 +232,9 @@ async function loadProducts(term) {
   setMsg(`Found ${rows.length} product${rows.length === 1 ? "" : "s"}.`);
 
  fpList.innerHTML = rows.map(p => {
-  const typeObj = productTypesCache.find(x => x.id === p.product_type_id);
-  const typeLabel = typeObj ? `${typeObj.type_code} — ${typeObj.type_name}` : "Unknown type";
+const typeObj = productTypesCache.find(x => x.id === p.product_type_id);
+const typeLabel = typeObj ? (typeObj.type_name || "") : "Unknown type";
+
 
   return `
     <div class="customer-row" data-id="${escapeHtml(p.id)}">
