@@ -778,6 +778,32 @@
 
   <body>
     <div class="container">
+/* =========================================================
+   CUSTOMER ROWS — AUTHORITATIVE NO-OVERLAP FIX (PUT LAST)
+   ========================================================= */
+
+/* Ensure grid children can shrink and never bleed into next column */
+.customer-row { width: 100%; max-width: 100%; }
+.customer-row > * { min-width: 0; }
+
+/* For the 3 content columns: allow wrapping instead of spilling */
+.customer-row > div:not(.customer-actions) {
+  overflow: hidden;              /* stop bleed into next column */
+  overflow-wrap: anywhere;       /* break long emails/IDs */
+  word-break: break-word;
+}
+
+/* Keep action buttons tidy */
+.customer-actions {
+  white-space: nowrap;
+}
+
+/* If any text is marked subtle, allow it to wrap (your current nowrap causes spill) */
+.customer-row .subtle {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
 
       <!-- =========================================================
            BLOCK: TOPBAR SHELL (shown when logged in)
