@@ -289,16 +289,31 @@ if (addingNew) {
     return;
   }
 
-  const { data, error } = await supabaseClient.functions.invoke(
-  "create-user",
-  {
-    body: { email, password, full_name, role, status, permissions },
-    headers: {
-      apikey: supabaseClient.supabaseKey,
-      Authorization: `Bearer ${supabaseClient.supabaseKey}`
-    }
+// get current session JWT (best for calling functions)
+const { data: sessionData, error: sessionErr } = await supabaseClient.auth.getSession();
+if (sessionErr) {
+  setMsg("Session error: " + sessionErr.message);
+  return;
+}
+
+const accessToken = sessionData?.session?.access_token;
+if (!accessToken) {
+  setMsg("Not logged in (no access token). Please log in again.");
+  return;
+}
+
+// IMPORTANT: use your actual anon key here (see note below)
+const ANON_KEY = window.SUPABASE_ANON_KEY || "";  // or replace with your constant
+
+const { data, error } = await supabaseClient.functions.invoke("create-user", {
+  body: { email, password, full_name, role, status, permissions },
+  headers: {
+    apikey: ANON_KEY,
+    Authorization: `Bearer ${accessToken}`
   }
-);
+});
+
+
 
 
   if (error) {
