@@ -6,6 +6,8 @@ import { initLabManagement } from "./modules/labs.js";
 import { initProductTypesManagement } from "./modules/productTypes.js";
 import { initFormulatedProductsManagement } from "./modules/formulatedProducts.js";
 import { initAccountManagersManagement } from "./modules/accountManagers.js";
+import { initUserManagement } from "./modules/userManagement.js";
+
 
 
 
@@ -357,6 +359,25 @@ const amgrAddress = document.getElementById("amgrAddress");
 const amgrNotes = document.getElementById("amgrNotes");
 const amgrSaveBtn = document.getElementById("amgrSaveBtn");
 
+  const viewUserMgmt = document.getElementById("viewUserMgmt");
+
+     // USER Management UI
+const umViewBtn = document.getElementById("umViewBtn");
+const umClearBtn = document.getElementById("umClearBtn");
+const umMsg = document.getElementById("umMsg");
+const umViewPanel = document.getElementById("umViewPanel");
+const umEditPanel = document.getElementById("umEditPanel");
+const umList = document.getElementById("umList");
+
+const umFullName = document.getElementById("umFullName");
+const umEmail = document.getElementById("umEmail");
+const umRole = document.getElementById("umRole");
+const umStatus = document.getElementById("umStatus");
+const umPerms = document.getElementById("umPerms");
+const umSaveBtn = document.getElementById("umSaveBtn");
+const umCancelBtn = document.getElementById("umCancelBtn");
+
+
   // =========================================================
   // BLOCK: STATE
   // =========================================================
@@ -507,6 +528,16 @@ const formulatedProductsModule = initFormulatedProductsManagement({
     amgrSaveBtn
   },
   helpers: { show, confirmExact }
+});
+const userMgmtModule = initUserManagement({
+  supabaseClient,
+  ui: {
+    umViewBtn, umClearBtn, umMsg,
+    umViewPanel, umEditPanel, umList,
+    umFullName, umEmail, umRole, umStatus,
+    umPerms, umSaveBtn, umCancelBtn
+  },
+  helpers: { show, escapeHtml, confirmExact }
 });
 
 
@@ -760,6 +791,8 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
       productTypes: viewProductTypes,
       labs: viewLabMgmt,
       formulary: viewFormulary
+      userMgmt: viewUserMgmt,
+
     },
 
     show,
@@ -769,6 +802,7 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
       if (viewKey === "labs" && currentProfile?.role !== "admin") return false;
       if (viewKey === "productTypes" && currentProfile?.role !== "admin") return false;
       if (viewKey === "accountManagers" && currentProfile?.role !== "admin") return false;
+      if (viewKey === "userMgmt" && currentProfile?.role !== "admin") return false;
 
       return true;
     },
@@ -795,7 +829,11 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
   formulary: () => {
     setActiveFormularyTab("ingredients");
     resetIngredientsScreen();
-  }
+  },
+    userMgmt: () => {
+    userMgmtModule.resetUserScreen();
+},
+
 }
 
 
