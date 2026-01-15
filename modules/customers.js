@@ -144,24 +144,37 @@ export function initCustomerManagement({
 
     const createdPill = created ? `<span class="pill-soft">Created: ${escapeHtml(created)}</span>` : "";
 
-    return `
-      <div class="customer-row" data-customer-id="${id}">
-        <div class="customer-main">
-          <div class="name">${name}</div>
-          <div class="meta">${metaLine}</div>
-        </div>
+return `
+  <div class="customer-row" data-id="${c.id}">
+    
+    <!-- LEFT: NAME + CODE -->
+    <div>
+      <div style="font-weight:700;">${fullName}</div>
+      <div class="subtle">${customerCode || ""}</div>
+    </div>
 
-        <div class="customer-context">
-          ${clinicPill}
-          ${createdPill}
-        </div>
+    <!-- MIDDLE: CLINIC + CREATED -->
+    <div>
+      <div>Clinic: ${clinicName || "—"}</div>
+      <div class="subtle">Created: ${created || "—"}</div>
+    </div>
 
-        <div class="customer-actions">
-          <button class="btn btn-soft action-pill edit-pill" data-action="edit" type="button">Edit</button>
-          <button class="btn action-pill delete-pill" data-action="delete" type="button">Delete</button>
-        </div>
+    <!-- RIGHT: ACTIONS -->
+    <div class="customer-actions">
+      <button data-action="edit">Edit</button>
+      <button data-action="delete">Delete</button>
+    </div>
+
+    <!-- FULL-WIDTH EMAIL ROW -->
+    ${c.email ? `
+      <div class="customer-email">
+        <a href="mailto:${c.email}">${c.email}</a>
       </div>
-    `.trim();
+    ` : ""}
+
+  </div>
+`;
+
   }
 
   function ensureCustomerListDelegation() {
