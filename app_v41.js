@@ -723,7 +723,7 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
       formulary: () => {
         setActiveFormularyTab("ingredients");
         resetIngredientsScreen();
-      }
+      },
     }
 
   });
