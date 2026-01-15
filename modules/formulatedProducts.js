@@ -356,6 +356,15 @@ const typeLabel = typeObj ? (typeObj.type_name || "") : "Unknown type";
     const { lines, error: linesErr } = getLinesFromUI();
     if (linesErr) return setMsg(linesErr);
 
+    // --- ENFORCE: total % must equal 100.000 (allow tiny rounding) ---
+const totalPct = lines.reduce((sum, l) => sum + Number(l.pct || 0), 0);
+const rounded = Math.round(totalPct * 1000) / 1000; // keep 3 decimals
+
+if (Math.abs(rounded - 100) > 0.001) {
+  return setMsg(`Total % must equal 100. Current total: ${rounded}%.`);
+}
+
+
     let productId = editingProductId;
 
     if (productId) {
