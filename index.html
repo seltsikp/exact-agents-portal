@@ -313,6 +313,70 @@
         .ingredient-row{ grid-template-columns: 1fr; }
         .ingredient-actions{ justify-content: flex-start; }
       }
+/* =========================================================
+   BLOCK: LAB LIST (CLEAN GRID)
+   ========================================================= */
+.lab-head,
+.lab-row{
+  display:grid;
+  grid-template-columns: 120px 1.4fr 1.2fr 1.2fr 140px auto;
+  gap: 14px;
+  align-items:center;
+}
+
+.lab-head{
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  font-weight: 700;
+}
+
+.lab-row{
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 10px 22px rgba(15,20,25,.06);
+}
+
+.lab-row:hover{
+  border-color: rgba(184,154,91,.45);
+  box-shadow: 0 14px 28px rgba(15,20,25,.08);
+}
+
+.lab-cell{
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.lab-name{ font-weight: 700; }
+.lab-muted{ color: var(--muted); }
+
+.lab-actions{
+  display:inline-flex;
+  gap:10px;
+  justify-content:flex-end;
+}
+
+/* Prevent ugly overlap from long emails */
+.lab-cell{
+  min-width: 0;
+}
+.lab-cell .wrap{
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Mobile */
+@media (max-width: 840px){
+  .lab-head{ display:none; }
+  .lab-row{
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .lab-actions{ justify-content:flex-start; }
+}
 
       /* =========================================================
          BLOCK: FORMULARY TABS
@@ -565,9 +629,20 @@
                 <p id="labMsg" class="subtle" style="margin:0;"></p>
               </div>
 
-              <div id="lmViewPanel" style="display:none; margin-top:6px;">
-                <div id="labList" class="customer-list"></div>
-              </div>
+            <div id="lmViewPanel" style="display:none; margin-top:6px;">
+
+  <div class="lab-head">
+    <div>Code</div>
+    <div>Name</div>
+    <div>Orders email</div>
+    <div>Admin email</div>
+    <div>Phone</div>
+    <div></div>
+  </div>
+
+  <div id="labList" class="customer-list"></div>
+</div>
+
 
               <div id="lmAddPanel" style="display:none; margin-top:6px;">
                 <div style="margin-bottom:10px;">
