@@ -46,55 +46,79 @@ export function initLabManagement({ supabaseClient, ui, helpers }) {
   async function loadLabs() {
     if (!labList) return;
 
-    setLabMsg("Loading labs…");
-    labList.innerHTML = "";
-    labsById = {};
+   setLabMsg("Loading labs…");
+labsById = {};
+labList.innerHTML = "";
 
-    const { data, error } = await supabaseClient
-      .from("labs")
-      .select("id, lab_code, name, orders_email, admin_email, phone, address, shipping_address, created_at")
-      .order("created_at", { ascending: false });
+// --- load rows ---
+const { data, error } = await supabaseClient
+  .from("labs")
+  .select("id, lab_code, name, orders_email, admin_email, phone, address, shipping_address, created_at")
+  .order("created_at", { ascending: false });
 
-    if (error) {
-      setLabMsg("Load error: " + error.message);
-      labList.innerHTML = `<p class="subtle" style="margin:0;">Could not load labs.</p>`;
-      return;
-    }
+if (error) {
+  setLabMsg("Load error: " + error.message);
+  labList.innerHTML = `<p class="subtle" style="margin:0;">Could not load labs.</p>`;
+  return;
+}
 
-    const rows = data || [];
-    rows.forEach(r => { labsById[r.id] = r; });
+const rows = data || [];
+rows.forEach(r => { labsById[r.id] = r; });
 
-    if (rows.length === 0) {
-      setLabMsg("No labs yet. Click “Add lab”.");
-      labList.innerHTML = `<p class="subtle" style="margin:0;">No labs yet. Click “Add lab”.</p>`;
-      return;
-    }
+if (rows.length === 0) {
+  setLabMsg("No labs yet. Click “Add lab”.");
+  labList.innerHTML = `<p class="subtle" style="margin:0;">No labs yet. Click “Add lab”.</p>`;
+  return;
+}
 
-    setLabMsg(`Found ${rows.length} lab${rows.length === 1 ? "" : "s"}.`);
+setLabMsg(`Found ${rows.length} lab${rows.length === 1 ? "" : "s"}.`);
 
-   labList.innerHTML = rows.map(r => {
-  const created = r.created_at ? new Date(r.created_at).toLocaleDateString() : "";
+// --- HEADER + ROWS (aligned columns) ---
+const headerHTML = `
+  <div class="lab-row lab-head">
+    <div class="lab-cell">Code</div>
+    <div class="lab-cell">Name</div>
+    <div class="lab-cell">Orders email</div>
+    <div class="lab-cell">Admin email</div>
+    <div class="lab-cell">Phone</div>
+    <div class="lab-cell" style="text-align:right;">Actions</div>
+  </div>
+`;
 
-  return `
-    <div class="lab-row" data-lab-id="${escapeHtml(r.id)}">
-      <div class="lab-cell"><strong>${escapeHtml(r.lab_code || "")}</strong></div>
+labList.innerHTML =
+  headerHTML +
+  rows.map(r => {
+    const created = r.created_at ? new Date(r.created_at).toLocaleDateString() : "";
+    const ordersEmail = r.orders_email || "";
+    const adminEmail = r.admin_email || "";
+    const phone = r.phone || "";
 
-      <div class="lab-cell">
-        <div class="lab-name">${escapeHtml(r.name || "")}</div>
-        <div class="lab-muted">${created ? "Created: " + escapeHtml(created) : ""}</div>
+    return `
+      <div class="lab-row" data-lab-id="${escapeHtml(r.id)}">
+        <div class="lab-cell"><strong>${escapeHtml(r.lab_code || "")}</strong></div>
+
+        <div class="lab-cell">
+          <div class="lab-name">${escapeHtml(r.name || "")}</div>
+          <div class="lab-muted">${created ? "Created: " + escapeHtml(created) : ""}</div>
+        </div>
+
+        <div class="lab-cell">
+          <span class="lab-ellipsis" title="${escapeHtml(ordersEmail)}">${escapeHtml(ordersEmail)}</span>
+        </div>
+
+        <div class="lab-cell">
+          <span class="lab-ellipsis" title="${escapeHtml(adminEmail)}">${escapeHtml(adminEmail)}</span>
+        </div>
+
+        <div class="lab-cell">${escapeHtml(phone)}</div>
+
+        <div class="lab-actions">
+          <button class="btn-primary" type="button" data-action="edit">Edit</button>
+          <button class="btn-danger" type="button" data-action="delete">Delete</button>
+        </div>
       </div>
-
-      <div class="lab-cell"><span class="wrap">${escapeHtml(r.orders_email || "")}</span></div>
-      <div class="lab-cell"><span class="wrap">${escapeHtml(r.admin_email || "")}</span></div>
-      <div class="lab-cell">${escapeHtml(r.phone || "")}</div>
-
-      <div class="lab-actions">
-        <button class="btn-primary" type="button" data-action="edit">Edit</button>
-        <button class="btn-danger" type="button" data-action="delete">Delete</button>
-      </div>
-    </div>
-  `;
-}).join("");
+    `;
+  }).join("");
 
   }
 
