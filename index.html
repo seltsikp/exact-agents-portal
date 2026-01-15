@@ -44,6 +44,66 @@
         margin: 28px auto;
         padding: 0 18px 60px;
       }
+/* LABS TABLE */
+#labList{
+  width: 100%;
+  overflow-x: auto;     /* allows scroll instead of spilling */
+}
+
+.lab-row{
+  display: grid;
+  grid-template-columns:
+    110px
+    minmax(220px, 1.4fr)
+    minmax(240px, 1.6fr)
+    minmax(220px, 1.4fr)
+    130px
+    170px;
+  gap: 12px;
+  align-items: center;
+
+  width: 100%;
+  min-width: 980px;     /* keeps columns readable; will scroll on smaller screens */
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  margin-top: 10px;
+}
+
+.lab-head{
+  background: #fbfbfc;
+  font-weight: 700;
+  margin-top: 0;
+}
+
+.lab-cell{
+  min-width: 0;         /* enables ellipsis */
+}
+
+.lab-name{
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.lab-muted{
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.lab-ellipsis{
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lab-actions{
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
 
       /* =========================================================
          BLOCK: TOPBAR
@@ -692,8 +752,6 @@
   <h2>Lab Management</h2>
   <div class="cardHeaderRight"></div>
 </div>
-
-
               <div class="cm-actions">
                 <button id="lmViewBtn" class="btn-gold" type="button">View labs</button>
                 <button id="lmAddBtn" type="button">Add lab</button>
@@ -702,19 +760,9 @@
               </div>
 
             <div id="lmViewPanel" style="display:none; margin-top:6px;">
+            <div id="labList"></div>
+            </div>
 
-  <div class="lab-head">
-    <div>Code</div>
-    <div>Name</div>
-    <div>Orders email</div>
-    <div>Admin email</div>
-    <div>Phone</div>
-    <div></div>
-  </div>
-
-<div class="labs-wrap">
-  <div id="labList" style="display:grid; gap:12px;"></div>
-</div>
 
 
 
