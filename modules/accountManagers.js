@@ -93,21 +93,27 @@ export function initAccountManagersManagement({ supabaseClient, ui, helpers }) {
     bindRowActions();
   }
 
-  function bindRowActions() {
-    amgrList.querySelectorAll(".amgr-edit").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const id = btn.closest(".customer-row").dataset.id;
-        editManager(id);
-      });
-    });
+ function bindRowActions() {
+  if (!amgrList) return;
 
-    amgrList.querySelectorAll(".amgr-del").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const id = btn.closest(".customer-row").dataset.id;
-        deleteManager(id);
-      });
+  amgrList.querySelectorAll(".amgr-edit").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const row = btn.closest(".customer-row");
+      const id = row?.dataset?.id;
+      if (id) editManager(id);
     });
-  }
+  });
+
+  amgrList.querySelectorAll(".amgr-del").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const row = btn.closest(".customer-row");
+      const id = row?.dataset?.id;
+      if (id) deleteManager(id);
+    });
+  });
+}
 
   function showView() {
     show(amgrViewPanel, true);
@@ -127,20 +133,25 @@ export function initAccountManagersManagement({ supabaseClient, ui, helpers }) {
   }
 
   function editManager(id) {
-    const m = managersById[id];
-    if (!m) return;
+  const m = managersById[id];
+  if (!m) return;
 
-    editingId = id;
-    show(amgrViewPanel, false);
-    show(amgrAddPanel, true);
-    show(amgrClearBtn, true);
-    setMsg("Editing Account Manager.");
+  editingId = id;
 
-    amgrFirstName.value = m.first_name;
-    amgrLastName.value = m.last_name;
-    amgrEmail.value = m.email;
-    amgrPhone.value = m.phone || "";
-  }
+  show(amgrViewPanel, false);
+  show(amgrAddPanel, true);
+  show(amgrClearBtn, true);
+  setMsg("Editing Account Manager.");
+
+  if (amgrFirstName) amgrFirstName.value = m.first_name || "";
+  if (amgrLastName) amgrLastName.value = m.last_name || "";
+  if (amgrEmail) amgrEmail.value = m.email || "";
+  if (amgrPhone) amgrPhone.value = m.phone || "";
+  // address/notes are not in the list query, so leave as-is (or clear)
+  if (amgrAddress) amgrAddress.value = "";
+  if (amgrNotes) amgrNotes.value = "";
+}
+
 
   async function deleteManager(id) {
     const m = managersById[id];
@@ -160,40 +171,41 @@ export function initAccountManagersManagement({ supabaseClient, ui, helpers }) {
     loadManagers();
   }
 
-  async function saveManager() {
-    setMsg("");
+async function saveManager() {
+  setMsg("");
 
-    const payload = {
-      first_name: amgrFirstName.value.trim(),
-      last_name: amgrLastName.value.trim(),
-      email: amgrEmail.value.trim(),
-      phone: amgrPhone.value.trim() || null,
-      address: amgrAddress.value.trim() || null,
-      notes: amgrNotes.value.trim() || null
-    };
+  const payload = {
+    first_name: (amgrFirstName?.value || "").trim(),
+    last_name: (amgrLastName?.value || "").trim(),
+    email: (amgrEmail?.value || "").trim(),
+    phone: (amgrPhone?.value || "").trim() || null,
+    address: (amgrAddress?.value || "").trim() || null,
+    notes: (amgrNotes?.value || "").trim() || null
+  };
 
-    if (!payload.first_name || !payload.last_name || !payload.email) {
-      return setMsg("First name, last name, and email are required.");
-    }
-
-    if (editingId) {
-      const { error } = await supabaseClient
-        .from("account_managers")
-        .update(payload)
-        .eq("id", editingId);
-
-      if (error) return setMsg("Save failed: " + error.message);
-    } else {
-      const { error } = await supabaseClient
-        .from("account_managers")
-        .insert([payload]);
-
-      if (error) return setMsg("Insert failed: " + error.message);
-    }
-
-    setMsg("Saved ✅");
-    showView();
+  if (!payload.first_name || !payload.last_name || !payload.email) {
+    return setMsg("First name, last name, and email are required.");
   }
+
+  if (editingId) {
+    const { error } = await supabaseClient
+      .from("account_managers")
+      .update(payload)
+      .eq("id", editingId);
+
+    if (error) return setMsg("Save failed: " + error.message);
+  } else {
+    const { error } = await supabaseClient
+      .from("account_managers")
+      .insert([payload]);
+
+    if (error) return setMsg("Insert failed: " + error.message);
+  }
+
+  setMsg("Saved ✅");
+  editingId = null;
+  showView();
+}
 
   if (amgrViewBtn) amgrViewBtn.addEventListener("click", showView);
   if (amgrAddBtn) amgrAddBtn.addEventListener("click", showAdd);
