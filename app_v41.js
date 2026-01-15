@@ -681,7 +681,7 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
   // =========================================================
   const nav = initNavigation({
     menuItems,
-       views: {
+      views: {
       welcome: viewWelcome,
       customers: viewCustomerMgmt,
       agents: viewAgentMgmt,
@@ -701,30 +701,32 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
 
       return true;
     },
-       onEnter: {
-      welcome: () => {
-        showWelcomePanel({ containerEl: welcomeContent });
-      },
-      customers: () => {
-        customerModule.resetCustomerScreen();
-      },
-      agents: () => {
-        agentModule.resetAgentScreen();
-      },
-      productTypes: async () => {
-        productTypesModule.resetProductTypesScreen();
-        await productTypesModule.loadProductTypes();
-      },
-      labs: () => {
-        labsModule.resetLabsScreen();
-        accountManagers: () => {
-        accountManagersModule.resetAccountManagersScreen();
-      },
-      formulary: () => {
-        setActiveFormularyTab("ingredients");
-        resetIngredientsScreen();
-      },
-    }
+      onEnter: {
+  welcome: () => {
+    showWelcomePanel({ containerEl: welcomeContent });
+  },
+  customers: () => {
+    customerModule.resetCustomerScreen();
+  },
+  agents: () => {
+    agentModule.resetAgentScreen();
+  },
+  accountManagers: () => {
+    accountManagersModule.resetAccountManagersScreen();
+  },
+  productTypes: async () => {
+    productTypesModule.resetProductTypesScreen();
+    await productTypesModule.loadProductTypes();
+  },
+  labs: () => {
+    labsModule.resetLabsScreen();
+  },
+  formulary: () => {
+    setActiveFormularyTab("ingredients");
+    resetIngredientsScreen();
+  }
+}
+
 
   });
 
