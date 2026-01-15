@@ -290,18 +290,29 @@ if (addingNew) {
     setMsg("Password is required for new users (min 8 chars).");
     return;
   }
-await supabaseClient.auth.refreshSession();
 
-  // get current session JWT (must be logged in)
+  // Force refresh and CHECK errors (important when autoRefreshToken=false)
+  const { data: refreshed, error: refreshErr } = await supabaseClient.auth.refreshSession();
+  if (refreshErr) {
+    setMsg("Refresh session failed: " + refreshErr.message);
+    console.error("refreshSession error:", refreshErr);
+    return;
+  }
+
+  // Get current session token
   const { data: sessionData, error: sessionErr } = await supabaseClient.auth.getSession();
   if (sessionErr) {
-    setMsg("Session error: " + sessionErr.message);
+    setMsg("Get session failed: " + sessionErr.message);
+    console.error("getSession error:", sessionErr);
     return;
   }
 
   const accessToken = sessionData?.session?.access_token;
+  const expiresAt = sessionData?.session?.expires_at;
+
   if (!accessToken) {
     setMsg("Not logged in (no access token). Please log in again.");
+    console.error("No access token. Session is:", sessionData);
     return;
   }
 
@@ -311,6 +322,12 @@ await supabaseClient.auth.refreshSession();
     return;
   }
 
+  // TEMP DEBUG (leave until it works)
+  console.log("Calling create-user with JWT...", {
+    jwt_start: accessToken.slice(0, 20),
+    expires_at: expiresAt
+  });
+
   const { data, error } = await supabaseClient.functions.invoke("create-user", {
     body: { email, password, full_name, role, status, permissions },
     headers: {
@@ -319,20 +336,20 @@ await supabaseClient.auth.refreshSession();
     }
   });
 
- if (error) {
-  // supabase-js puts the function JSON error in error.context
-  const status = error.context?.status ?? "";
-  const body = error.context?.body ?? error.context ?? error;
+  if (error) {
+    const status = error.context?.status ?? "";
+    const body = error.context?.body ?? error.context ?? error;
 
-  let details = "";
-  try { details = typeof body === "string" ? body : JSON.stringify(body); }
-  catch { details = String(body); }
+    let details = "";
+    try { details = typeof body === "string" ? body : JSON.stringify(body); }
+    catch { details = String(body); }
 
-  setMsg(`Create user failed (${status}): ${details}`);
-  console.error("create-user error:", error);
-  return;
-}
+    setMsg(`Create user failed (${status}): ${details}`);
+    console.error("create-user error:", error);
+    return;
+  }
 
+  console.log("create-user success:", data);
 
   setMsg("User created ✅");
   clearForm();
