@@ -807,27 +807,20 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
 
   show,
 
-  canAccess: (viewKey) => {
-  // Always allow welcome
+canAccess: (viewKey) => {
   if (viewKey === "welcome") return true;
 
-  // must be logged in + active profile
+  // must have profile loaded
   if (!currentProfile) return false;
-  if (currentProfile.status !== "active") return false;
 
-  // Admin still gets everything (unless you want even admin governed by perms)
+  // admins can access everything
   if (currentProfile.role === "admin") return true;
 
-  // Agent: use permissions JSON if present
-  const perms = currentProfile.permissions || {};
-
-  // If no permissions saved yet, lock down to customers only (safe default)
-  const fallback = { customers: true };
-
-  const effective = Object.keys(perms).length ? perms : fallback;
-
-  return !!effective[viewKey];
+  // otherwise respect permissions json
+  const p = currentProfile.permissions || {};
+  return !!p[viewKey];
 },
+
 
   onEnter: {
     welcome: () => {
@@ -926,7 +919,7 @@ resetIngredientsScreen();
       if (!profile) {
         if (topBarTitle) topBarTitle.textContent = "Logged in";
         if (topBarSub) topBarSub.textContent = "Profile lookup failed (agent_users). Check RLS / row exists.";
-        nav.renderMenuForRole("agent");
+        nav.renderMenuForRole("agent", {});
         nav.setActiveView("welcome");
         return;
       }
@@ -945,7 +938,8 @@ resetIngredientsScreen();
         if (agentClinicName) agentClinicName.value = agentName || "Unknown clinic";
       }
 
-      nav.renderMenuForRole(profile.role);
+      nav.renderMenuForRole(profile.role, profile.permissions || {});
+
 
       // keep screens neutral until user chooses
 customerModule.resetCustomerScreen();
