@@ -43,8 +43,7 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
     { key: "userMgmt", label: "User Management" }
   ];
 
-  // IMPORTANT: put your EXACT_ADMIN_SECRET value here (exactly as in Supabase Secrets)
-  // Example: const EXACT_ADMIN_SECRET = "exact_admin_......";
+  // IMPORTANT: must match the Supabase Edge Function secret EXACT_ADMIN_SECRET (VALUE)
   const EXACT_ADMIN_SECRET = "exact_090-1c7b7785443-rkskl3f6d03aa3df7";
 
   function renderPerms(permsObj) {
@@ -186,7 +185,9 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
 
       if (action === "delete") {
         const label = (u.full_name || u.email || "this user").trim();
-        const ok = await confirmExact(`Delete ${label}?\n\nThis deletes ONLY the agent_users row (not the Supabase Auth user).`);
+        const ok = await confirmExact(
+          `Delete ${label}?\n\nThis deletes ONLY the agent_users row (not the Supabase Auth user).`
+        );
         if (!ok) return;
 
         const { data, error } = await supabaseClient
@@ -287,11 +288,6 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
           return;
         }
 
-        if (!EXACT_ADMIN_SECRET || EXACT_ADMIN_SECRET === "PASTE_YOUR_EXACT_ADMIN_SECRET_VALUE_HERE") {
-          setMsg("EXACT_ADMIN_SECRET not set in userManagement.js");
-          return;
-        }
-
         const { data, error } = await supabaseClient.functions.invoke("create-user", {
           body: { email, password, full_name, role, status, permissions },
           headers: {
@@ -301,25 +297,55 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
           }
         });
 
-if (error) {
-  const res = error?.context?.response;
+        if (error) {
+          const res = error?.context?.response;
+          let statusCode = "";
+          let text = "";
 
-  let status = "";
-  let text = "";
+          try {
+            statusCode = String(res?.status ?? error?.context?.status ?? "");
+            if (res) text = await res.text();
+          } catch (e) {
+            text = "Could not read error response: " + String(e);
+          }
 
-  try {
-    status = String(res?.status ?? error?.context?.status ?? "");
-    if (res) text = await res.text();
-  } catch (e) {
-    text = "Could not read error response: " + String(e);
+          const name = error?.name || "Error";
+          const msg = error?.message || "(no message)";
+          if (!text) text = "(no response body)";
+
+          setMsg(`Create user failed (${statusCode}): ${name}: ${msg} ${text}`);
+          console.error("create-user error FULL:", error);
+          return;
+        }
+
+        setMsg("User created ✅");
+        clearForm();
+        showViewUsersPanel();
+        await runSearch("");
+        return;
+      }
+
+      // EDIT
+      if (!editingId) { setMsg("No user selected."); return; }
+
+      const { data, error } = await supabaseClient
+        .from("agent_users")
+        .update({ full_name, email, role, status, permissions })
+        .eq("id", editingId)
+        .select("id");
+
+      if (error) { setMsg("Update error: " + error.message); return; }
+      if (!data || data.length === 0) { setMsg("Update blocked (RLS) — no rows updated."); return; }
+
+      setMsg("Saved ✅");
+      clearForm();
+      showViewUsersPanel();
+      await runSearch(umSearch?.value || "");
+    });
   }
 
-  const name = error?.name || "Error";
-  const msg = error?.message || "(no message)";
-  if (!text) text = "(no response body)";
-
-  setMsg(`Create user failed (${status}): ${name}: ${msg} ${text}`);
-  console.error("create-user error FULL:", error);
-  return;
+  return {
+    resetUserScreen,
+    loadUsers: async () => { showViewUsersPanel(); await runSearch(""); }
+  };
 }
-
