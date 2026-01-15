@@ -313,7 +313,79 @@
         .ingredient-row{ grid-template-columns: 1fr; }
         .ingredient-actions{ justify-content: flex-start; }
       }
-/* =========================================================
+/* ================================
+   LAB TABLE (PRO LOOK)
+   ================================ */
+
+.labs-wrap {
+  overflow-x: auto;              /* enables horizontal scroll if needed */
+  -webkit-overflow-scrolling: touch;
+}
+
+.lab-row {
+  display: grid;
+  grid-template-columns: 120px 260px 260px 260px 140px 190px;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 10px 22px rgba(15,20,25,.06);
+  min-width: 1100px;             /* forces scroll instead of wrap */
+}
+
+.lab-head {
+  background: #fff;
+  box-shadow: none;
+  border-color: var(--line);
+  padding: 12px 16px;
+}
+
+.lab-head .lab-cell {
+  font-weight: 800;
+}
+
+.lab-cell {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.lab-name {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.lab-muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.lab-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* make emails (and long text) stay on one line */
+.lab-ellipsis {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* phone stays tidy */
+.lab-phone {
+  white-space: nowrap;
+}
+
+/* on smaller screens, just scroll horizontally */
+@media (max-width: 900px) {
+  .lab-row { min-width: 980px; }
+}
+
+  /* =========================================================
    BLOCK: LAB LIST (CLEAN GRID)
    ========================================================= */
 .lab-head,
@@ -640,8 +712,10 @@
     <div></div>
   </div>
 
-  <div id="labList" class="customer-list"></div>
+<div class="labs-wrap">
+  <div id="labList" style="display:grid; gap:12px;"></div>
 </div>
+
 
 
               <div id="lmAddPanel" style="display:none; margin-top:6px;">
