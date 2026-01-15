@@ -373,6 +373,7 @@ const umList = document.getElementById("umList");
 
 const umFullName = document.getElementById("umFullName");
 const umEmail = document.getElementById("umEmail");
+const umPassword = document.getElementById("umPassword");
 const umRole = document.getElementById("umRole");
 const umStatus = document.getElementById("umStatus");
 const umPerms = document.getElementById("umPerms");
@@ -383,9 +384,6 @@ const umAddBtn = document.getElementById("umAddBtn");
 const umSearch = document.getElementById("umSearch");
 const umSearchBtn = document.getElementById("umSearchBtn");
 const umShowAllBtn = document.getElementById("umShowAllBtn");
-const umAuthUserId = document.getElementById("umAuthUserId");
-
-
 
   // =========================================================
   // BLOCK: STATE
@@ -544,8 +542,7 @@ ui: {
   umViewBtn, umAddBtn, umClearBtn, umMsg,
   umViewPanel, umEditPanel, umList,
   umSearch, umSearchBtn, umShowAllBtn,
-  umAuthUserId,
-  umFullName, umEmail, umRole, umStatus,
+  umFullName, umEmail, umPassword, umRole, umStatus,
   umPerms, umSaveBtn, umCancelBtn
 },
 
