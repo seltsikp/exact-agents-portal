@@ -350,7 +350,8 @@ const typeLabel = typeObj ? (typeObj.type_name || "") : "Unknown type";
     const lines = data || [];
     if (lines.length === 0) addLine();
     else lines.forEach(l => addLine({ ingredient_id: l.ingredient_id, pct: l.pct }));
-
+    
+    updateTotalPct();
     fpName?.focus();
   }
 
