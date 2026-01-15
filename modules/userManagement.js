@@ -280,9 +280,9 @@ if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
 if (!role) { setMsg("Role is required."); return; }
 if (!status) { setMsg("Status is required."); return; }
 
-      // ADD
-    if (addingNew) {
-  const password = (ui.umPassword?.value || "").trim(); // see note below
+// ADD
+if (addingNew) {
+  const password = (umPassword?.value || "").trim();
 
   if (!password || password.length < 8) {
     setMsg("Password is required for new users (min 8 chars).");
@@ -305,15 +305,6 @@ if (!status) { setMsg("Status is required."); return; }
   return;
 }
 
-
-        if (error) { setMsg("Insert error: " + error.message); return; }
-
-        setMsg("User added ✅");
-        clearForm();
-        showViewUsersPanel();
-        await runSearch("");
-        return;
-      }
 
       // EDIT
       if (!editingId) { setMsg("No user selected."); return; }
