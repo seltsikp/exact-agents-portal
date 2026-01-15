@@ -135,6 +135,32 @@
         border-color: rgba(184,154,91,.75);
         box-shadow: 0 16px 30px rgba(15,20,25,.10);
       }
+/* =========================================================
+   BLOCK: CARD HEADER (TITLE + PILLS RIGHT)
+   ========================================================= */
+.cardHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.cardHeader h2{
+  margin:0;
+}
+
+.cardHeaderRight{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+/* Make tab pills sit nicely in header */
+.cardHeaderRight .tab-row{
+  margin:0;           /* remove extra spacing */
+}
 
       /* =========================================================
          BLOCK: CONTROLS
@@ -401,7 +427,11 @@
 
             <!-- AGENT MANAGEMENT -->
             <div id="viewAgentMgmt" class="card" style="display:none;">
-              <h2>Agent Management</h2>
+              <div class="cardHeader">
+  <h2>Agent Management</h2>
+  <div class="cardHeaderRight"></div>
+</div>
+
 
               <div class="cm-actions">
                 <button id="amViewBtn" class="btn-gold" type="button">View agents</button>
@@ -435,7 +465,11 @@
 
             <!-- CUSTOMER MANAGEMENT -->
             <div id="viewCustomerMgmt" class="card" style="display:none;">
-              <h2>Customer Management</h2>
+              <div class="cardHeader">
+  <h2>Customer Management</h2>
+  <div class="cardHeaderRight"></div>
+</div>
+
 
               <div class="cm-actions">
                 <button id="cmViewBtn" class="btn-gold" type="button">View customers</button>
@@ -485,7 +519,11 @@
 
             <!-- PRODUCT TYPES -->
             <div id="viewProductTypes" class="card" style="display:none;">
-              <h2>Product Types</h2>
+              <div class="cardHeader">
+  <h2>Product Types</h2>
+  <div class="cardHeaderRight"></div>
+</div>
+
 
               <div class="pt-row" style="margin-top:6px;">
                 <div class="pt-field">
@@ -514,7 +552,11 @@
 
             <!-- LAB MANAGEMENT -->
             <div id="viewLabMgmt" class="card" style="display:none;">
-              <h2>Lab Management</h2>
+              <div class="cardHeader">
+  <h2>Lab Management</h2>
+  <div class="cardHeaderRight"></div>
+</div>
+
 
               <div class="cm-actions">
                 <button id="lmViewBtn" class="btn-gold" type="button">View labs</button>
@@ -565,12 +607,17 @@
 
             <!-- EXACT FORMULARY -->
             <div id="viewFormulary" class="card" style="display:none;">
-              <h2>EXACT Formulary</h2>
+            <div class="cardHeader">
+  <h2>EXACT Formulary</h2>
 
-              <div class="tab-row">
-                <button id="fxTabIngredients" class="tabBtn active" type="button">Ingredients</button>
-                <button id="fxTabProducts" class="tabBtn" type="button">Formulated Products</button>
-              </div>
+  <div class="cardHeaderRight">
+    <div class="tab-row">
+      <button id="fxTabIngredients" class="tabBtn active" type="button">Ingredients</button>
+      <button id="fxTabProducts" class="tabBtn" type="button">Formulated Products</button>
+    </div>
+  </div>
+</div>
+
 
               <!-- INGREDIENTS -->
               <div id="fxSectionIngredients" class="tabSection" style="display:block;">
