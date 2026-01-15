@@ -72,35 +72,30 @@ export function initLabManagement({ supabaseClient, ui, helpers }) {
 
     setLabMsg(`Found ${rows.length} lab${rows.length === 1 ? "" : "s"}.`);
 
-    labList.innerHTML = rows.map(r => `
-      <div class="customer-row" data-lab-id="${escapeHtml(r.id)}">
-        <div class="customer-main">
-          <div class="name">${escapeHtml(r.name || "")}</div>
-          <div class="meta">
-            <span style="opacity:.75;"><b>${escapeHtml(r.lab_code || "")}</b></span>
-            <span class="customer-dot">•</span>
-            <span><b>Orders:</b> ${escapeHtml(r.orders_email || "")}</span>
-            <span class="customer-dot">•</span>
-            ${r.admin_email
-              ? `<span>Admin: ${escapeHtml(r.admin_email)}</span>`
-              : `<span style="opacity:.65;">No admin email</span>`}
-            <span class="customer-dot">•</span>
-            ${r.phone
-              ? `<span>${escapeHtml(r.phone)}</span>`
-              : `<span style="opacity:.65;">No phone</span>`}
-          </div>
-        </div>
+   labList.innerHTML = rows.map(r => {
+  const created = r.created_at ? new Date(r.created_at).toLocaleDateString() : "";
 
-        <div class="customer-context">
-          <span class="pill-soft">Created: ${escapeHtml(new Date(r.created_at).toLocaleDateString())}</span>
-        </div>
+  return `
+    <div class="lab-row" data-lab-id="${escapeHtml(r.id)}">
+      <div class="lab-cell"><strong>${escapeHtml(r.lab_code || "")}</strong></div>
 
-        <div class="customer-actions">
-          <button class="btn btn-soft action-pill edit-pill" type="button" data-action="edit">Edit</button>
-          <button class="btn action-pill delete-pill" type="button" data-action="delete">Delete</button>
-        </div>
+      <div class="lab-cell">
+        <div class="lab-name">${escapeHtml(r.name || "")}</div>
+        <div class="lab-muted">${created ? "Created: " + escapeHtml(created) : ""}</div>
       </div>
-    `).join("");
+
+      <div class="lab-cell"><span class="wrap">${escapeHtml(r.orders_email || "")}</span></div>
+      <div class="lab-cell"><span class="wrap">${escapeHtml(r.admin_email || "")}</span></div>
+      <div class="lab-cell">${escapeHtml(r.phone || "")}</div>
+
+      <div class="lab-actions">
+        <button class="btn-primary" type="button" data-action="edit">Edit</button>
+        <button class="btn-danger" type="button" data-action="delete">Delete</button>
+      </div>
+    </div>
+  `;
+}).join("");
+
   }
 
   function resetLabsScreen() {
@@ -195,7 +190,7 @@ export function initLabManagement({ supabaseClient, ui, helpers }) {
       if (!btn) return;
 
       const action = btn.getAttribute("data-action");
-      const row = e.target.closest(".customer-row");
+      const row = e.target.closest(".lab-row");
       if (!row) return;
 
       const labId = row.getAttribute("data-lab-id");
