@@ -179,11 +179,11 @@ function renderChangePasswordTool(containerEl) {
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <div style="flex:1; min-width:220px;">
         <label class="subtle" style="display:block; margin-bottom:6px;">New password</label>
-        <input id="pwNew" type="password" placeholder="New password (min 8 chars)" />
+        <input id="pwNew" type="password" value="" autocomplete="new-password" placeholder="New password (min 8 chars)" />
       </div>
       <div style="flex:1; min-width:220px;">
         <label class="subtle" style="display:block; margin-bottom:6px;">Confirm new password</label>
-        <input id="pwConfirm" type="password" placeholder="Repeat new password" />
+       <input id="pwConfirm" type="password" value="" autocomplete="new-password" placeholder="Repeat new password" />
       </div>
     </div>
     <div style="display:flex; gap:10px; align-items:center; margin-top:10px;">
@@ -196,6 +196,8 @@ function renderChangePasswordTool(containerEl) {
 
   const pwNew = document.getElementById("pwNew");
   const pwConfirm = document.getElementById("pwConfirm");
+  pwNew.value = "";
+  pwConfirm.value = "";
   const pwSaveBtn = document.getElementById("pwSaveBtn");
   const pwMsg = document.getElementById("pwMsg");
 
