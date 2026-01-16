@@ -402,8 +402,8 @@ if (
   umSaveBtn.disabled = false;
   umSaveBtn.textContent = originalSaveLabel;
   return;
+  }
 }
-
 
       // ADD
       if (addingNew) {
@@ -471,10 +471,11 @@ umSaveBtn.textContent = originalSaveLabel;
         setMsg("User created ✅");
         clearForm();
         showViewUsersPanel();
-        await runSearch("");
-        umSaveBtn.disabled = false;
+       await runSearch("");
+umSaveBtn.disabled = false;
+umSaveBtn.textContent = originalSaveLabel;
+return;
 
-        return;
       }
 
       // EDIT
