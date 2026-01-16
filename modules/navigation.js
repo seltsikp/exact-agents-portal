@@ -71,7 +71,6 @@ function renderMenuForRole(role, permissions = {}) {
   if (p.productTypes) addMenuBtn("Product Categories", "productTypes");
   if (p.formulary) addMenuBtn("Formulary", "formulary");
   if (p.labs) addMenuBtn("Labs", "labs");
-  if (p.userMgmt) addMenuBtn("Users", "userMgmt");
   if (p.agents) addMenuBtn("Agents", "agents");
 
   setActiveView("welcome");
