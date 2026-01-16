@@ -131,6 +131,12 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
   }
 
   function openAddUser() {
+    // Reset Save button state when opening add
+if (umSaveBtn) {
+  umSaveBtn.disabled = false;
+  umSaveBtn.textContent = "Save";
+}
+
     clearForm();
     addingNew = true;
 
@@ -145,6 +151,12 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
   }
 
   function openEditUser(u) {
+    // Reset Save button state when opening edit
+if (umSaveBtn) {
+  umSaveBtn.disabled = false;
+  umSaveBtn.textContent = "Save";
+}
+
     editingId = u.id;
     addingNew = false;
 
