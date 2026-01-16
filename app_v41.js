@@ -740,9 +740,7 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
 
   if (!data) return null;
   return data; // inactive handled in hydrateAfterLogin
-  if (data.status !== "active") return null;
-  return data;
-}
+  }
 
 
   async function loadAgentName(agentId) {
