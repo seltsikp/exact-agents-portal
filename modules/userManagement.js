@@ -263,11 +263,12 @@ if (!accessToken) {
         try {
           res = await fetch(fnUrl, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              apikey: anonKey,
-              Authorization: `Bearer ${accessToken}`
-            },
+headers: {
+  "Content-Type": "application/json",
+  "Authorization": `Bearer ${accessToken}`,
+  "apikey": window.SUPABASE_ANON_KEY
+},
+
             body: JSON.stringify({
               auth_user_id: u.auth_user_id,
               agent_user_id: u.id
@@ -372,11 +373,15 @@ if (!accessToken) {
         }
 
         await supabaseClient.auth.refreshSession();
-        const { data: sessionData, error: sessionErr } = await supabaseClient.auth.getSession();
-        if (sessionErr) { setMsg("Session error: " + sessionErr.message); return; }
+const { data: { session } } = await supabaseClient.auth.getSession();
 
-        const accessToken = sessionData?.session?.access_token;
-        if (!accessToken) { setMsg("Not logged in. Please log in again."); return; }
+if (!session || !session.access_token) {
+  setMsg("Session expired. Please log in again.");
+  return;
+}
+
+const accessToken = session.access_token;
+
 
         const anonKey = window.SUPABASE_ANON_KEY || "";
         const baseUrl = window.SUPABASE_URL || "";
