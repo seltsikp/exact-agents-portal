@@ -314,7 +314,8 @@ window.addEventListener("DOMContentLoaded", () => {
     setForgotMsg("Sending…");
 
     const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + window.location.pathname
+     redirectTo: "https://seltsikp.github.io/exact-portal/"
+
     });
 
     if (error) { setForgotMsg("Failed: " + error.message); return; }
