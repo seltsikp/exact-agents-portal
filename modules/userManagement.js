@@ -234,12 +234,23 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
         );
         if (!ok) return;
 
-        await supabaseClient.auth.refreshSession();
-        const { data: sessionData, error: sessionErr } = await supabaseClient.auth.getSession();
-        if (sessionErr) { setMsg("Session error: " + sessionErr.message); return; }
+const { data: sessionData, error: sessionErr } =
+  await supabaseClient.auth.getSession();
 
-        const accessToken = sessionData?.session?.access_token;
-        if (!accessToken) { setMsg("Not logged in. Please log in again."); return; }
+if (!sessionData?.session) {
+  await supabaseClient.auth.refreshSession();
+}
+
+const { data: freshSession } =
+  await supabaseClient.auth.getSession();
+
+const accessToken = freshSession?.session?.access_token;
+
+if (!accessToken) {
+  setMsg("Session expired. Please log in again.");
+  return;
+}
+
 
         const anonKey = window.SUPABASE_ANON_KEY || "";
         const baseUrl = window.SUPABASE_URL || "";
