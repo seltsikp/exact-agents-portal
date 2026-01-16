@@ -864,6 +864,16 @@
         </div>
         <div style="margin-bottom:10px;">
           <input id="password" type="password" placeholder="Password" />
+          <div style="margin-top:8px;">
+  <a href="#" id="forgotPwLink" style="font-size:13px; text-decoration:underline;">Forgot password?</a>
+</div>
+
+<div id="forgotPwPanel" style="display:none; margin-top:10px;">
+  <input id="forgotPwEmail" type="email" placeholder="Enter your email address" />
+  <button id="forgotPwSendBtn" type="button" class="btn-secondary" style="margin-top:8px;">Send reset email</button>
+  <div id="forgotPwMsg" class="subtle" style="margin-top:6px;"></div>
+</div>
+
         </div>
         <button id="loginBtn" class="btn-primary">Login</button>
         <p id="authMsg" class="subtle" style="margin-top:10px;"></p>
