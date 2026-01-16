@@ -374,8 +374,17 @@ umSaveBtn.disabled = true;
       const statusFromUI = (umStatus?.value || "active").trim();
       const permissions = readPermsFromUI();
 
-      if (!email) { setMsg("Email is required (this is the login ID)."); return; }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setMsg("Please enter a valid email address."); return; }
+   if (!email) {
+  setMsg("Email is required (this is the login ID).");
+  umSaveBtn.disabled = false;
+  return;
+}
+if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  setMsg("Please enter a valid email address.");
+  umSaveBtn.disabled = false;
+  return;
+}
+
 
       // Enforce role rules (UI + hard client-side)
       const role = admin ? roleFromUI : "agent";
@@ -389,8 +398,12 @@ if (
   const ok = await confirmExact(
     "Set this user to INACTIVE?\n\nThey will be immediately signed out and will not be able to log in again unless reactivated."
   );
-  if (!ok) return;
+ if (!ok) {
+  umSaveBtn.disabled = false;
+  umSaveBtn.textContent = originalSaveLabel;
+  return;
 }
+
 
       // ADD
       if (addingNew) {
@@ -482,14 +495,14 @@ umSaveBtn.textContent = "Saving…";
         .eq("id", editingId)
         .select("id");
 
-      iif (error) {
+      if (error) {
   setMsg("Update error: " + error.message);
   umSaveBtn.disabled = false;
   umSaveBtn.textContent = originalSaveLabel;
   return;
 }
 
-      iif (!data || data.length === 0) {
+      if (!data || data.length === 0) {
   setMsg("Update blocked (RLS) — no rows updated.");
   umSaveBtn.disabled = false;
   umSaveBtn.textContent = originalSaveLabel;
