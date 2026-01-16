@@ -347,6 +347,8 @@ headers: {
 
   if (umSaveBtn) {
     umSaveBtn.addEventListener("click", async () => {
+      const originalSaveLabel = umSaveBtn.textContent;
+
       if (umSaveBtn.disabled) return;
 umSaveBtn.disabled = true;
 
@@ -381,6 +383,7 @@ if (
       // ADD
       if (addingNew) {
         umSaveBtn.disabled = true;
+         umSaveBtn.textContent = "Saving…";
         const password = (umPassword?.value || "").trim();
         if (!password || password.length < 8) {
           setMsg("Password is required for new users (min 8 chars).");
@@ -420,6 +423,8 @@ const accessToken = session.access_token;
         } catch (e) {
           setMsg("Create user failed: network error.");
           umSaveBtn.disabled = false;
+          umSaveBtn.textContent = originalSaveLabel;
+
           return;
         }
 
@@ -432,6 +437,7 @@ const accessToken = session.access_token;
     setMsg(`Create user failed (${res.status}).`);
   }
          umSaveBtn.disabled = false;
+umSaveBtn.textContent = originalSaveLabel;
 
   return;
 }
@@ -463,10 +469,16 @@ const accessToken = session.access_token;
       if (error) { setMsg("Update error: " + error.message); return; }
       if (!data || data.length === 0) { setMsg("Update blocked (RLS) — no rows updated."); return; }
 
+      umSaveBtn.textContent = originalSaveLabel;
+
       setMsg("Saved ✅");
       clearForm();
       showViewUsersPanel();
       await runSearch(umSearch?.value || "");
+
+      umSaveBtn.disabled = false;
+umSaveBtn.textContent = originalSaveLabel;
+
     });
   }
 
