@@ -548,9 +548,12 @@ ui: {
   umFullName, umEmail, umPassword, umRole, umStatus,
   umPerms, umSaveBtn, umCancelBtn
 },
-
-  helpers: { show, escapeHtml, confirmExact }
+   helpers: { show, escapeHtml, confirmExact },
+   state: {
+    get currentProfile() { return currentProfile; }
+  }
 });
+
 
 
   // =========================================================
@@ -735,7 +738,8 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
     throw error;
   }
 
-  if (!data) return null;                 // no row found
+  if (!data) return null;
+  return data; // inactive handled in hydrateAfterLogin
   if (data.status !== "active") return null;
   return data;
 }
@@ -926,13 +930,20 @@ resetIngredientsScreen();
       }
 
 
-      if (!profile) {
-        if (topBarTitle) topBarTitle.textContent = "Logged in";
-        if (topBarSub) topBarSub.textContent = "Profile lookup failed (agent_users). Check RLS / row exists.";
-        nav.renderMenuForRole("agent", {});
-        nav.setActiveView("welcome");
-        return;
-      }
+     if (!profile) {
+  await supabaseClient.auth.signOut();
+  setLoggedOutUI("Access not provisioned");
+  setAuthMsg("Login blocked: your account is not provisioned. Please contact admin.");
+  return;
+}
+
+if ((profile.status || "").toLowerCase() !== "active") {
+  await supabaseClient.auth.signOut();
+  setLoggedOutUI("Account inactive");
+  setAuthMsg("Your account is inactive. Please contact admin.");
+  return;
+}
+
 
       currentProfile = profile;
 
