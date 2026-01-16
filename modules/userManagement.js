@@ -221,127 +221,94 @@ if (umSaveBtn) {
   }
 
   function ensureListDelegation() {
-    if (!umList) return;
-    if (umList.dataset.bound === "1") return;
+  if (!umList) return;
+  if (umList.dataset.bound === "1") return;
 
-    umList.addEventListener("click", async (e) => {
-      const btn = e.target.closest("button[data-action]");
-      if (!btn) return;
+  umList.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
 
-      const row = e.target.closest(".user-row");
-      if (!row) return;
+    const row = e.target.closest(".user-row");
+    if (!row) return;
 
-      const id = row.getAttribute("data-user-id");
-      const action = btn.getAttribute("data-action");
-      const u = usersById[id];
-      if (!u) return;
+    const id = row.getAttribute("data-user-id");
+    const action = btn.getAttribute("data-action");
+    const u = usersById[id];
+    if (!u) return;
 
-      if (action === "edit") {
-        openEditUser(u);
+    if (action === "edit") {
+      openEditUser(u);
+      return;
+    }
+
+    if (action === "delete") {
+      // UI guard: admin only
+      if (!isAdmin()) {
+        setMsg("Permission denied.");
         return;
       }
 
-      // SINGLE DELETE: deletes BOTH Auth user + agent_users row (irreversible)
-      if (action === "delete") {
-        if (!isAdmin()) {
-  setMsg("Permission denied.");
-  return;
-}
+      const label = (u.full_name || u.email || "this user").trim();
 
-        const label = (u.full_name || u.email || "this user").trim();
+      const ok = await confirmExact(
+        `Delete ${label}?\n\nThis will permanently delete this user and prevent them from logging in again.\n\nThis action cannot be undone.`
+      );
+      if (!ok) return;
 
-        const ok = await confirmExact(
-          `Delete ${label}?\n\nThis will permanently delete this user and prevent them from logging in again.\n\nThis action cannot be undone.`
-        );
-        if (!ok) return;
-
-const { data: sessionData, error: sessionErr } =
-  await supabaseClient.auth.getSession();
-
-if (!sessionData?.session) {
-  await supabaseClient.auth.refreshSession();
-}
-
-const { data: freshSession } =
-  await supabaseClient.auth.getSession();
-
-const accessToken = freshSession?.session?.access_token;
-        const currentAuthUserId = freshSession?.session?.user?.id || null;
-
-if (currentAuthUserId && String(currentAuthUserId) === String(u.auth_user_id)) {
-  setMsg("You cannot delete your own account.");
-  return;
-}
-// Prevent deleting the last ACTIVE admin
-const targetIsAdmin = String((u.role || "").toLowerCase()) === "admin";
-const targetIsActive = String((u.status || "").toLowerCase()) === "active";
-
-if (targetIsAdmin && targetIsActive) {
-  const { count: adminCount, error: adminCountErr } = await supabaseClient
-    .from("agent_users")
-    .select("id", { count: "exact", head: true })
-    .eq("role", "admin")
-    .eq("status", "active")
-    .neq("auth_user_id", u.auth_user_id);
-
-  if (adminCountErr) {
-    setMsg("Cannot verify admin count (RLS).");
-    return;
-  }
-
-  if (!adminCount || adminCount < 1) {
-    setMsg("Cannot delete the last active admin.");
-    return;
-  }
-}
-
-
-if (!accessToken) {
-  setMsg("Session expired. Please log in again.");
-  return;
-}
-
-
-        const anonKey = window.SUPABASE_ANON_KEY || "";
-        const baseUrl = window.SUPABASE_URL || "";
-        if (!anonKey) { setMsg("Missing SUPABASE_ANON_KEY."); return; }
-        if (!baseUrl) { setMsg("Missing SUPABASE_URL."); return; }
-
-        const fnUrl = `${baseUrl}/functions/v1/delete-user`;
-
-        let res, text = "";
-        try {
-          res = await fetch(fnUrl, {
-            method: "POST",
-headers: {
-  "Content-Type": "application/json",
-  "Authorization": `Bearer ${accessToken}`,
-  "apikey": window.SUPABASE_ANON_KEY
-},
-
-            body: JSON.stringify({
-              auth_user_id: u.auth_user_id,
-              agent_user_id: u.id
-            })
-          });
-          text = await res.text();
-        } catch (err) {
-          setMsg("Delete failed: network error: " + String(err));
-          return;
-        }
-
-        if (!res.ok) {
-          setMsg(`Delete failed (${res.status}): ${text || "(empty body)"}`);
-          return;
-        }
-
-        setMsg("Deleted ✅");
-        await runSearch(umSearch?.value || "");
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      if (!sessionData?.session) {
+        await supabaseClient.auth.refreshSession();
       }
-    });
 
-    umList.dataset.bound = "1";
-  }
+      const { data: freshSession } = await supabaseClient.auth.getSession();
+      const accessToken = freshSession?.session?.access_token;
+
+      if (!accessToken) {
+        setMsg("Session expired. Please log in again.");
+        return;
+      }
+
+      const anonKey = window.SUPABASE_ANON_KEY || "";
+      const baseUrl = window.SUPABASE_URL || "";
+      if (!anonKey) { setMsg("Missing SUPABASE_ANON_KEY."); return; }
+      if (!baseUrl) { setMsg("Missing SUPABASE_URL."); return; }
+
+      const fnUrl = `${baseUrl}/functions/v1/delete-user`;
+
+      let res, text = "";
+      try {
+        res = await fetch(fnUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`,
+            "apikey": anonKey
+          },
+          body: JSON.stringify({
+            auth_user_id: u.auth_user_id,
+            agent_user_id: u.id
+          })
+        });
+        text = await res.text();
+      } catch (err) {
+        setMsg("Delete failed: network error.");
+        return;
+      }
+
+      if (!res.ok) {
+        setMsg(`Delete failed (${res.status}): ${text || "(empty body)"}`);
+        return;
+      }
+
+      setMsg("Deleted ✅");
+      await runSearch(umSearch?.value || "");
+      return;
+    }
+  });
+
+  umList.dataset.bound = "1";
+}
+
 
   async function runSearch(term) {
     if (!umList) return;
