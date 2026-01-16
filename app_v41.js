@@ -218,6 +218,37 @@ function renderChangePasswordTool(containerEl) {
     setPwMsg("Password updated ✅");
   });
 }
+function renderChangePasswordLink(containerEl) {
+  if (!containerEl) return;
+
+  // avoid duplicate render
+  if (document.getElementById("pwLinkWrap")) return;
+
+  const wrap = document.createElement("div");
+  wrap.id = "pwLinkWrap";
+  wrap.style.marginTop = "6px";
+  wrap.style.fontSize = "13px";
+  wrap.style.color = "var(--muted)";
+
+  wrap.innerHTML = `
+    <span>
+      Click
+      <a href="#" id="pwOpenLink" style="text-decoration:underline;">
+        here
+      </a>
+      if you would like to change your password.
+    </span>
+  `;
+
+  containerEl.appendChild(wrap);
+
+  const link = document.getElementById("pwOpenLink");
+  link?.addEventListener("click", (e) => {
+    e.preventDefault();
+    renderChangePasswordTool(containerEl);
+    wrap.remove(); // remove link after opening
+  });
+}
 
   // BLOCK: VALIDATION
   // =========================================================
@@ -897,11 +928,12 @@ canAccess: (viewKey) => {
    welcome: () => {
   showWelcomePanel({ containerEl: welcomeContent });
 
-  // Non-admin: show Change Password tool
-  const role = (currentProfile?.role || "").toLowerCase();
-  if (role !== "admin") {
-    renderChangePasswordTool(welcomeContent);
-  }
+// Non-admin: show subtle change-password link
+const role = (currentProfile?.role || "").toLowerCase();
+if (role !== "admin") {
+  renderChangePasswordLink(welcomeContent);
+}
+
 },
 
     customers: () => {
