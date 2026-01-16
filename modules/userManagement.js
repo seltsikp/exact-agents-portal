@@ -43,7 +43,7 @@ const SEARCH_DEBOUNCE_MS = 300;
     { key: "customers", label: "Customer Management" },
     { key: "agents", label: "Agent Management" },
     { key: "accountManagers", label: "Account Managers" },
-    { key: "productTypes", label: "Product Types" },
+    { key: "productTypes", label: "Product Groups" },
     { key: "formulary", label: "EXACT Formulary" },
     { key: "labs", label: "Lab Management" },
     { key: "userMgmt", label: "User Management" }
