@@ -1,5 +1,5 @@
 // modules/userManagement.js
-export function initUserManagement({ supabaseClient, ui, helpers }) {
+export function initUserManagement({ supabaseClient, ui, helpers, state }) {
   const { show, escapeHtml, confirmExact } = helpers;
 
   const {
@@ -29,6 +29,9 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
 
   const setMsg = (t) => { if (umMsg) umMsg.textContent = t || ""; };
 
+  const getCurrentProfile = () => (state?.currentProfile ?? null);
+  const isAdmin = () => ((getCurrentProfile()?.role || "").toLowerCase() === "admin");
+
   let usersById = {};
   let editingId = null;   // agent_users.id
   let addingNew = false;
@@ -49,7 +52,7 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
     umPerms.innerHTML = MODULES.map(m => {
       const checked = !!p[m.key];
       return `
-        <label class="perm-card" style="display:flex; gap:10px; align-items:center; padding:10px 12px; border:1px solid rgba(15,20,25,.10); border-radius:12px; background:#fff;">
+        <label class="perm-card">
           <input type="checkbox" data-perm="${escapeHtml(m.key)}" ${checked ? "checked" : ""} />
           <span>${escapeHtml(m.label)}</span>
         </label>
@@ -67,20 +70,33 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
     return out;
   }
 
+  function applyRoleControls() {
+    // Only ADMIN can choose role + status (your requirement)
+    const admin = isAdmin();
+
+    if (umRole) {
+      umRole.disabled = !admin;
+      if (!admin) umRole.value = "agent"; // USER
+    }
+
+    if (umStatus) {
+      umStatus.disabled = !admin;
+      // non-admin can’t toggle status
+    }
+  }
+
   function clearForm() {
     editingId = null;
     addingNew = false;
 
     if (umFullName) umFullName.value = "";
-    if (umEmail) umEmail.value = "";
-    if (umPassword) umPassword.value = "";
+    if (umEmail) { umEmail.value = ""; umEmail.readOnly = false; }
+    if (umPassword) { umPassword.value = ""; umPassword.disabled = false; }
     if (umRole) umRole.value = "agent";
     if (umStatus) umStatus.value = "active";
     renderPerms({});
 
-    // default field states
-    if (umEmail) umEmail.readOnly = false;
-    if (umPassword) umPassword.disabled = false;
+    applyRoleControls();
   }
 
   function resetUserScreen() {
@@ -118,82 +134,71 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
     clearForm();
     addingNew = true;
 
-    // password required on add
-    if (umPassword) {
-      umPassword.disabled = false;
-      umPassword.placeholder = "Temporary password (min 8 chars)";
-    }
+    // New users need a password
+    if (umPassword) umPassword.disabled = false;
+
+    // Non-admin cannot choose role; default USER (agent)
+    applyRoleControls();
 
     showEditPanel();
-    setMsg("Adding user — enter email + password, role/status, permissions, then Save.");
+    setMsg("Adding user — enter email + password, set status (admin only), permissions, then Save.");
   }
 
   function openEditUser(u) {
     editingId = u.id;
     addingNew = false;
 
+    // Password never editable here
     if (umPassword) {
       umPassword.value = "";
       umPassword.disabled = true;
-      umPassword.placeholder = "Password cannot be edited here (create new password flow later)";
     }
 
     if (umFullName) umFullName.value = u.full_name || "";
+
+    // Email locked on edit to avoid mismatch with Supabase Auth email
     if (umEmail) {
       umEmail.value = u.email || "";
-      // IMPORTANT: editing agent_users email does NOT update Supabase Auth email
-      // So we lock it to avoid mismatches.
       umEmail.readOnly = true;
-      umEmail.title = "Email is locked to avoid mismatch with Supabase Auth. (If needed, build a dedicated change-email flow.)";
+      umEmail.title = "Email is locked to avoid mismatch with Supabase Auth. (Change-email flow can be added later.)";
     }
 
     if (umRole) umRole.value = u.role || "agent";
     if (umStatus) umStatus.value = u.status || "active";
     renderPerms(u.permissions || {});
 
-    showEditPanel();
-    setMsg("Editing user — update name/role/status/permissions and click Save.");
-  }
+    // Only ADMIN can change role/status
+    applyRoleControls();
 
-  function pill(text) {
-    return `<span style="display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid rgba(15,20,25,.10); font-size:12px; font-weight:700;">${escapeHtml(text)}</span>`;
+    showEditPanel();
+    setMsg("Editing user — update name/permissions (and role/status if admin), then Save.");
   }
 
   function buildRowHTML(u) {
     const id = escapeHtml(u.id);
     const name = escapeHtml((u.full_name || "").trim() || "Unnamed");
     const email = escapeHtml((u.email || "").trim() || "—");
-    const role = (u.role || "").trim() || "—";
-    const status = (u.status || "").trim() || "—";
 
-    const perms = (u.permissions && typeof u.permissions === "object") ? u.permissions : {};
-    const allowedKeys = Object.keys(perms).filter(k => !!perms[k]);
-    const permsSummary = allowedKeys.length ? `${allowedKeys.length} modules` : "No modules";
+    const roleRaw = ((u.role || "").trim() || "—").toLowerCase();
+    const roleLabel = roleRaw === "admin" ? "ADMIN" : (roleRaw === "agent" ? "USER" : roleRaw.toUpperCase());
+
+    const status = escapeHtml((u.status || "").trim());
 
     return `
-      <div class="user-row" data-user-id="${id}" style="
-        display:grid; grid-template-columns: 1.6fr 1fr 150px;
-        gap:14px; align-items:center;
-        padding:14px; border:1px solid rgba(15,20,25,.10); border-radius:14px; background:#fff;
-        box-shadow:0 10px 22px rgba(15,20,25,.06);
-      ">
-        <div style="min-width:0;">
-          <div style="font-weight:800;">${name}</div>
-          <div class="subtle" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${email}</div>
-          <div class="subtle" style="margin-top:6px;">${escapeHtml(permsSummary)}</div>
+      <div class="user-row" data-user-id="${id}">
+        <div>
+          <div style="font-weight:700;">${name}</div>
+          <div class="subtle">${email}</div>
         </div>
 
-        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-          ${pill(`Role: ${role}`)}
-          ${pill(`Status: ${status}`)}
+        <div>
+          <div>Role: ${escapeHtml(roleLabel)}</div>
+          <div class="subtle">Status: ${status || "—"}</div>
         </div>
 
-        <div class="user-actions" style="display:flex; gap:10px; justify-content:flex-end; white-space:nowrap;">
+        <div class="user-actions">
           <button data-action="edit" type="button">Edit</button>
-<button data-action="deleteUser" type="button" class="btn-danger">
-  Delete user
-</button>
-
+          <button data-action="delete" type="button" class="btn-danger">Delete</button>
         </div>
       </div>
     `.trim();
@@ -220,39 +225,19 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
         return;
       }
 
-      // OPTION A (existing): delete ONLY agent_users row
-      if (action === "deleteRow") {
+      // SINGLE DELETE: deletes BOTH Auth user + agent_users row (irreversible)
+      if (action === "delete") {
         const label = (u.full_name || u.email || "this user").trim();
+
         const ok = await confirmExact(
-          `Delete ${label}?\n\nThis deletes ONLY the agent_users row (not the Supabase Auth user).`
-        );
-        if (!ok) return;
-
-        const { data, error } = await supabaseClient
-          .from("agent_users")
-          .delete()
-          .eq("id", u.id)
-          .select("id");
-
-        if (error) { setMsg("Delete error: " + error.message); return; }
-        if (!data || data.length === 0) { setMsg("Delete blocked (RLS) — no rows deleted."); return; }
-
-        setMsg("Deleted ✅");
-        await runSearch(umSearch?.value || "");
-        return;
-      }
-
-      // OPTION B: delete agent_users row + delete Auth user (Edge Function)
-      if (action === "deleteAuth") {
-        const label = (u.full_name || u.email || "this user").trim();
-        const ok = await confirmExact(
-          `Delete ${label}?\n\nThis will delete BOTH:\n• agent_users row\n• Supabase Auth user\n\nThis cannot be undone.`
+          `Delete ${label}?\n\nThis will permanently delete this user and prevent them from logging in again.\n\nThis action cannot be undone.`
         );
         if (!ok) return;
 
         await supabaseClient.auth.refreshSession();
         const { data: sessionData, error: sessionErr } = await supabaseClient.auth.getSession();
         if (sessionErr) { setMsg("Session error: " + sessionErr.message); return; }
+
         const accessToken = sessionData?.session?.access_token;
         if (!accessToken) { setMsg("Not logged in. Please log in again."); return; }
 
@@ -272,7 +257,10 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
               apikey: anonKey,
               Authorization: `Bearer ${accessToken}`
             },
-            body: JSON.stringify({ auth_user_id: u.auth_user_id, agent_user_id: u.id, email: u.email })
+            body: JSON.stringify({
+              auth_user_id: u.auth_user_id,
+              agent_user_id: u.id
+            })
           });
           text = await res.text();
         } catch (err) {
@@ -285,34 +273,12 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
           return;
         }
 
-        setMsg("Deleted (Auth + row) ✅");
+        setMsg("Deleted ✅");
         await runSearch(umSearch?.value || "");
-        return;
       }
     });
 
     umList.dataset.bound = "1";
-  }
-
-  async function emailExistsInAgentUsers(email, excludeAgentUserId = null) {
-    const e = String(email || "").trim().toLowerCase();
-    if (!e) return false;
-
-    let q = supabaseClient
-      .from("agent_users")
-      .select("id")
-      .eq("email", e)
-      .limit(1);
-
-    if (excludeAgentUserId) q = q.neq("id", excludeAgentUserId);
-
-    const { data, error } = await q;
-    if (error) {
-      // If RLS blocks reads, we still have Edge Function enforcement via createUser
-      console.warn("emailExistsInAgentUsers check failed:", error.message);
-      return false;
-    }
-    return (data || []).length > 0;
   }
 
   async function runSearch(term) {
@@ -367,33 +333,24 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
     showViewUsersPanel();
   });
 
-  function friendlyCreateError(status, text) {
-    const raw = String(text || "");
-    const lower = raw.toLowerCase();
-
-    // Edge function returns JSON often; but we keep it safe
-    if (lower.includes("duplicate") && lower.includes("email")) return "That email already exists.";
-    if (lower.includes("already") && lower.includes("registered")) return "That email is already registered in Auth.";
-    if (lower.includes("email") && lower.includes("exists")) return "That email already exists.";
-    if (status === 401 || lower.includes("invalid jwt") || lower.includes("missing authorization")) return "You are not authorised. Please log in again.";
-    if (status === 403 || lower.includes("forbidden")) return "Forbidden: your user does not have admin rights.";
-    return `Create user failed (${status}): ${raw || "(empty body)"}`;
-  }
-
   if (umSaveBtn) {
     umSaveBtn.addEventListener("click", async () => {
       setMsg("");
 
+      const admin = isAdmin();
+
       const full_name = (umFullName?.value || "").trim() || null;
       const email = (umEmail?.value || "").trim().toLowerCase();
-      const role = (umRole?.value || "agent").trim();
-      const status = (umStatus?.value || "active").trim();
+      const roleFromUI = (umRole?.value || "agent").trim();
+      const statusFromUI = (umStatus?.value || "active").trim();
       const permissions = readPermsFromUI();
 
       if (!email) { setMsg("Email is required (this is the login ID)."); return; }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setMsg("Please enter a valid email address."); return; }
-      if (!role) { setMsg("Role is required."); return; }
-      if (!status) { setMsg("Status is required."); return; }
+
+      // Enforce role rules (UI + hard client-side)
+      const role = admin ? roleFromUI : "agent";
+      const status = admin ? statusFromUI : "active";
 
       // ADD
       if (addingNew) {
@@ -403,14 +360,6 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
           return;
         }
 
-        // Duplicate email check against agent_users first (fast + clear)
-        const exists = await emailExistsInAgentUsers(email);
-        if (exists) {
-          setMsg("That email already exists in Users (agent_users). Use a different email.");
-          return;
-        }
-
-        // Ensure fresh session token
         await supabaseClient.auth.refreshSession();
         const { data: sessionData, error: sessionErr } = await supabaseClient.auth.getSession();
         if (sessionErr) { setMsg("Session error: " + sessionErr.message); return; }
@@ -443,7 +392,7 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
         }
 
         if (!res.ok) {
-          setMsg(friendlyCreateError(res.status, text));
+          setMsg(`Create user failed (${res.status}): ${text || "(empty body)"}`);
           return;
         }
 
@@ -454,12 +403,17 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
         return;
       }
 
-      // EDIT (email locked; only update safe columns)
+      // EDIT
       if (!editingId) { setMsg("No user selected."); return; }
+
+      // Email is locked (do not update email here)
+      const patch = admin
+        ? { full_name, role, status, permissions }
+        : { full_name, permissions };
 
       const { data, error } = await supabaseClient
         .from("agent_users")
-        .update({ full_name, role, status, permissions })
+        .update(patch)
         .eq("id", editingId)
         .select("id");
 
@@ -472,6 +426,9 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
       await runSearch(umSearch?.value || "");
     });
   }
+
+  // Ensure controls are correct even before any click
+  applyRoleControls();
 
   return {
     resetUserScreen,
