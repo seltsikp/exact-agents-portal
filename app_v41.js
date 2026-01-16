@@ -724,7 +724,8 @@ async function loadIngredients(term) {
 
   let q = supabaseClient
     .from("ingredients")
-    .select("id, psi_number, inci_name, description, created_at")
+    .select("id, psi_number, inci_name, created_at")
+
     .order("psi_number", { ascending: true });
 
   const t = (term || "").trim();
@@ -733,7 +734,7 @@ async function loadIngredients(term) {
     q = q.or([
       `psi_number.ilike.%${esc}%`,
       `inci_name.ilike.%${esc}%`,
-      `description.ilike.%${esc}%`
+    
     ].join(","));
   }
 
@@ -754,13 +755,12 @@ async function loadIngredients(term) {
     const id = escapeHtml(r.id);
     const psi = escapeHtml(r.psi_number || "");
     const inci = escapeHtml(r.inci_name || "");
-    const desc = escapeHtml(r.description || "");
+
 
     return `
       <div class="customer-row" data-id="${id}">
         <div>${psi}</div>
         <div>${inci}</div>
-        <div class="subtle">${desc}</div>
         <div class="customer-actions">
           <button class="btn-primary fxIng-edit" type="button">Edit</button>
           <button class="btn-danger fxIng-del" type="button">Delete</button>
@@ -807,7 +807,6 @@ function editIngredient(id) {
 
   if (fxIngPsiNum) fxIngPsiNum.value = r.psi_number || "";
   if (fxIngInci) fxIngInci.value = r.inci_name || "";
-  if (fxIngDesc) fxIngDesc.value = r.description || "";
 
   fxIngInci?.focus();
 }
@@ -845,7 +844,8 @@ async function saveIngredient() {
   if (editingIngredientId) {
     const { data, error } = await supabaseClient
       .from("ingredients")
-      .update({ psi_number, inci_name, description })
+  .update({ psi_number, inci_name })
+
       .eq("id", editingIngredientId)
       .select("id");
 
@@ -854,7 +854,8 @@ async function saveIngredient() {
   } else {
     const { error } = await supabaseClient
       .from("ingredients")
-      .insert([{ psi_number, inci_name, description }]);
+      .insert([{ psi_number, inci_name }]);
+
 
     if (error) return setFxIngMsg("Save failed: " + error.message);
   }
