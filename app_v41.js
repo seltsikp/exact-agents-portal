@@ -755,6 +755,22 @@ window.addEventListener("DOMContentLoaded", () => {
     show(fxSectionIngredients, tabKey === "ingredients");
     show(fxSectionProducts, tabKey === "products");
   }
+// Wire Formulary tabs (Ingredients / Products)
+if (fxTabIngredients && fxTabIngredients.dataset.bound !== "1") {
+  fxTabIngredients.addEventListener("click", () => {
+    setActiveFormularyTab("ingredients");
+    resetIngredientsScreen();
+  });
+  fxTabIngredients.dataset.bound = "1";
+}
+
+if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
+  fxTabProducts.addEventListener("click", async () => {
+    setActiveFormularyTab("products");
+    await formulatedProductsModule.enter();
+  });
+  fxTabProducts.dataset.bound = "1";
+}
 
   // =========================================================
   // BLOCK: VIEWS + MENU (MODULE)
