@@ -18,7 +18,6 @@ const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
 window.SUPABASE_URL = SUPABASE_URL;
 window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
 
-
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     storage: window.localStorage,
@@ -60,198 +59,190 @@ window.addEventListener("DOMContentLoaded", () => {
   // =========================================================
   // BLOCK: CONFIRM DIALOG
   // =========================================================
-  // =========================================================
-// BLOCK: CONFIRM DIALOG
-// =========================================================
-async function confirmExact(message) {
-  // Hard stop: never use <dialog> modal state (it can leave an invisible backdrop).
-  // We use a custom overlay that always removes itself.
-  const existing = document.getElementById("exactConfirmOverlay");
-  if (existing) existing.remove();
+  async function confirmExact(message) {
+    const existing = document.getElementById("exactConfirmOverlay");
+    if (existing) existing.remove();
 
-  // If a native dialog exists and is open from a previous run, force-close it.
-  const dlg = document.getElementById("confirmDialog");
-  try {
-    if (dlg && dlg.open && typeof dlg.close === "function") dlg.close();
-  } catch (e) {}
+    const dlg = document.getElementById("confirmDialog");
+    try {
+      if (dlg && dlg.open && typeof dlg.close === "function") dlg.close();
+    } catch (_e) { }
 
-  return await new Promise((resolve) => {
-    const overlay = document.createElement("div");
-    overlay.id = "exactConfirmOverlay";
-    overlay.style.position = "fixed";
-    overlay.style.inset = "0";
-    overlay.style.background = "rgba(0,0,0,0.35)";
-    overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.zIndex = "999999";
-    overlay.style.pointerEvents = "auto";
+    return await new Promise((resolve) => {
+      const overlay = document.createElement("div");
+      overlay.id = "exactConfirmOverlay";
+      overlay.style.position = "fixed";
+      overlay.style.inset = "0";
+      overlay.style.background = "rgba(0,0,0,0.35)";
+      overlay.style.display = "flex";
+      overlay.style.alignItems = "center";
+      overlay.style.justifyContent = "center";
+      overlay.style.zIndex = "999999";
+      overlay.style.pointerEvents = "auto";
 
-    const modal = document.createElement("div");
-    modal.style.width = "min(520px, calc(100vw - 32px))";
-    modal.style.background = "#fff";
-    modal.style.border = "1px solid rgba(0,0,0,0.12)";
-    modal.style.borderRadius = "16px";
-    modal.style.boxShadow = "0 20px 60px rgba(0,0,0,0.25)";
-    modal.style.padding = "16px";
+      const modal = document.createElement("div");
+      modal.style.width = "min(520px, calc(100vw - 32px))";
+      modal.style.background = "#fff";
+      modal.style.border = "1px solid rgba(0,0,0,0.12)";
+      modal.style.borderRadius = "16px";
+      modal.style.boxShadow = "0 20px 60px rgba(0,0,0,0.25)";
+      modal.style.padding = "16px";
 
-    const txt = document.createElement("div");
-    txt.textContent = String(message || "Are you sure?");
-    txt.style.margin = "0 0 14px 0";
-    txt.style.whiteSpace = "pre-wrap";
+      const txt = document.createElement("div");
+      txt.textContent = String(message || "Are you sure?");
+      txt.style.margin = "0 0 14px 0";
+      txt.style.whiteSpace = "pre-wrap";
 
-    const actions = document.createElement("div");
-    actions.style.display = "flex";
-    actions.style.gap = "10px";
-    actions.style.justifyContent = "flex-end";
+      const actions = document.createElement("div");
+      actions.style.display = "flex";
+      actions.style.gap = "10px";
+      actions.style.justifyContent = "flex-end";
 
-    const btnCancel = document.createElement("button");
-    btnCancel.className = "btn-primary";
-    btnCancel.type = "button";
-    btnCancel.textContent = "Cancel";
+      const btnCancel = document.createElement("button");
+      btnCancel.className = "btn-primary";
+      btnCancel.type = "button";
+      btnCancel.textContent = "Cancel";
 
-    const btnOk = document.createElement("button");
-    btnOk.className = "btn-danger";
-    btnOk.type = "button";
-    btnOk.textContent = "Confirm";
+      const btnOk = document.createElement("button");
+      btnOk.className = "btn-danger";
+      btnOk.type = "button";
+      btnOk.textContent = "Confirm";
 
-    let done = false;
-    const cleanup = (val) => {
-      if (done) return;
-      done = true;
-      try { overlay.remove(); } catch (e) {}
-      window.removeEventListener("keydown", onKey);
-      resolve(val);
-    };
+      let done = false;
+      const cleanup = (val) => {
+        if (done) return;
+        done = true;
+        try { overlay.remove(); } catch (_e) { }
+        window.removeEventListener("keydown", onKey);
+        resolve(val);
+      };
 
-    const onKey = (e) => {
-      if (e.key === "Escape") cleanup(false);
-      if (e.key === "Enter") cleanup(true);
-    };
+      const onKey = (e) => {
+        if (e.key === "Escape") cleanup(false);
+        if (e.key === "Enter") cleanup(true);
+      };
 
-    btnCancel.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      cleanup(false);
+      btnCancel.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        cleanup(false);
+      });
+
+      btnOk.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        cleanup(true);
+      });
+
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) cleanup(false);
+      });
+
+      window.addEventListener("keydown", onKey);
+
+      actions.appendChild(btnCancel);
+      actions.appendChild(btnOk);
+
+      modal.appendChild(txt);
+      modal.appendChild(actions);
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      setTimeout(() => btnOk.focus(), 0);
     });
-
-    btnOk.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      cleanup(true);
-    });
-
-    // Click outside = cancel
-    overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) cleanup(false);
-    });
-
-    window.addEventListener("keydown", onKey);
-
-    actions.appendChild(btnCancel);
-    actions.appendChild(btnOk);
-
-    modal.appendChild(txt);
-    modal.appendChild(actions);
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-
-    setTimeout(() => btnOk.focus(), 0);
-  });
-}
-
+  }
 
   // =========================================================
-function renderChangePasswordTool(containerEl) {
-  if (!containerEl) return;
+  // BLOCK: CHANGE PASSWORD (TOOL + SUBTLE LINK)
+  // =========================================================
+  function renderChangePasswordTool(containerEl) {
+    if (!containerEl) return;
 
-  // remove existing tool if already rendered
-  const existing = document.getElementById("pwTool");
-  if (existing) existing.remove();
+    const existing = document.getElementById("pwTool");
+    if (existing) existing.remove();
 
-  const wrap = document.createElement("div");
-  wrap.id = "pwTool";
-  wrap.className = "card";
-  wrap.style.marginTop = "12px";
+    const wrap = document.createElement("div");
+    wrap.id = "pwTool";
+    wrap.className = "card";
+    wrap.style.marginTop = "12px";
 
-  wrap.innerHTML = `
-    <h3 style="margin-top:0;">Change Password</h3>
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <div style="flex:1; min-width:220px;">
-        <label class="subtle" style="display:block; margin-bottom:6px;">New password</label>
-        <input id="pwNew" type="password" value="" autocomplete="new-password" placeholder="New password (min 8 chars)" />
+    wrap.innerHTML = `
+      <h3 style="margin-top:0;">Change Password</h3>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:220px;">
+          <label class="subtle" style="display:block; margin-bottom:6px;">New password</label>
+          <input id="pwNew" type="password" value="" autocomplete="new-password" placeholder="New password (min 8 chars)" />
+        </div>
+        <div style="flex:1; min-width:220px;">
+          <label class="subtle" style="display:block; margin-bottom:6px;">Confirm new password</label>
+          <input id="pwConfirm" type="password" value="" autocomplete="new-password" placeholder="Repeat new password" />
+        </div>
       </div>
-      <div style="flex:1; min-width:220px;">
-        <label class="subtle" style="display:block; margin-bottom:6px;">Confirm new password</label>
-       <input id="pwConfirm" type="password" value="" autocomplete="new-password" placeholder="Repeat new password" />
+      <div style="display:flex; gap:10px; align-items:center; margin-top:10px;">
+        <button id="pwSaveBtn" class="btn-primary" type="button">Update password</button>
+        <span id="pwMsg" class="subtle"></span>
       </div>
-    </div>
-    <div style="display:flex; gap:10px; align-items:center; margin-top:10px;">
-      <button id="pwSaveBtn" class="btn-primary" type="button">Update password</button>
-      <span id="pwMsg" class="subtle"></span>
-    </div>
-  `;
+    `;
 
-  containerEl.appendChild(wrap);
+    containerEl.appendChild(wrap);
 
-  const pwNew = document.getElementById("pwNew");
-  const pwConfirm = document.getElementById("pwConfirm");
-  pwNew.value = "";
-  pwConfirm.value = "";
-  const pwSaveBtn = document.getElementById("pwSaveBtn");
-  const pwMsg = document.getElementById("pwMsg");
+    const pwNew = document.getElementById("pwNew");
+    const pwConfirm = document.getElementById("pwConfirm");
+    const pwSaveBtn = document.getElementById("pwSaveBtn");
+    const pwMsg = document.getElementById("pwMsg");
 
-  const setPwMsg = (t) => { if (pwMsg) pwMsg.textContent = t || ""; };
+    if (pwNew) pwNew.value = "";
+    if (pwConfirm) pwConfirm.value = "";
 
-  pwSaveBtn?.addEventListener("click", async () => {
-    const a = String(pwNew?.value || "").trim();
-    const b = String(pwConfirm?.value || "").trim();
+    const setPwMsg = (t) => { if (pwMsg) pwMsg.textContent = t || ""; };
 
-    if (!a || a.length < 8) { setPwMsg("Password must be at least 8 characters."); return; }
-    if (a !== b) { setPwMsg("Passwords do not match."); return; }
+    pwSaveBtn?.addEventListener("click", async () => {
+      const a = String(pwNew?.value || "").trim();
+      const b = String(pwConfirm?.value || "").trim();
 
-    setPwMsg("Updating…");
+      if (!a || a.length < 8) { setPwMsg("Password must be at least 8 characters."); return; }
+      if (a !== b) { setPwMsg("Passwords do not match."); return; }
 
-    const { error } = await supabaseClient.auth.updateUser({ password: a });
-    if (error) { setPwMsg("Update failed: " + error.message); return; }
+      setPwMsg("Updating…");
 
-    pwNew.value = "";
-    pwConfirm.value = "";
-    setPwMsg("Password updated ✅");
-  });
-}
-function renderChangePasswordLink(containerEl) {
-  if (!containerEl) return;
+      const { error } = await supabaseClient.auth.updateUser({ password: a });
+      if (error) { setPwMsg("Update failed: " + error.message); return; }
 
-  // avoid duplicate render
-  if (document.getElementById("pwLinkWrap")) return;
+      if (pwNew) pwNew.value = "";
+      if (pwConfirm) pwConfirm.value = "";
+      setPwMsg("Password updated ✅");
+    });
+  }
 
-  const wrap = document.createElement("div");
-  wrap.id = "pwLinkWrap";
-  wrap.style.marginTop = "6px";
-  wrap.style.fontSize = "13px";
-  wrap.style.color = "var(--muted)";
+  function renderChangePasswordLink(containerEl) {
+    if (!containerEl) return;
 
-  wrap.innerHTML = `
-    <span>
-      Click
-      <a href="#" id="pwOpenLink" style="text-decoration:underline;">
-        here
-      </a>
-      if you would like to change your password.
-    </span>
-  `;
+    if (document.getElementById("pwLinkWrap")) return;
 
-  containerEl.appendChild(wrap);
+    const wrap = document.createElement("div");
+    wrap.id = "pwLinkWrap";
+    wrap.style.marginTop = "6px";
+    wrap.style.fontSize = "13px";
+    wrap.style.color = "var(--muted)";
 
-  const link = document.getElementById("pwOpenLink");
-  link?.addEventListener("click", (e) => {
-    e.preventDefault();
-    renderChangePasswordTool(containerEl);
-    wrap.remove(); // remove link after opening
-  });
-}
+    wrap.innerHTML = `
+      <span>
+        Click <a href="#" id="pwOpenLink" style="text-decoration:underline;">here</a>
+        if you would like to change your password.
+      </span>
+    `;
 
+    containerEl.appendChild(wrap);
+
+    const link = document.getElementById("pwOpenLink");
+    link?.addEventListener("click", (e) => {
+      e.preventDefault();
+      renderChangePasswordTool(containerEl);
+      wrap.remove();
+    });
+  }
+
+  // =========================================================
   // BLOCK: VALIDATION
   // =========================================================
   function isValidEmail(email) {
@@ -301,15 +292,45 @@ function renderChangePasswordLink(containerEl) {
   const appBox = document.getElementById("appBox");
   const menuItems = document.getElementById("menuItems");
 
-  // Views
-const viewWelcome = document.getElementById("viewWelcome");
-const welcomeContent = document.getElementById("welcomeContent");
-const viewCustomerMgmt = document.getElementById("viewCustomerMgmt");
-const viewAgentMgmt = document.getElementById("viewAgentMgmt");
-const viewFormulary = document.getElementById("viewFormulary");
-const viewLabMgmt = document.getElementById("viewLabMgmt");
-const viewAccountManagers = document.getElementById("viewAccountManagers");
+  // Forgot password UI (now SAFE: DOM exists)
+  const forgotPwLink = document.getElementById("forgotPwLink");
+  const forgotPwPanel = document.getElementById("forgotPwPanel");
+  const forgotPwEmail = document.getElementById("forgotPwEmail");
+  const forgotPwSendBtn = document.getElementById("forgotPwSendBtn");
+  const forgotPwMsg = document.getElementById("forgotPwMsg");
+  const setForgotMsg = (t) => { if (forgotPwMsg) forgotPwMsg.textContent = t || ""; };
 
+  forgotPwLink?.addEventListener("click", (e) => {
+    e.preventDefault();
+    setForgotMsg("");
+    if (forgotPwPanel) forgotPwPanel.style.display = (forgotPwPanel.style.display === "none" ? "block" : "none");
+    if (forgotPwEmail) forgotPwEmail.value = "";
+  });
+
+  forgotPwSendBtn?.addEventListener("click", async () => {
+    const email = String(forgotPwEmail?.value || "").trim().toLowerCase();
+    if (!email) { setForgotMsg("Please enter your email."); return; }
+
+    setForgotMsg("Sending…");
+
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + window.location.pathname
+    });
+
+    if (error) { setForgotMsg("Failed: " + error.message); return; }
+    setForgotMsg("Reset email sent. Check your inbox.");
+  });
+
+  // Views
+  const viewWelcome = document.getElementById("viewWelcome");
+  const welcomeContent = document.getElementById("welcomeContent");
+  const viewCustomerMgmt = document.getElementById("viewCustomerMgmt");
+  const viewAgentMgmt = document.getElementById("viewAgentMgmt");
+  const viewFormulary = document.getElementById("viewFormulary");
+  const viewLabMgmt = document.getElementById("viewLabMgmt");
+  const viewAccountManagers = document.getElementById("viewAccountManagers");
+  const viewProductTypes = document.getElementById("viewProductTypes");
+  const viewUserMgmt = document.getElementById("viewUserMgmt");
 
   // Customer Mgmt UI
   const cmViewBtn = document.getElementById("cmViewBtn");
@@ -402,77 +423,74 @@ const viewAccountManagers = document.getElementById("viewAccountManagers");
   const fxIngSaveBtn = document.getElementById("fxIngSaveBtn");
 
   // Product Types view + UI
-  const viewProductTypes = document.getElementById("viewProductTypes");
   const ptName = document.getElementById("pt_name");
   const ptAddBtn = document.getElementById("pt_addBtn");
   const ptTbody = document.getElementById("pt_tbody");
   const ptStatus = document.getElementById("pt_status");
 
   // Formulated Products UI
-const fpViewBtn = document.getElementById("fpViewBtn");
-const fpAddBtn = document.getElementById("fpAddBtn");
-const fpClearBtn = document.getElementById("fpClearBtn");
-const fpMsg = document.getElementById("fpMsg");
+  const fpViewBtn = document.getElementById("fpViewBtn");
+  const fpAddBtn = document.getElementById("fpAddBtn");
+  const fpClearBtn = document.getElementById("fpClearBtn");
+  const fpMsg = document.getElementById("fpMsg");
 
-const fpViewPanel = document.getElementById("fpViewPanel");
-const fpAddPanel = document.getElementById("fpAddPanel");
+  const fpViewPanel = document.getElementById("fpViewPanel");
+  const fpAddPanel = document.getElementById("fpAddPanel");
 
-const fpSearch = document.getElementById("fpSearch");
-const fpSearchBtn = document.getElementById("fpSearchBtn");
-const fpShowAllBtn = document.getElementById("fpShowAllBtn");
-const fpList = document.getElementById("fpList");
+  const fpSearch = document.getElementById("fpSearch");
+  const fpSearchBtn = document.getElementById("fpSearchBtn");
+  const fpShowAllBtn = document.getElementById("fpShowAllBtn");
+  const fpList = document.getElementById("fpList");
 
-const fpCode = document.getElementById("fpCode");
-const fpName = document.getElementById("fpName");
-const fpType = document.getElementById("fpType");
-const fpNotes = document.getElementById("fpNotes");
+  const fpCode = document.getElementById("fpCode");
+  const fpName = document.getElementById("fpName");
+  const fpType = document.getElementById("fpType");
+  const fpNotes = document.getElementById("fpNotes");
 
-const fpAddLineBtn = document.getElementById("fpAddLineBtn");
-const fpLines = document.getElementById("fpLines");
+  const fpAddLineBtn = document.getElementById("fpAddLineBtn");
+  const fpLines = document.getElementById("fpLines");
 
-const fpSaveBtn = document.getElementById("fpSaveBtn");
-const fpCancelEditBtn = document.getElementById("fpCancelEditBtn");
+  const fpSaveBtn = document.getElementById("fpSaveBtn");
+  const fpCancelEditBtn = document.getElementById("fpCancelEditBtn");
 
-   // Account Managers UI
-const amgrViewBtn = document.getElementById("amgrViewBtn");
-const amgrAddBtn = document.getElementById("amgrAddBtn");
-const amgrClearBtn = document.getElementById("amgrClearBtn");
-const amgrMsg = document.getElementById("amgrMsg");
-const amgrViewPanel = document.getElementById("amgrViewPanel");
-const amgrAddPanel = document.getElementById("amgrAddPanel");
-const amgrList = document.getElementById("amgrList");
+  // Account Managers UI
+  const amgrViewBtn = document.getElementById("amgrViewBtn");
+  const amgrAddBtn = document.getElementById("amgrAddBtn");
+  const amgrClearBtn = document.getElementById("amgrClearBtn");
+  const amgrMsg = document.getElementById("amgrMsg");
+  const amgrViewPanel = document.getElementById("amgrViewPanel");
+  const amgrAddPanel = document.getElementById("amgrAddPanel");
+  const amgrList = document.getElementById("amgrList");
 
-const amgrFirstName = document.getElementById("amgrFirstName");
-const amgrLastName = document.getElementById("amgrLastName");
-const amgrEmail = document.getElementById("amgrEmail");
-const amgrPhone = document.getElementById("amgrPhone");
-const amgrAddress = document.getElementById("amgrAddress");
-const amgrNotes = document.getElementById("amgrNotes");
-const amgrSaveBtn = document.getElementById("amgrSaveBtn");
+  const amgrFirstName = document.getElementById("amgrFirstName");
+  const amgrLastName = document.getElementById("amgrLastName");
+  const amgrEmail = document.getElementById("amgrEmail");
+  const amgrPhone = document.getElementById("amgrPhone");
+  const amgrAddress = document.getElementById("amgrAddress");
+  const amgrNotes = document.getElementById("amgrNotes");
+  const amgrSaveBtn = document.getElementById("amgrSaveBtn");
 
-  const viewUserMgmt = document.getElementById("viewUserMgmt");
+  // User Mgmt UI
+  const umViewBtn = document.getElementById("umViewBtn");
+  const umClearBtn = document.getElementById("umClearBtn");
+  const umMsg = document.getElementById("umMsg");
+  const umViewPanel = document.getElementById("umViewPanel");
+  const umEditPanel = document.getElementById("umEditPanel");
+  const umList = document.getElementById("umList");
 
-     // USER Management UI
-const umViewBtn = document.getElementById("umViewBtn");
-const umClearBtn = document.getElementById("umClearBtn");
-const umMsg = document.getElementById("umMsg");
-const umViewPanel = document.getElementById("umViewPanel");
-const umEditPanel = document.getElementById("umEditPanel");
-const umList = document.getElementById("umList");
+  const umFullName = document.getElementById("umFullName");
+  const umEmail = document.getElementById("umEmail");
+  const umPassword = document.getElementById("umPassword");
+  const umRole = document.getElementById("umRole");
+  const umStatus = document.getElementById("umStatus");
+  const umPerms = document.getElementById("umPerms");
+  const umSaveBtn = document.getElementById("umSaveBtn");
+  const umCancelBtn = document.getElementById("umCancelBtn");
 
-const umFullName = document.getElementById("umFullName");
-const umEmail = document.getElementById("umEmail");
-const umPassword = document.getElementById("umPassword");
-const umRole = document.getElementById("umRole");
-const umStatus = document.getElementById("umStatus");
-const umPerms = document.getElementById("umPerms");
-const umSaveBtn = document.getElementById("umSaveBtn");
-const umCancelBtn = document.getElementById("umCancelBtn");
-
-const umAddBtn = document.getElementById("umAddBtn");
-const umSearch = document.getElementById("umSearch");
-const umSearchBtn = document.getElementById("umSearchBtn");
-const umShowAllBtn = document.getElementById("umShowAllBtn");
+  const umAddBtn = document.getElementById("umAddBtn");
+  const umSearch = document.getElementById("umSearch");
+  const umSearchBtn = document.getElementById("umSearchBtn");
+  const umShowAllBtn = document.getElementById("umShowAllBtn");
 
   // =========================================================
   // BLOCK: STATE
@@ -585,65 +603,65 @@ const umShowAllBtn = document.getElementById("umShowAllBtn");
     },
     helpers: { show, confirmExact }
   });
-   const productTypesModule = initProductTypesManagement({
-  supabaseClient,
-  ui: { ptName, ptAddBtn, ptTbody, ptStatus },
-  helpers: { confirmExact }
-});
 
-const formulatedProductsModule = initFormulatedProductsManagement({
-  supabaseClient,
-  ui: {
-    fpViewBtn, fpAddBtn, fpClearBtn, fpMsg,
-    fpViewPanel, fpAddPanel,
-    fpSearch, fpSearchBtn, fpShowAllBtn,
-    fpList,
-    fpCode, fpName, fpType, fpNotes,
-    fpAddLineBtn, fpLines,
-    fpSaveBtn, fpCancelEditBtn
-  },
-  helpers: { show, escapeHtml, confirmExact }
-});
+  const productTypesModule = initProductTypesManagement({
+    supabaseClient,
+    ui: { ptName, ptAddBtn, ptTbody, ptStatus },
+    helpers: { confirmExact }
+  });
+
+  const formulatedProductsModule = initFormulatedProductsManagement({
+    supabaseClient,
+    ui: {
+      fpViewBtn, fpAddBtn, fpClearBtn, fpMsg,
+      fpViewPanel, fpAddPanel,
+      fpSearch, fpSearchBtn, fpShowAllBtn,
+      fpList,
+      fpCode, fpName, fpType, fpNotes,
+      fpAddLineBtn, fpLines,
+      fpSaveBtn, fpCancelEditBtn
+    },
+    helpers: { show, escapeHtml, confirmExact }
+  });
 
   const accountManagersModule = initAccountManagersManagement({
-  supabaseClient,
-  ui: {
-    amgrViewBtn,
-    amgrAddBtn,
-    amgrClearBtn,
-    amgrMsg,
-    amgrViewPanel,
-    amgrAddPanel,
-    amgrList,
-    amgrFirstName,
-    amgrLastName,
-    amgrEmail,
-    amgrPhone,
-    amgrAddress,
-    amgrNotes,
-    amgrSaveBtn
-  },
-  helpers: { show, confirmExact }
-});
-const userMgmtModule = initUserManagement({
-  supabaseClient,
-ui: {
-  umViewBtn, umAddBtn, umClearBtn, umMsg,
-  umViewPanel, umEditPanel, umList,
-  umSearch, umSearchBtn, umShowAllBtn,
-  umFullName, umEmail, umPassword, umRole, umStatus,
-  umPerms, umSaveBtn, umCancelBtn
-},
-   helpers: { show, escapeHtml, confirmExact },
-   state: {
-    get currentProfile() { return currentProfile; }
-  }
-});
+    supabaseClient,
+    ui: {
+      amgrViewBtn,
+      amgrAddBtn,
+      amgrClearBtn,
+      amgrMsg,
+      amgrViewPanel,
+      amgrAddPanel,
+      amgrList,
+      amgrFirstName,
+      amgrLastName,
+      amgrEmail,
+      amgrPhone,
+      amgrAddress,
+      amgrNotes,
+      amgrSaveBtn
+    },
+    helpers: { show, confirmExact }
+  });
 
-
+  const userMgmtModule = initUserManagement({
+    supabaseClient,
+    ui: {
+      umViewBtn, umAddBtn, umClearBtn, umMsg,
+      umViewPanel, umEditPanel, umList,
+      umSearch, umSearchBtn, umShowAllBtn,
+      umFullName, umEmail, umPassword, umRole, umStatus,
+      umPerms, umSaveBtn, umCancelBtn
+    },
+    helpers: { show, escapeHtml, confirmExact },
+    state: {
+      get currentProfile() { return currentProfile; }
+    }
+  });
 
   // =========================================================
-  // BLOCK: RESET INGREDIENTS SCREEN (MISSING BEFORE)
+  // BLOCK: RESET INGREDIENTS SCREEN
   // =========================================================
   function resetIngredientsScreen() {
     show(fxIngViewPanel, false);
@@ -654,180 +672,32 @@ ui: {
     editingIngredientId = null;
 
     if (fxIngSearch) fxIngSearch.value = "";
-if (fxIngPsiNum) fxIngPsiNum.value = "";
+    if (fxIngPsiNum) fxIngPsiNum.value = "";
     if (fxIngInci) fxIngInci.value = "";
     if (fxIngDesc) fxIngDesc.value = "";
     if (fxIngList) fxIngList.innerHTML = "";
   }
 
   // =========================================================
-  // BLOCK: ROW RENDERERS
-  // =========================================================
-  function buildIngredientRowHTML(i) {
-    const id = escapeHtml(i.id);
-    const psi = escapeHtml((i.psi_number || "").trim());
-    const inci = escapeHtml((i.inci_name || "").trim());
-    const desc = escapeHtml((i.short_description || "").trim());
-
-    return `
-      <div class="ingredient-row" data-ingredient-id="${id}">
-        <div class="ingredient-cell ingredient-psi">${psi}</div>
-        <div class="ingredient-cell ingredient-inci">${inci}</div>
-        <div class="ingredient-cell ingredient-desc">${desc}</div>
-
-        <div class="ingredient-actions">
-          <button class="ing-link" data-action="edit" type="button">Edit</button>
-          <button class="ing-link ing-delete" data-action="delete" type="button">Delete</button>
-        </div>
-      </div>
-    `.trim();
-  }
-
-  // =========================================================
-  // BLOCK: INGREDIENT LIST DELEGATION
-  // =========================================================
-  function ensureIngredientListDelegation() {
-    if (!fxIngList) return;
-    if (fxIngList.dataset.bound === "1") return;
-
-    fxIngList.addEventListener("click", async (e) => {
-      const btn = e.target.closest("button[data-action]");
-      if (!btn) return;
-
-      const row = e.target.closest(".ingredient-row");
-      if (!row) return;
-
-      const ingId = row.getAttribute("data-ingredient-id");
-      const action = btn.getAttribute("data-action");
-      const i = ingredientsById[ingId];
-      if (!i) return;
-
-      if (action === "edit") {
-        editingIngredientId = i.id;
-if (fxIngPsiNum) {
-  // Expecting PSI-001 etc
-  const m = String(i.psi_number || "").match(/(\d+)/);
-  fxIngPsiNum.value = m ? Number(m[1]) : "";
-}
-        if (fxIngInci) fxIngInci.value = i.inci_name || "";
-        if (fxIngDesc) fxIngDesc.value = i.short_description || "";
-        showAddIngredientPanel();
-        setFxIngMsg("Editing ingredient — click Save ingredient to update.");
-        return;
-      }
-
-      if (action === "delete") {
-        const label =
-          (i.inci_name || "").trim() ||
-          (i.psi_number || "").trim() ||
-          "this ingredient";
-
-        const ok = await confirmExact(`Delete ${label}? This cannot be undone.`);
-        if (!ok) return;
-
-        const { data, error } = await supabaseClient
-          .from("ingredients")
-          .delete()
-          .eq("id", i.id)
-          .select("id");
-
-        if (error) { setFxIngMsg("Delete error: " + error.message); return; }
-        if (!data || data.length === 0) { setFxIngMsg("Delete blocked (RLS) — no rows deleted."); return; }
-
-        setFxIngMsg("Deleted ✅");
-        await runIngredientSearch(fxIngSearch?.value || "");
-      }
-    });
-
-    fxIngList.dataset.bound = "1";
-  }
-
-  // =========================================================
-  // BLOCK: SCREEN HELPERS (INGREDIENTS)
-  // =========================================================
-  function showViewIngredientsPanel() {
-    show(fxIngViewPanel, true);
-    show(fxIngAddPanel, false);
-    show(fxIngClearBtn, true);
-
-    if (fxIngList) fxIngList.className = "ingredient-list";
-    if (fxIngSearch) fxIngSearch.focus();
-
-    runIngredientSearch("");
-  }
-
-  function showAddIngredientPanel() {
-    show(fxIngViewPanel, false);
-    show(fxIngAddPanel, true);
-    show(fxIngClearBtn, true);
-
-    setFxIngMsg("");
-if (fxIngPsiNum) fxIngPsiNum.focus();
-  }
-
-  // =========================================================
-  // BLOCK: INGREDIENT QUERY
-  // =========================================================
-  async function runIngredientSearch(term) {
-    if (!fxIngList) return;
-
-    ensureIngredientListDelegation();
-
-    fxIngList.className = "ingredient-list";
-    fxIngList.innerHTML = "";
-    ingredientsById = {};
-    setFxIngMsg("Searching…");
-
-    let q = supabaseClient
-      .from("ingredients")
-      .select("id, psi_number, inci_name, short_description")
-      .order("psi_number", { ascending: true });
-
-    const t = (term || "").trim();
-    if (t) {
-      const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
-      q = q.or([
-        `psi_number.ilike.%${esc}%`,
-        `inci_name.ilike.%${esc}%`,
-        `short_description.ilike.%${esc}%`
-      ].join(","));
-    }
-
-    const { data, error } = await q;
-
-    if (error) { setFxIngMsg("Search error: " + error.message); return; }
-
-    const rows = data || [];
-    rows.forEach(i => { ingredientsById[i.id] = i; });
-
-    fxIngList.innerHTML = rows.map(buildIngredientRowHTML).join("");
-
-    if (rows.length === 0) setFxIngMsg("No matches found.");
-    else setFxIngMsg(`Found ${rows.length} ingredient${rows.length === 1 ? "" : "s"}.`);
-  }
-
-  // =========================================================
   // BLOCK: AUTH + PROFILE LOOKUPS
   // =========================================================
- async function loadProfileForUser(userId) {
-  const res = await supabaseClient
-    .from("agent_users")
-    .select("agent_id, role, status, email, full_name, permissions")
-    .eq("auth_user_id", userId)
-    .maybeSingle(); // IMPORTANT: avoids throwing when 0 rows
+  async function loadProfileForUser(userId) {
+    const res = await supabaseClient
+      .from("agent_users")
+      .select("agent_id, role, status, email, full_name, permissions")
+      .eq("auth_user_id", userId)
+      .maybeSingle();
 
-  const { data, error } = res;
+    const { data, error } = res;
 
-  if (error) {
-    // This will print the REAL reason (RLS, multiple rows, etc.)
-    console.error("agent_users lookup error:", error);
-    throw error;
+    if (error) {
+      console.error("agent_users lookup error:", error);
+      throw error;
+    }
+
+    if (!data) return null;
+    return data;
   }
-
-  if (!data) return null;
-  return data; // inactive handled in hydrateAfterLogin
-  }
-
 
   async function loadAgentName(agentId) {
     if (!agentId) return "";
@@ -877,7 +747,7 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
   // =========================================================
   // BLOCK: FORMULARY TABS
   // =========================================================
-   function setActiveFormularyTab(tabKey) {
+  function setActiveFormularyTab(tabKey) {
     fxTabIngredients?.classList.toggle("active", tabKey === "ingredients");
     fxTabProducts?.classList.toggle("active", tabKey === "products");
 
@@ -885,84 +755,66 @@ if (fxIngPsiNum) fxIngPsiNum.focus();
     show(fxSectionProducts, tabKey === "products");
   }
 
-
-
   // =========================================================
   // BLOCK: VIEWS + MENU (MODULE)
   // =========================================================
   const nav = initNavigation({
-  menuItems,
-  views: {
-    welcome: viewWelcome,
-    customers: viewCustomerMgmt,
-    agents: viewAgentMgmt,
-    accountManagers: viewAccountManagers,
-    productTypes: viewProductTypes,
-    labs: viewLabMgmt,
-    formulary: viewFormulary,
-    userMgmt: viewUserMgmt
-  },
-
-  show,
-
-canAccess: (viewKey) => {
-  if (viewKey === "welcome") return true;
-
-  // must have profile loaded
-  if (!currentProfile) return false;
-
-  const role = (currentProfile.role || "").toLowerCase();
-
-  // userMgmt is ADMIN only, always
-  if (viewKey === "userMgmt") return role === "admin";
-
-  // admins can access everything
-  if (role === "admin") return true;
-
-  // otherwise respect permissions json (excluding userMgmt, handled above)
-  const p = currentProfile.permissions || {};
-  return !!p[viewKey];
-},
-
-
-
-  onEnter: {
-   welcome: () => {
-  showWelcomePanel({ containerEl: welcomeContent });
-
-// Non-admin: show subtle change-password link
-const role = (currentProfile?.role || "").toLowerCase();
-if (role !== "admin") {
-  renderChangePasswordLink(welcomeContent);
-}
-
-},
-
-    customers: () => {
-      customerModule.resetCustomerScreen();
+    menuItems,
+    views: {
+      welcome: viewWelcome,
+      customers: viewCustomerMgmt,
+      agents: viewAgentMgmt,
+      accountManagers: viewAccountManagers,
+      productTypes: viewProductTypes,
+      labs: viewLabMgmt,
+      formulary: viewFormulary,
+      userMgmt: viewUserMgmt
     },
-    agents: () => {
-      agentModule.resetAgentScreen();
+    show,
+
+    canAccess: (viewKey) => {
+      if (viewKey === "welcome") return true;
+      if (!currentProfile) return false;
+
+      const role = (currentProfile.role || "").toLowerCase();
+
+      // userMgmt is ADMIN only, always
+      if (viewKey === "userMgmt") return role === "admin";
+
+      // admins can access everything
+      if (role === "admin") return true;
+
+      // otherwise respect permissions json
+      const p = currentProfile.permissions || {};
+      return !!p[viewKey];
     },
-    accountManagers: () => {
-      accountManagersModule.resetAccountManagersScreen();
-    },
-    productTypes: async () => {
-      productTypesModule.resetProductTypesScreen();
-      await productTypesModule.loadProductTypes();
-    },
-    labs: () => {
-      labsModule.resetLabsScreen();
-    },
-    userMgmt: () => {
-      userMgmtModule.resetUserScreen();
-    },
-    formulary: () => {
-      setActiveFormularyTab("ingredients");
-      resetIngredientsScreen();
+
+    onEnter: {
+      welcome: () => {
+        showWelcomePanel({ containerEl: welcomeContent });
+
+        // Non-admin: show subtle change-password link
+        const role = (currentProfile?.role || "").toLowerCase();
+        if (role !== "admin") {
+          renderChangePasswordLink(welcomeContent);
+        }
+      },
+
+      customers: () => customerModule.resetCustomerScreen(),
+      agents: () => agentModule.resetAgentScreen(),
+      accountManagers: () => accountManagersModule.resetAccountManagersScreen(),
+      productTypes: async () => {
+        productTypesModule.resetProductTypesScreen();
+        await productTypesModule.loadProductTypes();
+      },
+      labs: () => labsModule.resetLabsScreen(),
+      userMgmt: () => userMgmtModule.resetUserScreen(),
+      formulary: () => {
+        setActiveFormularyTab("ingredients");
+        resetIngredientsScreen();
+      }
     }
-  }
-});
+  });
 
   // =========================================================
   // BLOCK: LOGIN/LOGOUT SHELL
@@ -990,12 +842,11 @@ if (role !== "admin") {
     ingredientsById = {};
     editingIngredientId = null;
 
-customerModule.resetCustomerScreen();
-agentModule.resetAgentScreen();
-labsModule.resetLabsScreen();
-productTypesModule.resetProductTypesScreen();
-resetIngredientsScreen();
-
+    customerModule.resetCustomerScreen();
+    agentModule.resetAgentScreen();
+    labsModule.resetLabsScreen();
+    productTypesModule.resetProductTypesScreen();
+    resetIngredientsScreen();
 
     show(viewWelcome, false);
   }
@@ -1024,24 +875,22 @@ resetIngredientsScreen();
       try {
         profile = await loadProfileForUser(session.user.id);
       } catch (e) {
-  console.error("loadProfileForUser failed:", e?.message || e, e);
+        console.error("loadProfileForUser failed:", e?.message || e, e);
       }
 
+      if (!profile) {
+        await supabaseClient.auth.signOut();
+        setLoggedOutUI("Access not provisioned");
+        setAuthMsg("Login blocked: your account is not provisioned. Please contact admin.");
+        return;
+      }
 
-     if (!profile) {
-  await supabaseClient.auth.signOut();
-  setLoggedOutUI("Access not provisioned");
-  setAuthMsg("Login blocked: your account is not provisioned. Please contact admin.");
-  return;
-}
-
-if ((profile.status || "").toLowerCase() !== "active") {
-  await supabaseClient.auth.signOut();
-  setLoggedOutUI("Account inactive");
-  setAuthMsg("Your account is inactive. Please contact admin.");
-  return;
-}
-
+      if ((profile.status || "").toLowerCase() !== "active") {
+        await supabaseClient.auth.signOut();
+        setLoggedOutUI("Account inactive");
+        setAuthMsg("Your account is inactive. Please contact admin.");
+        return;
+      }
 
       currentProfile = profile;
 
@@ -1059,132 +908,17 @@ if ((profile.status || "").toLowerCase() !== "active") {
 
       nav.renderMenuForRole(profile.role, profile.permissions || {});
 
-
-      // keep screens neutral until user chooses
-customerModule.resetCustomerScreen();
-agentModule.resetAgentScreen();
-labsModule.resetLabsScreen();
-productTypesModule.resetProductTypesScreen();
-resetIngredientsScreen();
-
+      customerModule.resetCustomerScreen();
+      agentModule.resetAgentScreen();
+      labsModule.resetLabsScreen();
+      productTypesModule.resetProductTypesScreen();
+      resetIngredientsScreen();
 
     } catch (e) {
       console.error("hydrateAfterLogin error:", e);
       setAuthMsg("Error after login: " + (e?.message || "Unknown error"));
     }
   }
-
-  // =========================================================
-  // BLOCK: BIND BUTTONS (FORMULARY / ING)
-  // =========================================================
-if (fxTabIngredients) fxTabIngredients.addEventListener("click", () => {
-  setActiveFormularyTab("ingredients");
-});
-
-if (fxTabProducts) fxTabProducts.addEventListener("click", async () => {
-  setActiveFormularyTab("products");
-  await formulatedProductsModule.enter();
-});
-
-
-  if (fxIngViewBtn) fxIngViewBtn.addEventListener("click", () => showViewIngredientsPanel());
-  if (fxIngAddBtn) fxIngAddBtn.addEventListener("click", () => {
-    editingIngredientId = null;
-if (fxIngPsiNum) fxIngPsiNum.value = "";
-    if (fxIngInci) fxIngInci.value = "";
-    if (fxIngDesc) fxIngDesc.value = "";
-    showAddIngredientPanel();
-  });
-  if (fxIngClearBtn) fxIngClearBtn.addEventListener("click", () => resetIngredientsScreen());
-  if (fxIngSearchBtn) fxIngSearchBtn.addEventListener("click", async () => { await runIngredientSearch(fxIngSearch?.value || ""); });
-  if (fxIngShowAllBtn) fxIngShowAllBtn.addEventListener("click", async () => { await runIngredientSearch(""); });
-  if (fxIngSearch) fxIngSearch.addEventListener("keydown", async (e) => { if (e.key === "Enter") await runIngredientSearch(fxIngSearch.value || ""); });
-
-  function formatPsiNumber(numStr) {
-  const n = Number(String(numStr || "").trim());
-  if (!Number.isInteger(n) || n < 1 || n > 999) return null;
-  return "PSI-" + String(n).padStart(3, "0");
-}
-
-async function psiNumberExists(psi_number, excludeId = null) {
-  if (!psi_number) return false;
-
-  let q = supabaseClient
-    .from("ingredients")
-    .select("id")
-    .eq("psi_number", psi_number)
-    .limit(1);
-
-  if (excludeId) q = q.neq("id", excludeId);
-
-  const { data, error } = await q;
-  if (error) {
-    // If RLS prevents reading, you STILL should enforce uniqueness at DB level (see note below)
-    console.warn("psiNumberExists check failed:", error.message);
-    return false;
-  }
-
-  return (data || []).length > 0;
-}
-
- // =========================================================
-// BLOCK: SAVE INGREDIENT (ADD/EDIT)
-// =========================================================
-if (fxIngSaveBtn) {
-  fxIngSaveBtn.addEventListener("click", async () => {
-    setFxIngMsg("");
-
-    const psi_number = formatPsiNumber(fxIngPsiNum?.value);
-    const inci_name = (fxIngInci?.value || "").trim();
-    const short_description = (fxIngDesc?.value || "").trim() || null;
-
-    if (!psi_number) { setFxIngMsg("Enter a PSI number between 1 and 999."); return; }
-    if (!inci_name) { setFxIngMsg("INCI name is required."); return; }
-
-    const exists = await psiNumberExists(psi_number, editingIngredientId);
-    if (exists) {
-      setFxIngMsg(`Duplicate PSI number: ${psi_number} already exists.`);
-      return;
-    }
-
-    // EDIT
-    if (editingIngredientId) {
-      const { data, error } = await supabaseClient
-        .from("ingredients")
-        .update({ psi_number, inci_name, short_description })
-        .eq("id", editingIngredientId)
-        .select("id");
-
-      if (error) { setFxIngMsg("Update error: " + error.message); return; }
-      if (!data || data.length === 0) { setFxIngMsg("Update blocked (RLS) — no rows updated."); return; }
-
-      setFxIngMsg("Saved ✅");
-      editingIngredientId = null;
-
-      if (fxIngPsiNum) fxIngPsiNum.value = "";
-      if (fxIngInci) fxIngInci.value = "";
-      if (fxIngDesc) fxIngDesc.value = "";
-
-      showViewIngredientsPanel();
-      return;
-    }
-
-    // ADD
-    const { error } = await supabaseClient
-      .from("ingredients")
-      .insert([{ psi_number, inci_name, short_description }]);
-
-    if (error) { setFxIngMsg("Insert error: " + error.message); return; }
-
-    setFxIngMsg("Ingredient added ✅");
-    if (fxIngPsiNum) fxIngPsiNum.value = "";
-    if (fxIngInci) fxIngInci.value = "";
-    if (fxIngDesc) fxIngDesc.value = "";
-
-    showViewIngredientsPanel();
-    await runIngredientSearch("");
-  });
-}
 
   // =========================================================
   // BLOCK: LOGIN / LOGOUT
@@ -1235,8 +969,28 @@ if (fxIngSaveBtn) {
 
   supabaseClient.auth.onAuthStateChange((event, session) => {
     console.log("Auth state change:", event);
-    if (event === "SIGNED_OUT") setLoggedOutUI("Logged out");
-    if (event === "SIGNED_IN" && session) hydrateAfterLogin(session);
+
+    if (event === "SIGNED_OUT") {
+      setLoggedOutUI("Logged out");
+      return;
+    }
+
+    // Password recovery: after user clicks the email link
+    if (event === "PASSWORD_RECOVERY" && session) {
+      hydrateAfterLogin(session).then(() => {
+        try {
+          // Ensure Welcome is visible and open Change Password card
+          show(viewWelcome, true);
+          renderChangePasswordTool(welcomeContent);
+        } catch (_e) { }
+      });
+      return;
+    }
+
+    if (event === "SIGNED_IN" && session) {
+      hydrateAfterLogin(session);
+      return;
+    }
   });
 
 });
