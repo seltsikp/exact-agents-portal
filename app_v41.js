@@ -8,10 +8,6 @@ import { initFormulatedProductsManagement } from "./modules/formulatedProducts.j
 import { initAccountManagersManagement } from "./modules/accountManagers.js";
 import { initUserManagement } from "./modules/userManagement.js";
 
-
-
-
-
 console.log("EXACT Agents Portal loaded (v42)");
 
 // =========================================================
@@ -945,7 +941,7 @@ if ((profile.status || "").toLowerCase() !== "active") {
 
       currentProfile = profile;
 
-      if (profile.role === "admin") {
+      if ((profile.role || "").toLowerCase() === "admin") {
         if (topBarTitle) topBarTitle.textContent = "Admin";
         if (topBarSub) topBarSub.textContent = session.user.email || "";
         await loadAgentNameMap();
