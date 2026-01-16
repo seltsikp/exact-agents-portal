@@ -724,8 +724,7 @@ async function loadIngredients(term) {
 
   let q = supabaseClient
     .from("ingredients")
-    .select("id, psi_number, inci_name, created_at")
-
+    .select("id, psi_number, inci_name, short_description, created_at")
     .order("psi_number", { ascending: true });
 
   const t = (term || "").trim();
@@ -734,7 +733,7 @@ async function loadIngredients(term) {
     q = q.or([
       `psi_number.ilike.%${esc}%`,
       `inci_name.ilike.%${esc}%`,
-    
+      `short_description.ilike.%${esc}%`
     ].join(","));
   }
 
@@ -755,12 +754,13 @@ async function loadIngredients(term) {
     const id = escapeHtml(r.id);
     const psi = escapeHtml(r.psi_number || "");
     const inci = escapeHtml(r.inci_name || "");
-
+    const desc = escapeHtml(r.short_description || "");
 
     return `
       <div class="customer-row" data-id="${id}">
         <div>${psi}</div>
         <div>${inci}</div>
+        <div class="subtle">${desc}</div>
         <div class="customer-actions">
           <button class="btn-primary fxIng-edit" type="button">Edit</button>
           <button class="btn-danger fxIng-del" type="button">Delete</button>
@@ -807,6 +807,7 @@ function editIngredient(id) {
 
   if (fxIngPsiNum) fxIngPsiNum.value = r.psi_number || "";
   if (fxIngInci) fxIngInci.value = r.inci_name || "";
+  if (fxIngDesc) fxIngDesc.value = r.short_description || "";
 
   fxIngInci?.focus();
 }
@@ -836,7 +837,7 @@ async function saveIngredient() {
 
   const psi_number = String(fxIngPsiNum?.value || "").trim();
   const inci_name = String(fxIngInci?.value || "").trim();
-  const description = String(fxIngDesc?.value || "").trim() || null;
+  const short_description = String(fxIngDesc?.value || "").trim() || null;
 
   if (!psi_number) return setFxIngMsg("PSI number is required.");
   if (!inci_name) return setFxIngMsg("INCI name is required.");
@@ -844,7 +845,7 @@ async function saveIngredient() {
   if (editingIngredientId) {
     const { data, error } = await supabaseClient
       .from("ingredients")
-  .update({ psi_number, inci_name })
+  .update({ psi_number, inci_name, short_description })
 
       .eq("id", editingIngredientId)
       .select("id");
@@ -854,7 +855,7 @@ async function saveIngredient() {
   } else {
     const { error } = await supabaseClient
       .from("ingredients")
-      .insert([{ psi_number, inci_name }]);
+      .insert([{ psi_number, inci_name, short_description }]);
 
 
     if (error) return setFxIngMsg("Save failed: " + error.message);
