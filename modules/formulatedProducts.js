@@ -91,6 +91,8 @@ export function initFormulatedProductsManagement({ supabaseClient, ui, helpers }
   }
 
   function addLine(line = { ingredient_id: "", pct: "" }) {
+      if (!fpLines) { setMsg("Ingredient lines container missing (fpLines)."); return; }
+
     const row = document.createElement("div");
     row.className = "ingredient-row";
     row.style.gridTemplateColumns = "1fr 140px 120px";
@@ -264,7 +266,10 @@ async function loadProducts(term) {
 
   setMsg(`Found ${rows.length} product${rows.length === 1 ? "" : "s"}.`);
 
- fpList.innerHTML = rows.map(p => {
+  if (!fpList) { setMsg("Formulary list container missing (fpList)."); return; }
+
+  fpList.innerHTML = rows.map(p => {
+
 const typeObj = productTypesCache.find(x => x.id === p.product_type_id);
 const typeLabel = typeObj ? (typeObj.type_name || "") : "Unknown type";
 
@@ -387,8 +392,10 @@ const typeLabel = typeObj ? (typeObj.type_name || "") : "Unknown type";
     if (!name) return setMsg("Enter Product name.");
     if (!product_type_id) return setMsg("Select Product type.");
 
-    const { lines, error: linesErr } = getLinesFromUI();
-    if (linesErr) return setMsg(linesErr);
+const parsed = getLinesFromUI();
+if (parsed.error) return setMsg(parsed.error);
+const lines = parsed.lines;
+
 
     // --- ENFORCE: total % must equal 100.000 (allow tiny rounding) ---
 const totalPct = lines.reduce((sum, l) => sum + Number(l.pct || 0), 0);
