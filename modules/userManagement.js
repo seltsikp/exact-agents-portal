@@ -190,8 +190,10 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
 
         <div class="user-actions" style="display:flex; gap:10px; justify-content:flex-end; white-space:nowrap;">
           <button data-action="edit" type="button">Edit</button>
-          <button data-action="deleteRow" type="button" class="btn-danger">Delete row</button>
-          <button data-action="deleteAuth" type="button" class="btn-danger">Delete (Auth too)</button>
+<button data-action="deleteUser" type="button" class="btn-danger">
+  Delete user
+</button>
+
         </div>
       </div>
     `.trim();
