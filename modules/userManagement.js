@@ -407,10 +407,17 @@ const accessToken = session.access_token;
           return;
         }
 
-        if (!res.ok) {
-          setMsg(`Create user failed (${res.status}): ${text || "(empty body)"}`);
-          return;
-        }
+       if (!res.ok) {
+  if (res.status === 409) {
+    setMsg("Email already exists.");
+  } else if (res.status === 403) {
+    setMsg("Permission denied.");
+  } else {
+    setMsg(`Create user failed (${res.status}).`);
+  }
+  return;
+}
+
 
         setMsg("User created ✅");
         clearForm();
