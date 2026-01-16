@@ -56,7 +56,7 @@ function renderMenuForRole(role, permissions = {}) {
     addMenuBtn("Agents", "agents");
     addMenuBtn("Account Managers", "accountManagers");
     addMenuBtn("Customers", "customers");
-    addMenuBtn("Product Categories", "productTypes");
+    addMenuBtn("Product Groups", "productTypes");
     addMenuBtn("Formulary", "formulary");
     addMenuBtn("Labs", "labs");
     addMenuBtn("Users", "userMgmt");
@@ -68,7 +68,7 @@ function renderMenuForRole(role, permissions = {}) {
   const p = permissions || {};
   if (p.customers) addMenuBtn("Customers", "customers");
   if (p.accountManagers) addMenuBtn("Account Managers", "accountManagers");
-  if (p.productTypes) addMenuBtn("Product Categories", "productTypes");
+  if (p.productTypes) addMenuBtn("Product Groups", "productTypes");
   if (p.formulary) addMenuBtn("Formulary", "formulary");
   if (p.labs) addMenuBtn("Labs", "labs");
   if (p.agents) addMenuBtn("Agents", "agents");
