@@ -363,6 +363,17 @@ headers: {
       // Enforce role rules (UI + hard client-side)
       const role = admin ? roleFromUI : "agent";
       const status = admin ? statusFromUI : "active";
+// CONFIRM before inactivating a user
+if (
+  admin &&
+  !addingNew &&
+  status === "inactive"
+) {
+  const ok = await confirmExact(
+    "Set this user to INACTIVE?\n\nThey will be immediately signed out and will not be able to log in again unless reactivated."
+  );
+  if (!ok) return;
+}
 
       // ADD
       if (addingNew) {
