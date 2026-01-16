@@ -162,6 +162,63 @@ async function confirmExact(message) {
 
 
   // =========================================================
+function renderChangePasswordTool(containerEl) {
+  if (!containerEl) return;
+
+  // remove existing tool if already rendered
+  const existing = document.getElementById("pwTool");
+  if (existing) existing.remove();
+
+  const wrap = document.createElement("div");
+  wrap.id = "pwTool";
+  wrap.className = "card";
+  wrap.style.marginTop = "12px";
+
+  wrap.innerHTML = `
+    <h3 style="margin-top:0;">Change Password</h3>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:220px;">
+        <label class="subtle" style="display:block; margin-bottom:6px;">New password</label>
+        <input id="pwNew" type="password" placeholder="New password (min 8 chars)" />
+      </div>
+      <div style="flex:1; min-width:220px;">
+        <label class="subtle" style="display:block; margin-bottom:6px;">Confirm new password</label>
+        <input id="pwConfirm" type="password" placeholder="Repeat new password" />
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center; margin-top:10px;">
+      <button id="pwSaveBtn" class="btn-primary" type="button">Update password</button>
+      <span id="pwMsg" class="subtle"></span>
+    </div>
+  `;
+
+  containerEl.appendChild(wrap);
+
+  const pwNew = document.getElementById("pwNew");
+  const pwConfirm = document.getElementById("pwConfirm");
+  const pwSaveBtn = document.getElementById("pwSaveBtn");
+  const pwMsg = document.getElementById("pwMsg");
+
+  const setPwMsg = (t) => { if (pwMsg) pwMsg.textContent = t || ""; };
+
+  pwSaveBtn?.addEventListener("click", async () => {
+    const a = String(pwNew?.value || "").trim();
+    const b = String(pwConfirm?.value || "").trim();
+
+    if (!a || a.length < 8) { setPwMsg("Password must be at least 8 characters."); return; }
+    if (a !== b) { setPwMsg("Passwords do not match."); return; }
+
+    setPwMsg("Updating…");
+
+    const { error } = await supabaseClient.auth.updateUser({ password: a });
+    if (error) { setPwMsg("Update failed: " + error.message); return; }
+
+    pwNew.value = "";
+    pwConfirm.value = "";
+    setPwMsg("Password updated ✅");
+  });
+}
+
   // BLOCK: VALIDATION
   // =========================================================
   function isValidEmail(email) {
@@ -821,19 +878,32 @@ canAccess: (viewKey) => {
   // must have profile loaded
   if (!currentProfile) return false;
 
-  // admins can access everything
-  if (currentProfile.role === "admin") return true;
+  const role = (currentProfile.role || "").toLowerCase();
 
-  // otherwise respect permissions json
+  // userMgmt is ADMIN only, always
+  if (viewKey === "userMgmt") return role === "admin";
+
+  // admins can access everything
+  if (role === "admin") return true;
+
+  // otherwise respect permissions json (excluding userMgmt, handled above)
   const p = currentProfile.permissions || {};
   return !!p[viewKey];
 },
 
 
+
   onEnter: {
-    welcome: () => {
-      showWelcomePanel({ containerEl: welcomeContent });
-    },
+   welcome: () => {
+  showWelcomePanel({ containerEl: welcomeContent });
+
+  // Non-admin: show Change Password tool
+  const role = (currentProfile?.role || "").toLowerCase();
+  if (role !== "admin") {
+    renderChangePasswordTool(welcomeContent);
+  }
+},
+
     customers: () => {
       customerModule.resetCustomerScreen();
     },
