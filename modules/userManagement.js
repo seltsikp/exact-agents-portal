@@ -35,6 +35,9 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
   let usersById = {};
   let editingId = null;   // agent_users.id
   let addingNew = false;
+  let searchDebounceTimer = null;
+const SEARCH_DEBOUNCE_MS = 300;
+
 
   const MODULES = [
     { key: "customers", label: "Customer Management" },
@@ -208,10 +211,11 @@ if (umSaveBtn) {
           <div class="subtle">Status: ${status || "—"}</div>
         </div>
 
-        <div class="user-actions">
-          <button data-action="edit" type="button">Edit</button>
-          <button data-action="delete" type="button" class="btn-danger">Delete</button>
-        </div>
+       <div class="user-actions">
+  <button data-action="edit" type="button">Edit</button>
+  ${isAdmin() ? `<button data-action="delete" type="button" class="btn-danger">Delete</button>` : ``}
+</div>
+
       </div>
     `.trim();
   }
@@ -239,6 +243,11 @@ if (umSaveBtn) {
 
       // SINGLE DELETE: deletes BOTH Auth user + agent_users row (irreversible)
       if (action === "delete") {
+        if (!isAdmin()) {
+  setMsg("Permission denied.");
+  return;
+}
+
         const label = (u.full_name || u.email || "this user").trim();
 
         const ok = await confirmExact(
@@ -257,6 +266,35 @@ const { data: freshSession } =
   await supabaseClient.auth.getSession();
 
 const accessToken = freshSession?.session?.access_token;
+        const currentAuthUserId = freshSession?.session?.user?.id || null;
+
+if (currentAuthUserId && String(currentAuthUserId) === String(u.auth_user_id)) {
+  setMsg("You cannot delete your own account.");
+  return;
+}
+// Prevent deleting the last ACTIVE admin
+const targetIsAdmin = String((u.role || "").toLowerCase()) === "admin";
+const targetIsActive = String((u.status || "").toLowerCase()) === "active";
+
+if (targetIsAdmin && targetIsActive) {
+  const { count: adminCount, error: adminCountErr } = await supabaseClient
+    .from("agent_users")
+    .select("id", { count: "exact", head: true })
+    .eq("role", "admin")
+    .eq("status", "active")
+    .neq("auth_user_id", u.auth_user_id);
+
+  if (adminCountErr) {
+    setMsg("Cannot verify admin count (RLS).");
+    return;
+  }
+
+  if (!adminCount || adminCount < 1) {
+    setMsg("Cannot delete the last active admin.");
+    return;
+  }
+}
+
 
 if (!accessToken) {
   setMsg("Session expired. Please log in again.");
@@ -351,6 +389,13 @@ headers: {
   if (umSearch) umSearch.addEventListener("keydown", async (e) => {
     if (e.key === "Enter") await runSearch(umSearch.value || "");
   });
+  if (umSearch) umSearch.addEventListener("input", () => {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => {
+    runSearch(umSearch.value || "");
+  }, SEARCH_DEBOUNCE_MS);
+});
+
 
   if (umCancelBtn) umCancelBtn.addEventListener("click", () => {
     clearForm();
@@ -373,6 +418,8 @@ umSaveBtn.disabled = true;
       const roleFromUI = (umRole?.value || "agent").trim();
       const statusFromUI = (umStatus?.value || "active").trim();
       const permissions = readPermsFromUI();
+      const editingUser = (!addingNew && editingId) ? (usersById[editingId] || null) : null;
+
 
    if (!email) {
   setMsg("Email is required (this is the login ID).");
@@ -484,6 +531,52 @@ if (!editingId) { setMsg("No user selected."); return; }
 // EDIT save start
 umSaveBtn.disabled = true;
 umSaveBtn.textContent = "Saving…";
+// Prevent self-downgrade (admin removing own admin role)
+const { data: { session: currentSession } } = await supabaseClient.auth.getSession();
+const currentAuthUserId = currentSession?.user?.id || null;
+
+if (
+  admin &&
+  editingUser &&
+  currentAuthUserId &&
+  String(editingUser.auth_user_id) === String(currentAuthUserId) &&
+  String((roleFromUI || "").toLowerCase()) !== "admin"
+) {
+  setMsg("You cannot remove your own ADMIN role.");
+  umSaveBtn.disabled = false;
+  umSaveBtn.textContent = originalSaveLabel;
+  return;
+}
+
+// Prevent downgrading the last ACTIVE admin
+if (
+  admin &&
+  editingUser &&
+  String((editingUser.role || "").toLowerCase()) === "admin" &&
+  String((editingUser.status || "").toLowerCase()) === "active" &&
+  String((roleFromUI || "").toLowerCase()) !== "admin"
+) {
+  const { count: adminCount, error: adminCountErr } = await supabaseClient
+    .from("agent_users")
+    .select("id", { count: "exact", head: true })
+    .eq("role", "admin")
+    .eq("status", "active")
+    .neq("auth_user_id", editingUser.auth_user_id);
+
+  if (adminCountErr) {
+    setMsg("Cannot verify admin count (RLS).");
+    umSaveBtn.disabled = false;
+    umSaveBtn.textContent = originalSaveLabel;
+    return;
+  }
+
+  if (!adminCount || adminCount < 1) {
+    setMsg("Cannot downgrade the last active admin.");
+    umSaveBtn.disabled = false;
+    umSaveBtn.textContent = originalSaveLabel;
+    return;
+  }
+}
 
       // Email is locked (do not update email here)
       const patch = admin
