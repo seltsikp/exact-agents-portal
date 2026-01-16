@@ -465,7 +465,11 @@ umSaveBtn.textContent = originalSaveLabel;
       }
 
       // EDIT
-      if (!editingId) { setMsg("No user selected."); return; }
+if (!editingId) { setMsg("No user selected."); return; }
+
+// EDIT save start
+umSaveBtn.disabled = true;
+umSaveBtn.textContent = "Saving…";
 
       // Email is locked (do not update email here)
       const patch = admin
@@ -478,8 +482,20 @@ umSaveBtn.textContent = originalSaveLabel;
         .eq("id", editingId)
         .select("id");
 
-      if (error) { setMsg("Update error: " + error.message); return; }
-      if (!data || data.length === 0) { setMsg("Update blocked (RLS) — no rows updated."); return; }
+      iif (error) {
+  setMsg("Update error: " + error.message);
+  umSaveBtn.disabled = false;
+  umSaveBtn.textContent = originalSaveLabel;
+  return;
+}
+
+      iif (!data || data.length === 0) {
+  setMsg("Update blocked (RLS) — no rows updated.");
+  umSaveBtn.disabled = false;
+  umSaveBtn.textContent = originalSaveLabel;
+  return;
+}
+
 
       umSaveBtn.textContent = originalSaveLabel;
 
@@ -487,6 +503,9 @@ umSaveBtn.textContent = originalSaveLabel;
       clearForm();
       showViewUsersPanel();
       await runSearch(umSearch?.value || "");
+      umSaveBtn.disabled = false;
+umSaveBtn.textContent = originalSaveLabel;
+
 
       umSaveBtn.disabled = false;
 umSaveBtn.textContent = originalSaveLabel;
