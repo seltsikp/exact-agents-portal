@@ -43,15 +43,13 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
     { key: "userMgmt", label: "User Management" }
   ];
 
-
-
   function renderPerms(permsObj) {
     if (!umPerms) return;
     const p = permsObj && typeof permsObj === "object" ? permsObj : {};
     umPerms.innerHTML = MODULES.map(m => {
       const checked = !!p[m.key];
       return `
-        <label class="perm-card">
+        <label class="perm-card" style="display:flex; gap:10px; align-items:center; padding:10px 12px; border:1px solid rgba(15,20,25,.10); border-radius:12px; background:#fff;">
           <input type="checkbox" data-perm="${escapeHtml(m.key)}" ${checked ? "checked" : ""} />
           <span>${escapeHtml(m.label)}</span>
         </label>
@@ -79,6 +77,10 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
     if (umRole) umRole.value = "agent";
     if (umStatus) umStatus.value = "active";
     renderPerms({});
+
+    // default field states
+    if (umEmail) umEmail.readOnly = false;
+    if (umPassword) umPassword.disabled = false;
   }
 
   function resetUserScreen() {
@@ -115,47 +117,81 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
   function openAddUser() {
     clearForm();
     addingNew = true;
+
+    // password required on add
+    if (umPassword) {
+      umPassword.disabled = false;
+      umPassword.placeholder = "Temporary password (min 8 chars)";
+    }
+
     showEditPanel();
-    setMsg("Adding user — enter email, password, role/status, permissions, then Save.");
+    setMsg("Adding user — enter email + password, role/status, permissions, then Save.");
   }
 
   function openEditUser(u) {
     editingId = u.id;
     addingNew = false;
 
-    if (umPassword) umPassword.value = ""; // never show old password
+    if (umPassword) {
+      umPassword.value = "";
+      umPassword.disabled = true;
+      umPassword.placeholder = "Password cannot be edited here (create new password flow later)";
+    }
+
     if (umFullName) umFullName.value = u.full_name || "";
-    if (umEmail) umEmail.value = u.email || "";
+    if (umEmail) {
+      umEmail.value = u.email || "";
+      // IMPORTANT: editing agent_users email does NOT update Supabase Auth email
+      // So we lock it to avoid mismatches.
+      umEmail.readOnly = true;
+      umEmail.title = "Email is locked to avoid mismatch with Supabase Auth. (If needed, build a dedicated change-email flow.)";
+    }
+
     if (umRole) umRole.value = u.role || "agent";
     if (umStatus) umStatus.value = u.status || "active";
     renderPerms(u.permissions || {});
 
     showEditPanel();
-    setMsg("Editing user — update fields and click Save user.");
+    setMsg("Editing user — update name/role/status/permissions and click Save.");
+  }
+
+  function pill(text) {
+    return `<span style="display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid rgba(15,20,25,.10); font-size:12px; font-weight:700;">${escapeHtml(text)}</span>`;
   }
 
   function buildRowHTML(u) {
     const id = escapeHtml(u.id);
     const name = escapeHtml((u.full_name || "").trim() || "Unnamed");
     const email = escapeHtml((u.email || "").trim() || "—");
-    const role = escapeHtml((u.role || "").trim());
-    const status = escapeHtml((u.status || "").trim());
+    const role = (u.role || "").trim() || "—";
+    const status = (u.status || "").trim() || "—";
+
+    const perms = (u.permissions && typeof u.permissions === "object") ? u.permissions : {};
+    const allowedKeys = Object.keys(perms).filter(k => !!perms[k]);
+    const permsSummary = allowedKeys.length ? `${allowedKeys.length} modules` : "No modules";
 
     return `
-      <div class="user-row" data-user-id="${id}">
-        <div>
-          <div style="font-weight:700;">${name}</div>
-          <div class="subtle">${email}</div>
+      <div class="user-row" data-user-id="${id}" style="
+        display:grid; grid-template-columns: 1.6fr 1fr 150px;
+        gap:14px; align-items:center;
+        padding:14px; border:1px solid rgba(15,20,25,.10); border-radius:14px; background:#fff;
+        box-shadow:0 10px 22px rgba(15,20,25,.06);
+      ">
+        <div style="min-width:0;">
+          <div style="font-weight:800;">${name}</div>
+          <div class="subtle" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${email}</div>
+          <div class="subtle" style="margin-top:6px;">${escapeHtml(permsSummary)}</div>
         </div>
 
-        <div>
-          <div>Role: ${role || "—"}</div>
-          <div class="subtle">Status: ${status || "—"}</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          ${pill(`Role: ${role}`)}
+          ${pill(`Status: ${status}`)}
         </div>
 
-        <div class="user-actions">
+        <div class="user-actions" style="display:flex; gap:10px; justify-content:flex-end; white-space:nowrap;">
           <button data-action="edit" type="button">Edit</button>
-          <button data-action="delete" type="button">Delete</button>
+          <button data-action="deleteRow" type="button" class="btn-danger">Delete row</button>
+          <button data-action="deleteAuth" type="button" class="btn-danger">Delete (Auth too)</button>
         </div>
       </div>
     `.trim();
@@ -182,7 +218,8 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
         return;
       }
 
-      if (action === "delete") {
+      // OPTION A (existing): delete ONLY agent_users row
+      if (action === "deleteRow") {
         const label = (u.full_name || u.email || "this user").trim();
         const ok = await confirmExact(
           `Delete ${label}?\n\nThis deletes ONLY the agent_users row (not the Supabase Auth user).`
@@ -200,10 +237,80 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
 
         setMsg("Deleted ✅");
         await runSearch(umSearch?.value || "");
+        return;
+      }
+
+      // OPTION B: delete agent_users row + delete Auth user (Edge Function)
+      if (action === "deleteAuth") {
+        const label = (u.full_name || u.email || "this user").trim();
+        const ok = await confirmExact(
+          `Delete ${label}?\n\nThis will delete BOTH:\n• agent_users row\n• Supabase Auth user\n\nThis cannot be undone.`
+        );
+        if (!ok) return;
+
+        await supabaseClient.auth.refreshSession();
+        const { data: sessionData, error: sessionErr } = await supabaseClient.auth.getSession();
+        if (sessionErr) { setMsg("Session error: " + sessionErr.message); return; }
+        const accessToken = sessionData?.session?.access_token;
+        if (!accessToken) { setMsg("Not logged in. Please log in again."); return; }
+
+        const anonKey = window.SUPABASE_ANON_KEY || "";
+        const baseUrl = window.SUPABASE_URL || "";
+        if (!anonKey) { setMsg("Missing SUPABASE_ANON_KEY."); return; }
+        if (!baseUrl) { setMsg("Missing SUPABASE_URL."); return; }
+
+        const fnUrl = `${baseUrl}/functions/v1/delete-user`;
+
+        let res, text = "";
+        try {
+          res = await fetch(fnUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: anonKey,
+              Authorization: `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({ auth_user_id: u.auth_user_id, agent_user_id: u.id, email: u.email })
+          });
+          text = await res.text();
+        } catch (err) {
+          setMsg("Delete failed: network error: " + String(err));
+          return;
+        }
+
+        if (!res.ok) {
+          setMsg(`Delete failed (${res.status}): ${text || "(empty body)"}`);
+          return;
+        }
+
+        setMsg("Deleted (Auth + row) ✅");
+        await runSearch(umSearch?.value || "");
+        return;
       }
     });
 
     umList.dataset.bound = "1";
+  }
+
+  async function emailExistsInAgentUsers(email, excludeAgentUserId = null) {
+    const e = String(email || "").trim().toLowerCase();
+    if (!e) return false;
+
+    let q = supabaseClient
+      .from("agent_users")
+      .select("id")
+      .eq("email", e)
+      .limit(1);
+
+    if (excludeAgentUserId) q = q.neq("id", excludeAgentUserId);
+
+    const { data, error } = await q;
+    if (error) {
+      // If RLS blocks reads, we still have Edge Function enforcement via createUser
+      console.warn("emailExistsInAgentUsers check failed:", error.message);
+      return false;
+    }
+    return (data || []).length > 0;
   }
 
   async function runSearch(term) {
@@ -258,12 +365,25 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
     showViewUsersPanel();
   });
 
+  function friendlyCreateError(status, text) {
+    const raw = String(text || "");
+    const lower = raw.toLowerCase();
+
+    // Edge function returns JSON often; but we keep it safe
+    if (lower.includes("duplicate") && lower.includes("email")) return "That email already exists.";
+    if (lower.includes("already") && lower.includes("registered")) return "That email is already registered in Auth.";
+    if (lower.includes("email") && lower.includes("exists")) return "That email already exists.";
+    if (status === 401 || lower.includes("invalid jwt") || lower.includes("missing authorization")) return "You are not authorised. Please log in again.";
+    if (status === 403 || lower.includes("forbidden")) return "Forbidden: your user does not have admin rights.";
+    return `Create user failed (${status}): ${raw || "(empty body)"}`;
+  }
+
   if (umSaveBtn) {
     umSaveBtn.addEventListener("click", async () => {
       setMsg("");
 
       const full_name = (umFullName?.value || "").trim() || null;
-      const email = (umEmail?.value || "").trim() || null;
+      const email = (umEmail?.value || "").trim().toLowerCase();
       const role = (umRole?.value || "agent").trim();
       const status = (umStatus?.value || "active").trim();
       const permissions = readPermsFromUI();
@@ -274,66 +394,70 @@ export function initUserManagement({ supabaseClient, ui, helpers }) {
       if (!status) { setMsg("Status is required."); return; }
 
       // ADD
-if (addingNew) {
-  const password = (umPassword?.value || "").trim();
-  if (!password || password.length < 8) {
-    setMsg("Password is required for new users (min 8 chars).");
-    return;
-  }
+      if (addingNew) {
+        const password = (umPassword?.value || "").trim();
+        if (!password || password.length < 8) {
+          setMsg("Password is required for new users (min 8 chars).");
+          return;
+        }
 
-  // Ensure we have a fresh session token (since autoRefreshToken=false in your app)
-  await supabaseClient.auth.refreshSession();
+        // Duplicate email check against agent_users first (fast + clear)
+        const exists = await emailExistsInAgentUsers(email);
+        if (exists) {
+          setMsg("That email already exists in Users (agent_users). Use a different email.");
+          return;
+        }
 
-  const { data: sessionData, error: sessionErr } = await supabaseClient.auth.getSession();
-  if (sessionErr) { setMsg("Session error: " + sessionErr.message); return; }
+        // Ensure fresh session token
+        await supabaseClient.auth.refreshSession();
+        const { data: sessionData, error: sessionErr } = await supabaseClient.auth.getSession();
+        if (sessionErr) { setMsg("Session error: " + sessionErr.message); return; }
 
-  const accessToken = sessionData?.session?.access_token;
-  if (!accessToken) { setMsg("Not logged in. Please log in again."); return; }
+        const accessToken = sessionData?.session?.access_token;
+        if (!accessToken) { setMsg("Not logged in. Please log in again."); return; }
 
-  const anonKey = window.SUPABASE_ANON_KEY || "";
-  const baseUrl = window.SUPABASE_URL || "";
-  if (!anonKey) { setMsg("Missing SUPABASE_ANON_KEY."); return; }
-  if (!baseUrl) { setMsg("Missing SUPABASE_URL."); return; }
+        const anonKey = window.SUPABASE_ANON_KEY || "";
+        const baseUrl = window.SUPABASE_URL || "";
+        if (!anonKey) { setMsg("Missing SUPABASE_ANON_KEY."); return; }
+        if (!baseUrl) { setMsg("Missing SUPABASE_URL."); return; }
 
-  // Call Edge Function using the logged-in user's JWT
-  const fnUrl = `${baseUrl}/functions/v1/create-user`;
+        const fnUrl = `${baseUrl}/functions/v1/create-user`;
 
-  let res, text = "";
-  try {
-    res = await fetch(fnUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: anonKey,
-        Authorization: `Bearer ${accessToken}`
-      },
-      body: JSON.stringify({ email, password, full_name, role, status, permissions })
-    });
-    text = await res.text();
-  } catch (e) {
-    setMsg("Create user failed: network error: " + String(e));
-    return;
-  }
+        let res, text = "";
+        try {
+          res = await fetch(fnUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: anonKey,
+              Authorization: `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({ email, password, full_name, role, status, permissions })
+          });
+          text = await res.text();
+        } catch (e) {
+          setMsg("Create user failed: network error: " + String(e));
+          return;
+        }
 
-  if (!res.ok) {
-    setMsg(`Create user failed (${res.status}): ${text || "(empty body)"}`);
-    return;
-  }
+        if (!res.ok) {
+          setMsg(friendlyCreateError(res.status, text));
+          return;
+        }
 
-  setMsg("User created ✅");
-  clearForm();
-  showViewUsersPanel();
-  await runSearch("");
-  return;
-}
+        setMsg("User created ✅");
+        clearForm();
+        showViewUsersPanel();
+        await runSearch("");
+        return;
+      }
 
-
-      // EDIT
+      // EDIT (email locked; only update safe columns)
       if (!editingId) { setMsg("No user selected."); return; }
 
       const { data, error } = await supabaseClient
         .from("agent_users")
-        .update({ full_name, email, role, status, permissions })
+        .update({ full_name, role, status, permissions })
         .eq("id", editingId)
         .select("id");
 
