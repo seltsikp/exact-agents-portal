@@ -347,6 +347,9 @@ headers: {
 
   if (umSaveBtn) {
     umSaveBtn.addEventListener("click", async () => {
+      if (umSaveBtn.disabled) return;
+umSaveBtn.disabled = true;
+
       setMsg("");
 
       const admin = isAdmin();
@@ -377,6 +380,7 @@ if (
 
       // ADD
       if (addingNew) {
+        umSaveBtn.disabled = true;
         const password = (umPassword?.value || "").trim();
         if (!password || password.length < 8) {
           setMsg("Password is required for new users (min 8 chars).");
@@ -414,7 +418,8 @@ const accessToken = session.access_token;
           });
           text = await res.text();
         } catch (e) {
-          setMsg("Create user failed: network error: " + String(e));
+          setMsg("Create user failed: network error.");
+          umSaveBtn.disabled = false;
           return;
         }
 
@@ -426,6 +431,8 @@ const accessToken = session.access_token;
   } else {
     setMsg(`Create user failed (${res.status}).`);
   }
+         umSaveBtn.disabled = false;
+
   return;
 }
 
@@ -434,6 +441,8 @@ const accessToken = session.access_token;
         clearForm();
         showViewUsersPanel();
         await runSearch("");
+        umSaveBtn.disabled = false;
+
         return;
       }
 
