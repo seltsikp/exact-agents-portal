@@ -26,6 +26,28 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
     detectSessionInUrl: true
   }
 });
+// =========================================================
+// DEVTOOLS / EDGE FUNCTION TEST HOOKS
+// (Do NOT create a new Supabase client in console. Use this one.)
+// =========================================================
+window.supabaseClient = supabaseClient;
+window.sb = supabaseClient; // optional short alias
+
+window.exactGeneratePack = async (orderId) => {
+  // 1) ensure we have a valid session JWT
+  const { data: { session }, error: sessErr } = await window.supabaseClient.auth.getSession();
+  if (sessErr) throw sessErr;
+  if (!session?.access_token) throw new Error("No active session (JWT missing). Log in first, then retry.");
+
+  // 2) invoke Edge Function using the SAME authenticated client
+  const { data, error } = await window.supabaseClient.functions.invoke(
+    "exact_trio_v1_generate_pack",
+    { body: { order_id: orderId } }
+  );
+
+  if (error) throw error;
+  return data;
+};
 
 window.addEventListener("DOMContentLoaded", () => {
 
