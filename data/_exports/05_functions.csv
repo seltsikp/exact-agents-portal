@@ -1,0 +1,406 @@
+schema_name,function_name,args,return_type,language,function_def
+public,assign_customer_code,,trigger,plpgsql,"CREATE OR REPLACE FUNCTION public.assign_customer_code()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+declare
+  v_ym text;
+  v_next integer;
+begin
+  if new.customer_code is not null and new.customer_code <> '' then
+    return new;
+  end if;
+
+  -- derive MMYY from created_at (or now if null)
+  v_ym := to_char(coalesce(new.created_at, now()), 'MMYY');
+
+  -- increment counter atomically
+  insert into public.customer_month_counter(ym, last_seq)
+  values (v_ym, 1)
+  on conflict (ym)
+  do update set last_seq = public.customer_month_counter.last_seq + 1
+  returning last_seq into v_next;
+
+  new.customer_code := 'CN' || v_ym || lpad(v_next::text, 3, '0');  -- CN012601, CN012602...
+
+  return new;
+end;
+$function$
+"
+public,confirm_order,p_order_id uuid,void,plpgsql,"CREATE OR REPLACE FUNCTION public.confirm_order(p_order_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+  v_agent_id uuid;
+  v_customer_id uuid;
+  v_lab_id uuid;
+begin
+  -- Lock the order row
+  select o.agent_id, o.customer_id
+    into v_agent_id, v_customer_id
+  from public.orders o
+  where o.id = p_order_id
+  for update;
+
+  if not found then
+    raise exception 'Order not found';
+  end if;
+
+  -- Pull agent default lab
+  select a.default_lab_id
+    into v_lab_id
+  from public.agents a
+  where a.id = v_agent_id;
+
+  if v_lab_id is null then
+    raise exception 'Cannot confirm: agent has no default lab assigned';
+  end if;
+
+  -- Confirm + snapshot (customer + lab)
+  update public.orders o
+  set
+    status = 'confirmed',
+    placed_at = now(),
+
+    -- enforce lab assignment
+    lab_id = v_lab_id,
+
+    -- snapshot customer demographics
+    customer_dob_snapshot = c.date_of_birth,
+    customer_gender_snapshot = c.gender,
+
+    -- snapshot lab details
+    lab_name_snapshot = l.name,
+    lab_orders_email_snapshot = l.orders_email,
+    lab_admin_email_snapshot = l.admin_email,
+    lab_shipping_address_snapshot = l.shipping_address
+
+  from public.customers c
+  join public.labs l on l.id = v_lab_id
+  where o.id = p_order_id
+    and c.id = v_customer_id;
+
+  if not found then
+    raise exception 'Cannot confirm: customer or lab snapshot failed';
+  end if;
+
+  -- Optional: event
+  insert into public.order_events(order_id, event_type, message)
+  values (p_order_id, 'confirmed', 'Order confirmed and snapshotted');
+
+end;
+$function$
+"
+public,get_order_artifact_signed_url,"p_order_id uuid, p_artifact_type text, p_version integer",text,plpgsql,"CREATE OR REPLACE FUNCTION public.get_order_artifact_signed_url(p_order_id uuid, p_artifact_type text, p_version integer DEFAULT NULL::integer)
+ RETURNS text
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+declare
+  v_agent_id uuid;
+  v_path text;
+  v_bucket text;
+  v_url text;
+begin
+  if auth.uid() is null then
+    raise exception 'Not authorized';
+  end if;
+
+  select au.agent_id into v_agent_id
+  from agent_users au
+  where au.auth_user_id = auth.uid()
+    and au.status = 'active'
+  limit 1;
+
+  if v_agent_id is null then
+    raise exception 'Not authorized';
+  end if;
+
+  if not exists (
+    select 1
+    from orders o
+    where o.id = p_order_id
+      and o.agent_id = v_agent_id
+  ) then
+    raise exception 'Not authorized';
+  end if;
+
+  select oa.storage_bucket, oa.storage_path
+    into v_bucket, v_path
+  from order_artifacts oa
+  where oa.order_id = p_order_id
+    and oa.artifact_type = p_artifact_type
+    and oa.format = 'pdf'
+    and (p_version is null or oa.version = p_version)
+  order by oa.version desc
+  limit 1;
+
+  if v_bucket is null or v_path is null then
+    raise exception 'Artifact not found';
+  end if;
+
+  select storage.create_signed_url(v_bucket, v_path, 60 * 15) into v_url; -- 15 mins
+  return v_url;
+end;
+$function$
+"
+public,is_active_admin,,boolean,sql,"CREATE OR REPLACE FUNCTION public.is_active_admin()
+ RETURNS boolean
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  select exists (
+    select 1
+    from public.agent_users
+    where auth_user_id = auth.uid()
+      and lower(role) = 'admin'
+      and lower(status) = 'active'
+  );
+$function$
+"
+public,is_admin,,boolean,sql,"CREATE OR REPLACE FUNCTION public.is_admin()
+ RETURNS boolean
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  select exists (
+    select 1
+    from public.agent_users au
+    where au.auth_user_id = auth.uid()
+      and au.role = 'admin'
+      and au.status = 'active'
+  );
+$function$
+"
+public,make_agent_code,,text,sql,"CREATE OR REPLACE FUNCTION public.make_agent_code()
+ RETURNS text
+ LANGUAGE sql
+AS $function$
+  select 'AGT' || lpad(nextval('public.agent_code_seq')::text, 2, '0');
+$function$
+"
+public,make_customer_code,,text,plpgsql,"CREATE OR REPLACE FUNCTION public.make_customer_code()
+ RETURNS text
+ LANGUAGE plpgsql
+AS $function$
+declare
+  mk text;
+  seq integer;
+begin
+  -- month_key like '0126' for Jan 2026
+  mk := to_char(now(), 'MMYY');
+
+  insert into public.customer_code_counters (month_key, last_seq)
+  values (mk, 1)
+  on conflict (month_key)
+  do update set last_seq = public.customer_code_counters.last_seq + 1
+  returning last_seq into seq;
+
+  -- CHANGED HERE: 3-digit sequence
+  return 'CN' || mk || lpad(seq::text, 3, '0');
+end;
+$function$
+"
+public,normalize_agent_user_email,,trigger,plpgsql,"CREATE OR REPLACE FUNCTION public.normalize_agent_user_email()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+begin
+  new.email := lower(trim(new.email));
+  return new;
+end;
+$function$
+"
+public,orders_apply_default_lab,,trigger,plpgsql,"CREATE OR REPLACE FUNCTION public.orders_apply_default_lab()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+declare
+  v_default_lab uuid;
+begin
+  -- Only apply when moving into a status that requires a lab
+  if new.status not in ('draft','cancelled') then
+
+    -- If lab_id not explicitly set, pull from agent default
+    if new.lab_id is null then
+      select a.default_lab_id
+        into v_default_lab
+      from public.agents a
+      where a.id = new.agent_id;
+
+      new.lab_id := v_default_lab;
+    end if;
+
+    -- Hard-block if still null (agent has no default lab)
+    if new.lab_id is null then
+      raise exception 'Order cannot be % without agent default lab assigned', new.status
+        using errcode = '23514';
+    end if;
+
+  end if;
+
+  return new;
+end;
+$function$
+"
+public,prevent_last_active_admin,,trigger,plpgsql,"CREATE OR REPLACE FUNCTION public.prevent_last_active_admin()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  remaining_admins integer;
+begin
+  -- Only guard if the OLD row is an ACTIVE admin
+  if lower(coalesce(old.role,'')) = 'admin'
+     and lower(coalesce(old.status,'')) = 'active' then
+
+    -- If deleting the row OR changing it away from active admin, check remaining admins
+    if tg_op = 'DELETE'
+       or lower(coalesce(new.role,'')) <> 'admin'
+       or lower(coalesce(new.status,'')) <> 'active' then
+
+      select count(*) into remaining_admins
+      from public.agent_users
+      where lower(coalesce(role,'')) = 'admin'
+        and lower(coalesce(status,'')) = 'active'
+        and id <> old.id;
+
+      if remaining_admins < 1 then
+        raise exception 'Cannot remove the last active admin.';
+      end if;
+    end if;
+  end if;
+
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+
+  return new;
+end;
+$function$
+"
+public,set_account_manager_code,,trigger,plpgsql,"CREATE OR REPLACE FUNCTION public.set_account_manager_code()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+begin
+  if new.am_code is null or new.am_code = '' then
+    new.am_code :=
+      'AM' || lpad(nextval('public.account_manager_code_seq')::text, 4, '0');
+  end if;
+  return new;
+end;
+$function$
+"
+public,set_agent_code,,trigger,plpgsql,"CREATE OR REPLACE FUNCTION public.set_agent_code()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+begin
+  if new.agent_code is null or new.agent_code = '' then
+    new.agent_code := 'AGT' || lpad(nextval('public.agent_code_seq')::text, 3, '0');
+  end if;
+  return new;
+end;
+$function$
+"
+public,set_customer_code,,trigger,plpgsql,"CREATE OR REPLACE FUNCTION public.set_customer_code()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+begin
+  if new.customer_code is null or new.customer_code = '' then
+    new.customer_code := public.make_customer_code();
+  end if;
+  return new;
+end;
+$function$
+"
+public,set_formulated_product_code,,trigger,plpgsql,"CREATE OR REPLACE FUNCTION public.set_formulated_product_code()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+begin
+  if new.product_code is null or new.product_code = '' then
+    new.product_code :=
+      'EX' || lpad(nextval('public.formulated_product_code_seq')::text, 4, '0');
+  end if;
+  return new;
+end;
+$function$
+"
+public,set_lab_code,,trigger,plpgsql,"CREATE OR REPLACE FUNCTION public.set_lab_code()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+begin
+  if new.lab_code is null or new.lab_code = '' then
+    new.lab_code :=
+      'LAB' || lpad(nextval('public.lab_code_seq')::text, 3, '0');
+  end if;
+  return new;
+end;
+$function$
+"
+public,set_order_code,,trigger,plpgsql,"CREATE OR REPLACE FUNCTION public.set_order_code()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+begin
+  if new.order_code is null or new.order_code = '' then
+    new.order_code := 'ORD' || lpad(nextval('public.order_code_seq')::text, 6, '0');
+  end if;
+  return new;
+end;
+$function$
+"
+public,set_product_code,,trigger,plpgsql,"CREATE OR REPLACE FUNCTION public.set_product_code()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+begin
+  if new.product_code is null or new.product_code = '' then
+    new.product_code := 'PRD' || lpad(nextval('public.product_code_seq')::text, 4, '0');
+  end if;
+  return new;
+end;
+$function$
+"
+public,set_product_type_code,,trigger,plpgsql,"CREATE OR REPLACE FUNCTION public.set_product_type_code()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+begin
+  if new.type_code2 is null or new.type_code2 = '' then
+    new.type_code2 := 'PRD' || lpad(nextval('public.product_type_code_seq')::text, 4, '0');
+  end if;
+  return new;
+end;
+$function$
+"
+public,set_updated_at,,trigger,plpgsql,"CREATE OR REPLACE FUNCTION public.set_updated_at()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$function$
+"
+public,touch_updated_at,,trigger,plpgsql,"CREATE OR REPLACE FUNCTION public.touch_updated_at()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$function$
+"
