@@ -130,68 +130,85 @@ export function initProductsAdmin({ supabaseClient, ui, helpers }) {
     setMsg(`Loaded ${productsCache.length} products.`);
   }
 
-  async function openEditor(product) {
-    selectedProduct = product;
-    setMsg("");
+async function openEditor(product) {
+  selectedProduct = product;
+  setMsg("");
 
-    show(paListPanel, false);
-    show(paEditPanel, true);
-    if (paClearBtn) paClearBtn.style.display = "inline-block";
+  show(paListPanel, false);
+  show(paEditPanel, true);
+  if (paClearBtn) paClearBtn.style.display = "inline-block";
 
-    // Product master fields
-    if (paProductName) {
-      paProductName.value = `${product.product_code || ""} — ${product.name || ""}`.trim();
-    }
+  // ✅ Always re-fetch the latest product row from DB (source of truth)
+  const { data: p, error: pErr } = await supabaseClient
+    .from("products")
+    .select("id, product_code, name, product_kind, currency_code, unit_price_aed, is_active")
+    .eq("id", product.id)
+    .maybeSingle();
 
-    const kind = (product.product_kind || "static").toLowerCase();
-    if (paKind) paKind.value = kind;
-    if (paCurrency) paCurrency.value = product.currency_code || "AED";
-    if (paUnitPrice) paUnitPrice.value = (product.unit_price_aed === null || product.unit_price_aed === undefined) ? "" : String(product.unit_price_aed);
-    if (paIsActive) paIsActive.checked = (product.is_active !== false);
+  if (pErr) { setMsg("Load product failed: " + pErr.message); return; }
+  if (!p) { setMsg("Product not found."); return; }
 
-    toggleDynamicUI(kind);
+  // Update local references
+  selectedProduct = p;
 
-    // Bind kind toggle once (global)
-    if (paKind && paKind.dataset.bound !== "1") {
-      paKind.addEventListener("change", () => {
-        toggleDynamicUI(currentKind());
-      });
-      paKind.dataset.bound = "1";
-    }
-
-    // If static: do not load execution settings
-    if (kind !== "dynamic") {
-      // Keep dynamic fields blank to avoid confusion
-      if (paEdgeFn) paEdgeFn.value = "";
-      if (paSubject) paSubject.value = "";
-      if (paBody) paBody.value = "";
-      if (paSendEmail) paSendEmail.checked = true;
-      if (paIncludeLinks) paIncludeLinks.checked = true;
-      if (paIncludeAttachments) paIncludeAttachments.checked = false;
-      return;
-    }
-
-    // Load existing execution settings (admin-only RLS)
-    setMsg("Loading execution settings…");
-
-    const { data: s, error } = await supabaseClient
-      .from("product_execution_settings")
-      .select("*")
-      .eq("product_id", product.id)
-      .maybeSingle();
-
-    if (error) { setMsg("Load settings failed: " + error.message); return; }
-
-    if (paEdgeFn) paEdgeFn.value = s?.edge_function_name || "";
-    if (paSubject) paSubject.value = s?.lab_email_subject || "";
-    if (paBody) paBody.value = s?.lab_email_body_md || "";
-
-    if (paSendEmail) paSendEmail.checked = s?.send_lab_email ?? true;
-    if (paIncludeLinks) paIncludeLinks.checked = s?.include_signed_links ?? true;
-    if (paIncludeAttachments) paIncludeAttachments.checked = s?.include_attachments ?? false;
-
-    setMsg("");
+  // ---- Populate product master fields ----
+  if (paProductName) {
+    paProductName.value = `${p.product_code || ""} — ${p.name || ""}`.trim();
   }
+
+  const kind = String(p.product_kind || "static").toLowerCase();
+  if (paKind) paKind.value = kind;
+
+  if (paCurrency) paCurrency.value = p.currency_code || "AED";
+  if (paUnitPrice) paUnitPrice.value = (p.unit_price_aed === null || p.unit_price_aed === undefined)
+    ? ""
+    : String(p.unit_price_aed);
+
+  if (paIsActive) paIsActive.checked = (p.is_active !== false);
+
+  toggleDynamicUI(kind);
+
+  // Bind kind toggle once
+  if (paKind && paKind.dataset.bound !== "1") {
+    paKind.addEventListener("change", () => {
+      toggleDynamicUI(currentKind());
+    });
+    paKind.dataset.bound = "1";
+  }
+
+  // If static: clear dynamic fields and stop
+  if (kind !== "dynamic") {
+    if (paEdgeFn) paEdgeFn.value = "";
+    if (paSubject) paSubject.value = "";
+    if (paBody) paBody.value = "";
+    if (paSendEmail) paSendEmail.checked = true;
+    if (paIncludeLinks) paIncludeLinks.checked = true;
+    if (paIncludeAttachments) paIncludeAttachments.checked = false;
+    return;
+  }
+
+  // ---- Load execution settings ----
+  setMsg("Loading execution settings…");
+
+  const { data: s, error: sErr } = await supabaseClient
+    .from("product_execution_settings")
+    .select("*")
+    .eq("product_id", p.id)
+    .maybeSingle();
+
+  if (sErr) { setMsg("Load settings failed: " + sErr.message); return; }
+
+  if (paEdgeFn) paEdgeFn.value = s?.edge_function_name || "";
+  if (paSubject) paSubject.value = s?.lab_email_subject || "";
+  if (paBody) paBody.value = s?.lab_email_body_md || "";
+
+  if (paSendEmail) paSendEmail.checked = s?.send_lab_email ?? true;
+  if (paIncludeLinks) paIncludeLinks.checked = s?.include_signed_links ?? true;
+  if (paIncludeAttachments) paIncludeAttachments.checked = s?.include_attachments ?? false;
+
+  setMsg("");
+}
+
 
   async function saveSettings() {
     if (!selectedProduct?.id) { setMsg("No product selected."); return; }
