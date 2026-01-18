@@ -1111,7 +1111,7 @@
   </div>
 </div>
 
-         <!-- PRODUCTS (ADMIN) -->
+     <!-- PRODUCTS (ADMIN) -->
 <div id="viewProductsAdmin" class="card" style="display:none;">
   <div class="cardHeader">
     <h2>Products (Admin)</h2>
@@ -1130,21 +1130,23 @@
 
   <div id="paEditPanel" style="display:none; margin-top:10px;">
 
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+    <!-- Row 1: Product + Active -->
+    <div style="display:grid; grid-template-columns: 1fr 220px; gap:10px;">
       <div>
         <label class="subtle" style="display:block; margin-bottom:6px;">Product</label>
         <input id="paProductName" readonly />
       </div>
 
       <div>
-  <label class="subtle" style="display:block; margin-bottom:6px;">Active</label>
- <label style="display:flex; gap:10px; align-items:center; height:44px;">
-    <input id="paIsActive" type="checkbox" style="margin:0;" />
-    <span class="subtle">Active</span>
-  </label>
-</div>
+        <label class="subtle" style="display:block; margin-bottom:6px;">Active</label>
+        <label style="display:flex; gap:10px; align-items:center; height:44px;">
+          <input id="paIsActive" type="checkbox" style="margin:0;" />
+          <span class="subtle">Active</span>
+        </label>
+      </div>
+    </div>
 
-
+    <!-- Row 2: Kind / Currency / Price -->
     <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-top:10px;">
       <div>
         <label class="subtle" style="display:block; margin-bottom:6px;">Product kind</label>
@@ -1165,6 +1167,7 @@
       </div>
     </div>
 
+    <!-- Dynamic settings -->
     <div id="paDynamicBlock" style="margin-top:10px;">
       <div>
         <label class="subtle" style="display:block; margin-bottom:6px;">Edge Function Name</label>
