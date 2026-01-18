@@ -8,6 +8,8 @@ import { initFormulatedProductsManagement } from "./modules/formulatedProducts.j
 import { initAccountManagersManagement } from "./modules/accountManagers.js";
 import { initUserManagement } from "./modules/userManagement.js";
 import { initProductsAdmin } from "./modules/productsAdmin.js";
+import { initOrdersManagement } from "./modules/orders.js";
+
 
 
 console.log("EXACT Agents Portal loaded (v42)");
@@ -546,6 +548,29 @@ const paStaticNote = document.getElementById("paStaticNote");
   const umSearchBtn = document.getElementById("umSearchBtn");
   const umShowAllBtn = document.getElementById("umShowAllBtn");
 
+  // ORDERS UI
+
+  viewOrders: document.getElementById("viewOrders"),
+
+ordersMsg: document.getElementById("ordersMsg"),
+ordersListPanel: document.getElementById("ordersListPanel"),
+ordersSearch: document.getElementById("ordersSearch"),
+ordersSearchBtn: document.getElementById("ordersSearchBtn"),
+ordersShowAllBtn: document.getElementById("ordersShowAllBtn"),
+ordersStatusFilter: document.getElementById("ordersStatusFilter"),
+ordersList: document.getElementById("ordersList"),
+
+ordersDetailPanel: document.getElementById("ordersDetailPanel"),
+ordersDetailTitle: document.getElementById("ordersDetailTitle"),
+ordersDetailMeta: document.getElementById("ordersDetailMeta"),
+ordersBackBtn: document.getElementById("ordersBackBtn"),
+ordersRefreshBtn: document.getElementById("ordersRefreshBtn"),
+ordersGeneratePackBtn: document.getElementById("ordersGeneratePackBtn"),
+
+ordersBatchSummary: document.getElementById("ordersBatchSummary"),
+ordersArtifactsList: document.getElementById("ordersArtifactsList"),
+
+
   // =========================================================
   // BLOCK: STATE
   // =========================================================
@@ -711,6 +736,13 @@ const paStaticNote = document.getElementById("paStaticNote");
     },
     helpers: { show, confirmExact }
   });
+
+  const ordersModule = initOrdersManagement({
+  supabaseClient,
+  ui,
+  helpers,
+  state: { currentProfile }
+});
 
   const userMgmtModule = initUserManagement({
     supabaseClient,
@@ -1081,6 +1113,7 @@ if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
       labs: viewLabMgmt,
       formulary: viewFormulary,
       productsAdmin: viewProductsAdmin,
+      orders: ui.viewOrders,
       userMgmt: viewUserMgmt
     },
     show,
@@ -1122,6 +1155,7 @@ if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
         await productTypesModule.loadProductTypes();
       },
       labs: () => labsModule.resetLabsScreen(),
+      orders: async () => { await ordersModule.enter(); },
       userMgmt: () => userMgmtModule.resetUserScreen(),
       formulary: () => {
         setActiveFormularyTab("ingredients");
