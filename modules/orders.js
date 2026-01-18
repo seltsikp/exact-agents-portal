@@ -1,0 +1,369 @@
+// modules/orders.js
+export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
+  const {
+    show,
+    escapeHtml,
+    formatDateShort,
+  } = helpers;
+
+  const {
+    // view containers
+    viewOrders,
+
+    // list UI
+    ordersMsg,
+    ordersListPanel,
+    ordersSearch,
+    ordersSearchBtn,
+    ordersShowAllBtn,
+    ordersStatusFilter,
+    ordersList,
+
+    // detail UI
+    ordersDetailPanel,
+    ordersDetailTitle,
+    ordersDetailMeta,
+    ordersBackBtn,
+    ordersRefreshBtn,
+    ordersGeneratePackBtn,
+
+    // outputs
+    ordersBatchSummary,
+    ordersArtifactsList,
+  } = ui;
+
+  let selectedOrderId = null;
+
+  const setMsg = (t) => { if (ordersMsg) ordersMsg.textContent = t || ""; };
+
+  function resetScreen() {
+    setMsg("");
+    selectedOrderId = null;
+
+    if (ordersList) ordersList.innerHTML = "";
+    if (ordersBatchSummary) ordersBatchSummary.innerHTML = "";
+    if (ordersArtifactsList) ordersArtifactsList.innerHTML = "";
+
+    show(ordersListPanel, true);
+    show(ordersDetailPanel, false);
+  }
+
+  function renderOrderRow(o) {
+    const code = escapeHtml(o.order_code || o.id);
+    const status = escapeHtml(o.status || "—");
+    const created = o.created_at ? escapeHtml(formatDateShort(o.created_at)) : "—";
+
+    // customer name may vary; use safe fallback
+    const cust = o.customer?.first_name || o.customer?.last_name
+      ? `${o.customer?.first_name || ""} ${o.customer?.last_name || ""}`.trim()
+      : "—";
+
+    return `
+      <div class="customer-row" data-order-id="${escapeHtml(o.id)}" style="cursor:pointer;">
+        <div style="font-weight:800;">${code}</div>
+        <div class="subtle" style="margin-top:4px;">
+          Status: ${status} • Created: ${created} • Customer: ${escapeHtml(cust)}
+        </div>
+      </div>
+    `;
+  }
+
+  async function loadOrders({ mode }) {
+    setMsg("Loading orders…");
+
+    const status = String(ordersStatusFilter?.value || "").trim();
+    const q = String(ordersSearch?.value || "").trim();
+
+    let query = supabaseClient
+      .from("orders")
+      .select(`
+        id,
+        order_code,
+        status,
+        created_at,
+        customer_id,
+        customer:customers (
+          id,
+          first_name,
+          last_name
+        )
+      `)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (status) query = query.eq("status", status);
+
+    if (mode === "search" && q) {
+      query = query.ilike("order_code", `%${q}%`);
+    }
+
+    const { data, error } = await query;
+    if (error) { setMsg("Load failed: " + error.message); return; }
+
+    const rows = data || [];
+    if (ordersList) ordersList.innerHTML = rows.map(renderOrderRow).join("");
+    setMsg(`Loaded ${rows.length} orders.`);
+  }
+
+  async function openOrder(orderId) {
+    selectedOrderId = orderId;
+    setMsg("");
+
+    show(ordersListPanel, false);
+    show(ordersDetailPanel, true);
+
+    // Load order core fields (we only display some)
+    const { data: o, error } = await supabaseClient
+      .from("orders")
+      .select(`
+        id,
+        order_code,
+        status,
+        created_at,
+        dispatch_to,
+        ship_to_name,
+        ship_to_address,
+        ship_to_city,
+        ship_to_country,
+        lab_id
+      `)
+      .eq("id", orderId)
+      .maybeSingle();
+
+    if (error) { setMsg("Load order failed: " + error.message); return; }
+    if (!o) { setMsg("Order not found."); return; }
+
+    if (ordersDetailTitle) {
+      ordersDetailTitle.textContent = `${o.order_code || "Order"} — ${o.status || ""}`;
+    }
+
+    if (ordersDetailMeta) {
+      const parts = [];
+      parts.push(`Order ID: ${o.id}`);
+      if (o.dispatch_to) parts.push(`Dispatch: ${o.dispatch_to}`);
+      if (o.lab_id) parts.push(`Lab: ${o.lab_id}`);
+      if (o.ship_to_name) parts.push(`Ship-to: ${o.ship_to_name}`);
+      if (o.ship_to_city) parts.push(`City: ${o.ship_to_city}`);
+      if (o.ship_to_country) parts.push(`Country: ${o.ship_to_country}`);
+      ordersDetailMeta.textContent = parts.join(" | ");
+    }
+
+    await loadBatchSummaryFromLatestFormulationJson(orderId);
+    await loadArtifacts(orderId);
+  }
+
+  async function loadBatchSummaryFromLatestFormulationJson(orderId) {
+    if (!ordersBatchSummary) return;
+    ordersBatchSummary.innerHTML = `<div class="subtle">Loading…</div>`;
+
+    // We use the latest formulation_json artifact (format=json) and read content_json.formulas[]
+    const { data, error } = await supabaseClient
+      .from("order_artifacts")
+      .select("artifact_type, format, version, content_json, created_at")
+      .eq("order_id", orderId)
+      .eq("artifact_type", "formulation_json")
+      .order("version", { ascending: false })
+      .limit(1);
+
+    if (error) { setMsg("Load formulation_json failed: " + error.message); return; }
+
+    const row = (data || [])[0];
+    if (!row || !row.content_json) {
+      ordersBatchSummary.innerHTML = `<div class="subtle">No formulation_json yet (generate pack to create).</div>`;
+      return;
+    }
+
+    const cj = row.content_json;
+    const formulas = Array.isArray(cj.formulas) ? cj.formulas : [];
+
+    if (!formulas.length) {
+      ordersBatchSummary.innerHTML = `<div class="subtle">formulation_json has no formulas[] (unexpected).</div>`;
+      return;
+    }
+
+    const header = `
+      <div class="customer-row" style="font-weight:800;">
+        <div>formula_key</div>
+        <div>exact_batch_code</div>
+        <div>fill_ml</div>
+        <div>process_profile</div>
+      </div>
+    `;
+
+    const body = formulas.map(f => {
+      const fk = escapeHtml(f.formula_key || "—");
+      const batch = escapeHtml(f.batch?.exact_batch_code || "—");
+      const fill = escapeHtml(String(f.packaging?.fill_volume_ml ?? "—"));
+      const proc = escapeHtml(f.manufacturing?.process_profile || "—");
+
+      return `
+        <div class="customer-row">
+          <div>${fk}</div>
+          <div>${batch}</div>
+          <div>${fill}</div>
+          <div>${proc}</div>
+        </div>
+      `;
+    }).join("");
+
+    ordersBatchSummary.innerHTML = header + body;
+  }
+
+  async function loadArtifacts(orderId) {
+    if (!ordersArtifactsList) return;
+    ordersArtifactsList.innerHTML = `<div class="subtle">Loading…</div>`;
+
+    const { data, error } = await supabaseClient
+      .from("order_artifacts")
+      .select("id, artifact_type, format, version, created_at")
+      .eq("order_id", orderId)
+      .order("version", { ascending: false });
+
+    if (error) { setMsg("Load artifacts failed: " + error.message); return; }
+
+    const rows = data || [];
+    if (!rows.length) {
+      ordersArtifactsList.innerHTML = `<div class="subtle">No artifacts yet.</div>`;
+      return;
+    }
+
+    // Render with per-row "Open" button using get_order_artifact_signed_url(order_id, artifact_type, version)
+    const items = rows.map(a => {
+      const created = a.created_at ? escapeHtml(formatDateShort(a.created_at)) : "—";
+      return `
+        <div class="customer-row" style="align-items:center;">
+          <div style="font-weight:800;">${escapeHtml(a.artifact_type)}</div>
+          <div class="subtle">v${escapeHtml(String(a.version))} • ${created}</div>
+          <div style="text-align:right;">
+            <button type="button"
+              class="btn-primary"
+              data-open-artifact="1"
+              data-artifact-type="${escapeHtml(a.artifact_type)}"
+              data-artifact-version="${escapeHtml(String(a.version))}">
+              Open
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    ordersArtifactsList.innerHTML = items;
+  }
+
+  async function openArtifactSignedUrl(artifactType, version) {
+    if (!selectedOrderId) return;
+
+    const { data, error } = await supabaseClient.rpc("get_order_artifact_signed_url", {
+      p_order_id: selectedOrderId,
+      p_artifact_type: artifactType,
+      p_version: version
+    });
+
+    if (error) {
+      setMsg("Signed URL failed: " + error.message);
+      return;
+    }
+
+    // data should be a URL string (or JSON containing it). We handle both safely.
+    const url = typeof data === "string" ? data : (data?.url || data?.signed_url || null);
+    if (!url) {
+      setMsg("Signed URL returned no url.");
+      return;
+    }
+
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  async function generatePack() {
+    if (!selectedOrderId) return;
+
+    if (typeof window.exactGeneratePack !== "function") {
+      setMsg("Missing window.exactGeneratePack(orderId).");
+      return;
+    }
+
+    setMsg("Generating pack…");
+    try {
+      const result = await window.exactGeneratePack(selectedOrderId);
+
+      // Refresh panels
+      await loadBatchSummaryFromLatestFormulationJson(selectedOrderId);
+      await loadArtifacts(selectedOrderId);
+
+      const v = result?.version ?? result?.pack_version ?? null;
+      setMsg(v ? `Pack generated (v${v}).` : "Pack generated.");
+    } catch (e) {
+      setMsg("Generate pack failed: " + (e?.message || String(e)));
+    }
+  }
+
+  function bindOnce() {
+    if (ordersList && ordersList.dataset.bound !== "1") {
+      ordersList.addEventListener("click", (e) => {
+        const row = e.target.closest("[data-order-id]");
+        if (!row) return;
+        const id = row.getAttribute("data-order-id");
+        if (!id) return;
+        openOrder(id);
+      });
+      ordersList.dataset.bound = "1";
+    }
+
+    if (ordersShowAllBtn && ordersShowAllBtn.dataset.bound !== "1") {
+      ordersShowAllBtn.addEventListener("click", () => loadOrders({ mode: "all" }));
+      ordersShowAllBtn.dataset.bound = "1";
+    }
+
+    if (ordersSearchBtn && ordersSearchBtn.dataset.bound !== "1") {
+      ordersSearchBtn.addEventListener("click", () => loadOrders({ mode: "search" }));
+      ordersSearchBtn.dataset.bound = "1";
+    }
+
+    if (ordersBackBtn && ordersBackBtn.dataset.bound !== "1") {
+      ordersBackBtn.addEventListener("click", () => {
+        selectedOrderId = null;
+        show(ordersDetailPanel, false);
+        show(ordersListPanel, true);
+        setMsg("");
+      });
+      ordersBackBtn.dataset.bound = "1";
+    }
+
+    if (ordersRefreshBtn && ordersRefreshBtn.dataset.bound !== "1") {
+      ordersRefreshBtn.addEventListener("click", () => {
+        if (selectedOrderId) openOrder(selectedOrderId);
+      });
+      ordersRefreshBtn.dataset.bound = "1";
+    }
+
+    if (ordersGeneratePackBtn && ordersGeneratePackBtn.dataset.bound !== "1") {
+      ordersGeneratePackBtn.addEventListener("click", generatePack);
+      ordersGeneratePackBtn.dataset.bound = "1";
+    }
+
+    if (ordersArtifactsList && ordersArtifactsList.dataset.bound !== "1") {
+      ordersArtifactsList.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-open-artifact='1']");
+        if (!btn) return;
+        const t = btn.getAttribute("data-artifact-type");
+        const vStr = btn.getAttribute("data-artifact-version");
+        const v = Number(vStr);
+        if (!t || !Number.isFinite(v)) return;
+        openArtifactSignedUrl(t, v);
+      });
+      ordersArtifactsList.dataset.bound = "1";
+    }
+  }
+
+  bindOnce();
+
+  return {
+    reset: resetScreen,
+    enter: async () => {
+      // Force agent_id to current agent (agreed)
+      // (We’re not creating orders yet in this step; this is here as a guardrail for later.)
+      resetScreen();
+      setMsg("Use Search or Show all.");
+    }
+  };
+}
