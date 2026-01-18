@@ -526,50 +526,39 @@ const paStaticNote = document.getElementById("paStaticNote");
   const amgrNotes = document.getElementById("amgrNotes");
   const amgrSaveBtn = document.getElementById("amgrSaveBtn");
 
-  // User Mgmt UI
-  const umViewBtn = document.getElementById("umViewBtn");
-  const umClearBtn = document.getElementById("umClearBtn");
-  const umMsg = document.getElementById("umMsg");
-  const umViewPanel = document.getElementById("umViewPanel");
-  const umEditPanel = document.getElementById("umEditPanel");
-  const umList = document.getElementById("umList");
+// ==============================
+// USER MANAGEMENT UI
+// ==============================
+const umSaveBtn = document.getElementById("umSaveBtn");
+const umCancelBtn = document.getElementById("umCancelBtn");
 
-  const umFullName = document.getElementById("umFullName");
-  const umEmail = document.getElementById("umEmail");
-  const umPassword = document.getElementById("umPassword");
-  const umRole = document.getElementById("umRole");
-  const umStatus = document.getElementById("umStatus");
-  const umPerms = document.getElementById("umPerms");
-  const umSaveBtn = document.getElementById("umSaveBtn");
-  const umCancelBtn = document.getElementById("umCancelBtn");
+const umAddBtn = document.getElementById("umAddBtn");
+const umSearch = document.getElementById("umSearch");
+const umSearchBtn = document.getElementById("umSearchBtn");
+const umShowAllBtn = document.getElementById("umShowAllBtn");
 
-  const umAddBtn = document.getElementById("umAddBtn");
-  const umSearch = document.getElementById("umSearch");
-  const umSearchBtn = document.getElementById("umSearchBtn");
-  const umShowAllBtn = document.getElementById("umShowAllBtn");
+// ==============================
+// ORDERS UI
+// ==============================
+const viewOrders = document.getElementById("viewOrders");
 
-  // ORDERS UI
+const ordersMsg = document.getElementById("ordersMsg");
+const ordersListPanel = document.getElementById("ordersListPanel");
+const ordersSearch = document.getElementById("ordersSearch");
+const ordersSearchBtn = document.getElementById("ordersSearchBtn");
+const ordersShowAllBtn = document.getElementById("ordersShowAllBtn");
+const ordersStatusFilter = document.getElementById("ordersStatusFilter");
+const ordersList = document.getElementById("ordersList");
 
-  viewOrders: document.getElementById("viewOrders"),
+const ordersDetailPanel = document.getElementById("ordersDetailPanel");
+const ordersDetailTitle = document.getElementById("ordersDetailTitle");
+const ordersDetailMeta = document.getElementById("ordersDetailMeta");
+const ordersBackBtn = document.getElementById("ordersBackBtn");
+const ordersRefreshBtn = document.getElementById("ordersRefreshBtn");
+const ordersGeneratePackBtn = document.getElementById("ordersGeneratePackBtn");
 
-ordersMsg: document.getElementById("ordersMsg"),
-ordersListPanel: document.getElementById("ordersListPanel"),
-ordersSearch: document.getElementById("ordersSearch"),
-ordersSearchBtn: document.getElementById("ordersSearchBtn"),
-ordersShowAllBtn: document.getElementById("ordersShowAllBtn"),
-ordersStatusFilter: document.getElementById("ordersStatusFilter"),
-ordersList: document.getElementById("ordersList"),
-
-ordersDetailPanel: document.getElementById("ordersDetailPanel"),
-ordersDetailTitle: document.getElementById("ordersDetailTitle"),
-ordersDetailMeta: document.getElementById("ordersDetailMeta"),
-ordersBackBtn: document.getElementById("ordersBackBtn"),
-ordersRefreshBtn: document.getElementById("ordersRefreshBtn"),
-ordersGeneratePackBtn: document.getElementById("ordersGeneratePackBtn"),
-
-ordersBatchSummary: document.getElementById("ordersBatchSummary"),
-ordersArtifactsList: document.getElementById("ordersArtifactsList"),
-
+const ordersBatchSummary = document.getElementById("ordersBatchSummary");
+const ordersArtifactsList = document.getElementById("ordersArtifactsList");
 
   // =========================================================
   // BLOCK: STATE
@@ -737,12 +726,42 @@ ordersArtifactsList: document.getElementById("ordersArtifactsList"),
     helpers: { show, confirmExact }
   });
 
-  const ordersModule = initOrdersManagement({
+const ordersModule = initOrdersManagement({
   supabaseClient,
-  ui,
-  helpers,
-  state: { currentProfile }
+  ui: {
+    viewOrders,
+
+    ordersMsg,
+    ordersListPanel,
+    ordersSearch,
+    ordersSearchBtn,
+    ordersShowAllBtn,
+    ordersStatusFilter,
+    ordersList,
+
+    ordersDetailPanel,
+    ordersDetailTitle,
+    ordersDetailMeta,
+    ordersBackBtn,
+    ordersRefreshBtn,
+    ordersGeneratePackBtn,
+
+    ordersBatchSummary,
+    ordersArtifactsList,
+  },
+  helpers: {
+    show,
+    escapeHtml,
+    formatDateShort,
+    confirmExact,
+  },
+  state: {
+    // IMPORTANT: currentProfile changes after login,
+    // so give the module a getter instead of a fixed snapshot
+    get currentProfile() { return currentProfile; }
+  }
 });
+
 
   const userMgmtModule = initUserManagement({
     supabaseClient,
@@ -1113,7 +1132,7 @@ if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
       labs: viewLabMgmt,
       formulary: viewFormulary,
       productsAdmin: viewProductsAdmin,
-      orders: ui.viewOrders,
+      orders: viewOrders,
       userMgmt: viewUserMgmt
     },
     show,
