@@ -2,14 +2,18 @@
 export function initProductsAdmin({ supabaseClient, ui, helpers }) {
   const { show, escapeHtml, confirmExact } = helpers;
 
-  const {
-    paViewBtn, paClearBtn, paMsg,
-    paListPanel, paList,
-    paEditPanel,
-    paProductName, paEdgeFn, paSubject, paBody,
-    paSendEmail, paIncludeLinks, paIncludeAttachments,
-    paSaveBtn, paCancelBtn
-  } = ui;
+const {
+  paViewBtn, paClearBtn, paMsg,
+  paListPanel, paList,
+  paEditPanel,
+  paProductName,
+  paKind, paCurrency, paUnitPrice, paIsActive,
+  paDynamicBlock, paStaticNote,
+  paEdgeFn, paSubject, paBody,
+  paSendEmail, paIncludeLinks, paIncludeAttachments,
+  paSaveBtn, paCancelBtn
+} = ui;
+
 
   let selectedProduct = null; // {id, product_code, name}
 
@@ -29,8 +33,16 @@ export function initProductsAdmin({ supabaseClient, ui, helpers }) {
     if (paSendEmail) paSendEmail.checked = true;
     if (paIncludeLinks) paIncludeLinks.checked = true;
     if (paIncludeAttachments) paIncludeAttachments.checked = false;
-
     if (paClearBtn) paClearBtn.style.display = "none";
+
+    if (paKind) paKind.value = "static";
+    if (paCurrency) paCurrency.value = "AED";
+    if (paUnitPrice) paUnitPrice.value = "";
+    if (paIsActive) paIsActive.checked = true;
+    
+    show(paDynamicBlock, true);
+    show(paStaticNote, false);
+
   }
 
   async function loadProductsList() {
@@ -38,7 +50,7 @@ export function initProductsAdmin({ supabaseClient, ui, helpers }) {
 
     const { data: products, error } = await supabaseClient
       .from("products")
-      .select("id, product_code, name")
+     .select("id, product_code, name, product_kind, currency_code, unit_price_aed, is_active")
       .order("created_at", { ascending: false });
 
     if (error) { setMsg("Load failed: " + error.message); return; }
@@ -48,6 +60,7 @@ export function initProductsAdmin({ supabaseClient, ui, helpers }) {
 
     paList.innerHTML = rows.map(p => {
       const label = `${escapeHtml(p.product_code || "")} — ${escapeHtml(p.name || "")}`.trim();
+      const meta = `${escapeHtml(p.product_kind || "")} | ${escapeHtml(p.currency_code || "AED")} ${escapeHtml(p.unit_price_aed ?? "")} | ${p.is_active ? "active" : "inactive"}`;
       return `
         <div class="customer-row" data-id="${p.id}">
           <div style="font-weight:700;">${label || escapeHtml(p.id)}</div>
@@ -73,6 +86,29 @@ export function initProductsAdmin({ supabaseClient, ui, helpers }) {
 
     if (paProductName) paProductName.value =
       `${product.product_code || ""} — ${product.name || ""}`.trim();
+
+    if (paKind) paKind.value = product.product_kind || "static";
+if (paCurrency) paCurrency.value = product.currency_code || "AED";
+if (paUnitPrice) paUnitPrice.value = (product.unit_price_aed ?? "") === null ? "" : String(product.unit_price_aed ?? "");
+if (paIsActive) paIsActive.checked = product.is_active ?? true;
+
+const isDynamic = (paKind?.value === "dynamic");
+show(paDynamicBlock, isDynamic);
+show(paStaticNote, !isDynamic);
+
+if (paKind && paKind.dataset.bound !== "1") {
+  paKind.addEventListener("change", () => {
+    const dyn = (paKind.value === "dynamic");
+    show(paDynamicBlock, dyn);
+    show(paStaticNote, !dyn);
+  });
+  paKind.dataset.bound = "1";
+}
+const isDynamicNow = (product.product_kind === "dynamic");
+if (!isDynamicNow) {
+  setMsg("");
+  return;
+}
 
     // Load existing settings (admin-only RLS)
     setMsg("Loading execution settings…");
