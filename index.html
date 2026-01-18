@@ -1129,16 +1129,76 @@
   </div>
 
   <div id="paEditPanel" style="display:none; margin-top:10px;">
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-      <div>
-        <label class="subtle" style="display:block; margin-bottom:6px;">Product</label>
-        <input id="paProductName" readonly />
-      </div>
-      <div>
-        <label class="subtle" style="display:block; margin-bottom:6px;">Edge Function Name</label>
-        <input id="paEdgeFn" placeholder="exact_trio_v1_generate_pack" />
-      </div>
-    </div>
+   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+  <div>
+    <label class="subtle" style="display:block; margin-bottom:6px;">Product</label>
+    <input id="paProductName" readonly />
+  </div>
+
+  <div>
+    <label class="subtle" style="display:block; margin-bottom:6px;">Active</label>
+    <label style="display:flex; gap:8px; align-items:center;">
+      <input id="paIsActive" type="checkbox" /> is_active
+    </label>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-top:10px;">
+  <div>
+    <label class="subtle" style="display:block; margin-bottom:6px;">Product kind</label>
+    <select id="paKind">
+      <option value="static">static (off-the-shelf)</option>
+      <option value="dynamic">dynamic (workflow)</option>
+    </select>
+  </div>
+
+  <div>
+    <label class="subtle" style="display:block; margin-bottom:6px;">Currency</label>
+    <input id="paCurrency" placeholder="AED" />
+  </div>
+
+  <div>
+    <label class="subtle" style="display:block; margin-bottom:6px;">Unit price</label>
+    <input id="paUnitPrice" placeholder="0.00" />
+  </div>
+</div>
+
+<div id="paDynamicBlock" style="margin-top:10px;">
+  <div>
+    <label class="subtle" style="display:block; margin-bottom:6px;">Edge Function Name</label>
+    <input id="paEdgeFn" placeholder="exact_trio_v1_generate_pack" />
+  </div>
+
+  <div style="margin-top:10px;">
+    <label class="subtle" style="display:block; margin-bottom:6px;">Lab Email Subject</label>
+    <input id="paSubject" />
+  </div>
+
+  <div style="margin-top:10px;">
+    <label class="subtle" style="display:block; margin-bottom:6px;">Lab Email Body (plain text / markdown)</label>
+    <textarea id="paBody" rows="10"></textarea>
+    <p class="subtle" style="margin:6px 0 0 0;">
+      Placeholders: {{order_code}}, {{customer_name}}, {{lab_name}}, {{dispatch_name}}, {{dispatch_address}}, {{artifact_links}}
+    </p>
+  </div>
+
+  <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:10px;">
+    <label style="display:flex; gap:8px; align-items:center;">
+      <input id="paSendEmail" type="checkbox" /> Send lab email
+    </label>
+    <label style="display:flex; gap:8px; align-items:center;">
+      <input id="paIncludeLinks" type="checkbox" /> Include signed links
+    </label>
+    <label style="display:flex; gap:8px; align-items:center;">
+      <input id="paIncludeAttachments" type="checkbox" /> Include attachments
+    </label>
+  </div>
+</div>
+
+<div id="paStaticNote" class="subtle" style="display:none; margin-top:10px;">
+  Static product: no Edge Function / lab email settings required.
+</div>
+
 
     <div style="margin-top:10px;">
       <label class="subtle" style="display:block; margin-bottom:6px;">Lab Email Subject</label>
