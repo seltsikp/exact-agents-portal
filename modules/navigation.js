@@ -53,6 +53,7 @@ function renderMenuForRole(role, permissions = {}) {
 
   // Admin gets everything
   if (role === "admin") {
+    addMenuBtn("Orders", "orders");
     addMenuBtn("Agents", "agents");
     addMenuBtn("Account Managers", "accountManagers");
     addMenuBtn("Customers", "customers");
@@ -73,6 +74,8 @@ function renderMenuForRole(role, permissions = {}) {
   if (p.formulary) addMenuBtn("Formulary", "formulary");
   if (p.labs) addMenuBtn("Labs", "labs");
   if (p.agents) addMenuBtn("Agents", "agents");
+  if (p.orders) addMenuBtn("Orders", "orders");
+
 
   setActiveView("welcome");
 }
