@@ -1,215 +1,252 @@
-table_schema,table_name,ordinal_position,column_name,data_type,is_nullable,column_default
-public,account_manager_clinics,1,id,uuid,NO,gen_random_uuid()
-public,account_manager_clinics,2,account_manager_id,uuid,NO,null
-public,account_manager_clinics,3,agent_id,uuid,NO,null
-public,account_manager_clinics,4,commission_pct,numeric,NO,null
-public,account_manager_clinics,5,created_at,timestamp with time zone,YES,now()
-public,account_managers,1,id,uuid,NO,gen_random_uuid()
-public,account_managers,2,first_name,text,NO,null
-public,account_managers,3,last_name,text,NO,null
-public,account_managers,4,email,text,NO,null
-public,account_managers,5,phone,text,YES,null
-public,account_managers,6,address,text,YES,null
-public,account_managers,7,status,text,NO,'active'::text
-public,account_managers,8,notes,text,YES,null
-public,account_managers,9,created_at,timestamp with time zone,YES,now()
-public,account_managers,10,am_code,text,NO,null
-public,admin_users,1,auth_user_id,uuid,NO,null
-public,agent_users,1,id,uuid,NO,gen_random_uuid()
-public,agent_users,2,agent_id,uuid,YES,null
-public,agent_users,3,auth_user_id,uuid,NO,null
-public,agent_users,4,full_name,text,YES,null
-public,agent_users,5,email,text,NO,null
-public,agent_users,6,role,text,NO,'agent'::text
-public,agent_users,7,status,text,NO,'active'::text
-public,agent_users,8,created_at,timestamp with time zone,NO,now()
-public,agent_users,9,permissions,jsonb,NO,'{}'::jsonb
-public,agents,1,id,uuid,NO,gen_random_uuid()
-public,agents,2,name,text,NO,null
-public,agents,3,type,text,YES,null
-public,agents,4,country,text,YES,null
-public,agents,5,city,text,YES,null
-public,agents,6,status,text,NO,'active'::text
-public,agents,7,created_at,timestamp with time zone,NO,now()
-public,agents,8,agent_code,character varying,YES,null
-public,agents,9,default_lab_id,uuid,YES,null
-public,bases,1,id,uuid,NO,gen_random_uuid()
-public,bases,2,base_code,text,NO,null
-public,bases,3,name,text,NO,null
-public,bases,4,description,text,YES,null
-public,bases,5,created_at,timestamp with time zone,NO,now()
-public,bases,6,updated_at,timestamp with time zone,NO,now()
-public,boosters,1,id,uuid,NO,gen_random_uuid()
-public,boosters,2,booster_code,text,NO,null
-public,boosters,3,name,text,NO,null
-public,boosters,4,description,text,YES,null
-public,boosters,5,created_at,timestamp with time zone,NO,now()
-public,boosters,6,updated_at,timestamp with time zone,NO,now()
-public,customer_code_counters,1,month_key,text,NO,null
-public,customer_code_counters,2,last_seq,integer,NO,null
-public,customer_month_counter,1,ym,text,NO,null
-public,customer_month_counter,2,last_seq,integer,NO,null
-public,customers,1,id,uuid,NO,gen_random_uuid()
-public,customers,2,agent_id,uuid,NO,null
-public,customers,3,first_name,text,NO,null
-public,customers,4,last_name,text,NO,null
-public,customers,5,email,text,YES,null
-public,customers,6,phone,text,YES,null
-public,customers,7,created_at,timestamp with time zone,NO,now()
-public,customers,8,customer_code,text,YES,null
-public,customers,9,date_of_birth,date,NO,null
-public,customers,10,gender,text,NO,null
-public,formula_items,1,id,uuid,NO,gen_random_uuid()
-public,formula_items,2,formula_id,uuid,NO,null
-public,formula_items,3,ingredient_id,uuid,NO,null
-public,formula_items,4,pct,numeric,NO,0
-public,formula_items,5,sort_order,integer,NO,0
-public,formula_items,6,created_at,timestamp with time zone,NO,now()
-public,formula_items,7,updated_at,timestamp with time zone,NO,now()
-public,formulas,1,id,uuid,NO,gen_random_uuid()
-public,formulas,2,code,text,NO,null
-public,formulas,3,name,text,NO,null
-public,formulas,4,type,USER-DEFINED,NO,null
-public,formulas,5,notes,text,YES,null
-public,formulas,6,created_at,timestamp with time zone,NO,now()
-public,formulas,7,updated_at,timestamp with time zone,NO,now()
-public,formulated_product_ingredients,1,id,uuid,NO,gen_random_uuid()
-public,formulated_product_ingredients,2,product_id,uuid,NO,null
-public,formulated_product_ingredients,3,ingredient_id,uuid,NO,null
-public,formulated_product_ingredients,4,pct,numeric,NO,null
-public,formulated_product_ingredients,5,sort_order,integer,NO,1
-public,formulated_product_ingredients,6,created_at,timestamp with time zone,NO,now()
-public,formulated_product_items,1,id,uuid,NO,gen_random_uuid()
-public,formulated_product_items,2,formulated_product_id,uuid,NO,null
-public,formulated_product_items,3,ingredient_id,uuid,NO,null
-public,formulated_product_items,4,pct,numeric,NO,null
-public,formulated_product_items,5,sort_order,integer,NO,0
-public,formulated_product_items,6,phase,text,YES,null
-public,formulated_product_items,7,created_at,timestamp with time zone,NO,now()
-public,formulated_product_items,8,updated_at,timestamp with time zone,NO,now()
-public,formulated_products,1,id,uuid,NO,gen_random_uuid()
-public,formulated_products,2,code,text,NO,null
-public,formulated_products,3,name,text,NO,null
-public,formulated_products,4,type,text,NO,null
-public,formulated_products,5,category,text,YES,null
-public,formulated_products,6,notes,text,YES,null
-public,formulated_products,7,is_active,boolean,NO,true
-public,formulated_products,8,created_at,timestamp with time zone,NO,now()
-public,formulated_products,9,updated_at,timestamp with time zone,NO,now()
-public,formulated_products,10,product_code,text,YES,null
-public,formulated_products,11,product_type_id,uuid,NO,null
-public,ingredients,1,id,uuid,NO,gen_random_uuid()
-public,ingredients,2,psi_number,text,NO,null
-public,ingredients,3,inci_name,text,NO,null
-public,ingredients,4,short_description,text,YES,null
-public,ingredients,5,created_at,timestamp with time zone,NO,now()
-public,labs,1,id,uuid,NO,gen_random_uuid()
-public,labs,2,name,text,NO,null
-public,labs,3,orders_email,text,NO,null
-public,labs,4,admin_email,text,YES,null
-public,labs,5,phone,text,YES,null
-public,labs,6,address,text,YES,null
-public,labs,7,shipping_address,text,YES,null
-public,labs,8,created_at,timestamp with time zone,NO,now()
-public,labs,9,updated_at,timestamp with time zone,NO,now()
-public,labs,10,lab_code,text,YES,null
-public,order_artifacts,1,id,uuid,NO,gen_random_uuid()
-public,order_artifacts,2,order_id,uuid,NO,null
-public,order_artifacts,3,artifact_type,text,NO,null
-public,order_artifacts,4,format,text,NO,null
-public,order_artifacts,5,version,integer,NO,1
-public,order_artifacts,6,content_json,jsonb,YES,null
-public,order_artifacts,7,storage_bucket,text,YES,null
-public,order_artifacts,8,storage_path,text,YES,null
-public,order_artifacts,9,sha256,text,YES,null
-public,order_artifacts,10,created_at,timestamp with time zone,NO,now()
-public,order_batches,1,id,uuid,NO,gen_random_uuid()
-public,order_batches,2,order_id,uuid,NO,null
-public,order_batches,3,formula_key,text,NO,null
-public,order_batches,4,batch_code,text,NO,null
-public,order_batches,5,lab_batch_code,text,YES,null
-public,order_batches,6,created_at,timestamp with time zone,NO,now()
-public,order_events,1,id,uuid,NO,gen_random_uuid()
-public,order_events,2,order_id,uuid,NO,null
-public,order_events,3,event_type,text,NO,null
-public,order_events,4,message,text,YES,null
-public,order_events,5,meta,jsonb,NO,'{}'::jsonb
-public,order_events,6,created_at,timestamp with time zone,NO,now()
-public,order_events,7,created_by,uuid,YES,null
-public,order_items,1,id,uuid,NO,gen_random_uuid()
-public,order_items,2,order_id,uuid,NO,null
-public,order_items,3,product_id,uuid,NO,null
-public,order_items,4,product_code_snapshot,text,NO,null
-public,order_items,5,product_name_snapshot,text,NO,null
-public,order_items,6,product_kind_snapshot,text,NO,null
-public,order_items,7,unit_price,numeric,NO,0
-public,order_items,8,quantity,integer,NO,1
-public,order_items,9,line_total,numeric,NO,0
-public,order_items,10,notes,text,YES,null
-public,order_items,11,created_at,timestamp with time zone,NO,now()
-public,orders,1,id,uuid,NO,gen_random_uuid()
-public,orders,2,order_code,text,NO,null
-public,orders,3,agent_id,uuid,NO,null
-public,orders,4,customer_id,uuid,NO,null
-public,orders,5,status,text,NO,'draft'::text
-public,orders,6,placed_at,timestamp with time zone,YES,null
-public,orders,7,cancelled_at,timestamp with time zone,YES,null
-public,orders,8,cancel_reason,text,YES,null
-public,orders,9,dispatch_to,text,NO,'customer'::text
-public,orders,10,ship_to_name,text,NO,null
-public,orders,11,ship_to_phone,text,YES,null
-public,orders,12,ship_to_email,text,YES,null
-public,orders,13,ship_to_address,text,NO,null
-public,orders,14,ship_to_city,text,YES,null
-public,orders,15,ship_to_country,text,YES,null
-public,orders,16,lab_id,uuid,YES,null
-public,orders,17,lab_name_snapshot,text,YES,null
-public,orders,18,lab_orders_email_snapshot,text,YES,null
-public,orders,19,lab_admin_email_snapshot,text,YES,null
-public,orders,20,lab_shipping_address_snapshot,text,YES,null
-public,orders,21,currency,text,NO,'AED'::text
-public,orders,22,subtotal,numeric,NO,0
-public,orders,23,tax,numeric,NO,0
-public,orders,24,total,numeric,NO,0
-public,orders,25,agent_notes,text,YES,null
-public,orders,26,internal_notes,text,YES,null
-public,orders,27,created_at,timestamp with time zone,NO,now()
-public,orders,28,updated_at,timestamp with time zone,NO,now()
-public,orders,29,customer_dob_snapshot,date,YES,null
-public,orders,30,customer_gender_snapshot,text,YES,null
-public,product_execution_settings,1,product_id,uuid,NO,null
-public,product_execution_settings,2,edge_function_name,text,NO,null
-public,product_execution_settings,3,lab_email_subject,text,NO,null
-public,product_execution_settings,4,lab_email_body_md,text,NO,null
-public,product_execution_settings,5,send_lab_email,boolean,NO,true
-public,product_execution_settings,6,include_signed_links,boolean,NO,true
-public,product_execution_settings,7,include_attachments,boolean,NO,false
-public,product_execution_settings,8,settings,jsonb,NO,'{}'::jsonb
-public,product_execution_settings,9,updated_at,timestamp with time zone,NO,now()
-public,product_types,1,id,uuid,NO,gen_random_uuid()
-public,product_types,2,type_code,text,YES,null
-public,product_types,3,type_name,text,NO,null
-public,product_types,4,created_at,timestamp with time zone,NO,now()
-public,product_types,5,type_code2,text,YES,null
-public,products,1,id,uuid,NO,gen_random_uuid()
-public,products,2,product_code,text,NO,null
-public,products,3,name,text,NO,null
-public,products,4,kind,text,NO,null
-public,products,5,is_active,boolean,NO,true
-public,products,6,description,text,YES,null
-public,products,7,notes,text,YES,null
-public,products,8,workflow_key,text,YES,null
-public,products,9,currency,text,NO,'AED'::text
-public,products,10,price,numeric,YES,null
-public,products,11,created_at,timestamp with time zone,NO,now()
-public,products,12,updated_at,timestamp with time zone,NO,now()
-public,products,13,product_kind,text,NO,'static'::text
-public,products,14,currency_code,text,NO,'AED'::text
-public,products,15,unit_price_aed,numeric,YES,null
-public,psi_ingredients,1,id,uuid,NO,gen_random_uuid()
-public,psi_ingredients,2,psi_number,text,NO,null
-public,psi_ingredients,3,inci_name,text,NO,null
-public,psi_ingredients,4,short_description,text,YES,null
-public,psi_ingredients,5,is_aqua,boolean,NO,false
-public,psi_ingredients,6,created_at,timestamp with time zone,NO,now()
-public,psi_ingredients,7,updated_at,timestamp with time zone,NO,now()
+table_schema,table_name,constraint_name,constraint_type,column_name,foreign_table_name,foreign_column_name
+public,account_manager_clinics,2200_29118_1_not_null,CHECK,null,null,null
+public,account_manager_clinics,2200_29118_2_not_null,CHECK,null,null,null
+public,account_manager_clinics,2200_29118_3_not_null,CHECK,null,null,null
+public,account_manager_clinics,2200_29118_4_not_null,CHECK,null,null,null
+public,account_manager_clinics,account_manager_clinics_commission_pct_check,CHECK,null,account_manager_clinics,commission_pct
+public,account_manager_clinics,account_manager_clinics_account_manager_id_fkey,FOREIGN KEY,account_manager_id,account_managers,id
+public,account_manager_clinics,account_manager_clinics_agent_id_fkey,FOREIGN KEY,agent_id,agents,id
+public,account_manager_clinics,account_manager_clinics_pkey,PRIMARY KEY,id,account_manager_clinics,id
+public,account_manager_clinics,account_manager_clinics_account_manager_id_agent_id_key,UNIQUE,account_manager_id,account_manager_clinics,account_manager_id
+public,account_manager_clinics,account_manager_clinics_account_manager_id_agent_id_key,UNIQUE,account_manager_id,account_manager_clinics,agent_id
+public,account_manager_clinics,account_manager_clinics_account_manager_id_agent_id_key,UNIQUE,agent_id,account_manager_clinics,account_manager_id
+public,account_manager_clinics,account_manager_clinics_account_manager_id_agent_id_key,UNIQUE,agent_id,account_manager_clinics,agent_id
+public,account_managers,2200_29106_10_not_null,CHECK,null,null,null
+public,account_managers,2200_29106_1_not_null,CHECK,null,null,null
+public,account_managers,2200_29106_2_not_null,CHECK,null,null,null
+public,account_managers,2200_29106_3_not_null,CHECK,null,null,null
+public,account_managers,2200_29106_4_not_null,CHECK,null,null,null
+public,account_managers,2200_29106_7_not_null,CHECK,null,null,null
+public,account_managers,account_managers_pkey,PRIMARY KEY,id,account_managers,id
+public,account_managers,account_managers_email_key,UNIQUE,email,account_managers,email
+public,admin_users,2200_29163_1_not_null,CHECK,null,null,null
+public,admin_users,admin_users_pkey,PRIMARY KEY,auth_user_id,admin_users,auth_user_id
+public,agent_users,2200_24142_1_not_null,CHECK,null,null,null
+public,agent_users,2200_24142_3_not_null,CHECK,null,null,null
+public,agent_users,2200_24142_5_not_null,CHECK,null,null,null
+public,agent_users,2200_24142_6_not_null,CHECK,null,null,null
+public,agent_users,2200_24142_7_not_null,CHECK,null,null,null
+public,agent_users,2200_24142_8_not_null,CHECK,null,null,null
+public,agent_users,2200_24142_9_not_null,CHECK,null,null,null
+public,agent_users,agent_users_agent_id_fkey,FOREIGN KEY,agent_id,agents,id
+public,agent_users,agent_users_auth_user_id_fkey,FOREIGN KEY,auth_user_id,null,null
+public,agent_users,agent_users_pkey,PRIMARY KEY,id,agent_users,id
+public,agent_users,agent_users_auth_user_id_key,UNIQUE,auth_user_id,agent_users,auth_user_id
+public,agents,2200_24132_1_not_null,CHECK,null,null,null
+public,agents,2200_24132_2_not_null,CHECK,null,null,null
+public,agents,2200_24132_6_not_null,CHECK,null,null,null
+public,agents,2200_24132_7_not_null,CHECK,null,null,null
+public,agents,agents_default_lab_id_fkey,FOREIGN KEY,default_lab_id,labs,id
+public,agents,agents_pkey,PRIMARY KEY,id,agents,id
+public,agents,agents_agent_code_key,UNIQUE,agent_code,agents,agent_code
+public,bases,2200_27790_1_not_null,CHECK,null,null,null
+public,bases,2200_27790_2_not_null,CHECK,null,null,null
+public,bases,2200_27790_3_not_null,CHECK,null,null,null
+public,bases,2200_27790_5_not_null,CHECK,null,null,null
+public,bases,2200_27790_6_not_null,CHECK,null,null,null
+public,bases,bases_pkey,PRIMARY KEY,id,bases,id
+public,bases,bases_base_code_key,UNIQUE,base_code,bases,base_code
+public,boosters,2200_27802_1_not_null,CHECK,null,null,null
+public,boosters,2200_27802_2_not_null,CHECK,null,null,null
+public,boosters,2200_27802_3_not_null,CHECK,null,null,null
+public,boosters,2200_27802_5_not_null,CHECK,null,null,null
+public,boosters,2200_27802_6_not_null,CHECK,null,null,null
+public,boosters,boosters_pkey,PRIMARY KEY,id,boosters,id
+public,boosters,boosters_booster_code_key,UNIQUE,booster_code,boosters,booster_code
+public,customer_code_counters,2200_26523_1_not_null,CHECK,null,null,null
+public,customer_code_counters,2200_26523_2_not_null,CHECK,null,null,null
+public,customer_code_counters,customer_code_counters_pkey,PRIMARY KEY,month_key,customer_code_counters,month_key
+public,customer_month_counter,2200_26506_1_not_null,CHECK,null,null,null
+public,customer_month_counter,2200_26506_2_not_null,CHECK,null,null,null
+public,customer_month_counter,customer_month_counter_pkey,PRIMARY KEY,ym,customer_month_counter,ym
+public,customers,2200_24165_10_not_null,CHECK,null,null,null
+public,customers,2200_24165_1_not_null,CHECK,null,null,null
+public,customers,2200_24165_2_not_null,CHECK,null,null,null
+public,customers,2200_24165_3_not_null,CHECK,null,null,null
+public,customers,2200_24165_4_not_null,CHECK,null,null,null
+public,customers,2200_24165_7_not_null,CHECK,null,null,null
+public,customers,2200_24165_9_not_null,CHECK,null,null,null
+public,customers,customers_gender_check,CHECK,null,customers,gender
+public,customers,customers_agent_id_fkey,FOREIGN KEY,agent_id,agents,id
+public,customers,customers_pkey,PRIMARY KEY,id,customers,id
+public,customers,customers_customer_code_key,UNIQUE,customer_code,customers,customer_code
+public,formula_items,2200_26602_1_not_null,CHECK,null,null,null
+public,formula_items,2200_26602_2_not_null,CHECK,null,null,null
+public,formula_items,2200_26602_3_not_null,CHECK,null,null,null
+public,formula_items,2200_26602_4_not_null,CHECK,null,null,null
+public,formula_items,2200_26602_5_not_null,CHECK,null,null,null
+public,formula_items,2200_26602_6_not_null,CHECK,null,null,null
+public,formula_items,2200_26602_7_not_null,CHECK,null,null,null
+public,formula_items,formula_items_pct_nonnegative,CHECK,null,formula_items,pct
+public,formula_items,formula_items_formula_id_fkey,FOREIGN KEY,formula_id,formulas,id
+public,formula_items,formula_items_ingredient_id_fkey,FOREIGN KEY,ingredient_id,psi_ingredients,id
+public,formula_items,formula_items_pkey,PRIMARY KEY,id,formula_items,id
+public,formula_items,formula_items_unique_per_formula,UNIQUE,formula_id,formula_items,ingredient_id
+public,formula_items,formula_items_unique_per_formula,UNIQUE,formula_id,formula_items,formula_id
+public,formula_items,formula_items_unique_per_formula,UNIQUE,ingredient_id,formula_items,formula_id
+public,formula_items,formula_items_unique_per_formula,UNIQUE,ingredient_id,formula_items,ingredient_id
+public,formulas,2200_26589_1_not_null,CHECK,null,null,null
+public,formulas,2200_26589_2_not_null,CHECK,null,null,null
+public,formulas,2200_26589_3_not_null,CHECK,null,null,null
+public,formulas,2200_26589_4_not_null,CHECK,null,null,null
+public,formulas,2200_26589_6_not_null,CHECK,null,null,null
+public,formulas,2200_26589_7_not_null,CHECK,null,null,null
+public,formulas,formulas_pkey,PRIMARY KEY,id,formulas,id
+public,formulas,formulas_code_key,UNIQUE,code,formulas,code
+public,formulated_product_ingredients,2200_27943_1_not_null,CHECK,null,null,null
+public,formulated_product_ingredients,2200_27943_2_not_null,CHECK,null,null,null
+public,formulated_product_ingredients,2200_27943_3_not_null,CHECK,null,null,null
+public,formulated_product_ingredients,2200_27943_4_not_null,CHECK,null,null,null
+public,formulated_product_ingredients,2200_27943_5_not_null,CHECK,null,null,null
+public,formulated_product_ingredients,2200_27943_6_not_null,CHECK,null,null,null
+public,formulated_product_ingredients,formulated_product_ingredients_pct_check,CHECK,null,formulated_product_ingredients,pct
+public,formulated_product_ingredients,formulated_product_ingredients_ingredient_id_fkey,FOREIGN KEY,ingredient_id,ingredients,id
+public,formulated_product_ingredients,formulated_product_ingredients_product_id_fkey,FOREIGN KEY,product_id,formulated_products,id
+public,formulated_product_ingredients,formulated_product_ingredients_pkey,PRIMARY KEY,id,formulated_product_ingredients,id
+public,formulated_product_items,2200_27845_1_not_null,CHECK,null,null,null
+public,formulated_product_items,2200_27845_2_not_null,CHECK,null,null,null
+public,formulated_product_items,2200_27845_3_not_null,CHECK,null,null,null
+public,formulated_product_items,2200_27845_4_not_null,CHECK,null,null,null
+public,formulated_product_items,2200_27845_5_not_null,CHECK,null,null,null
+public,formulated_product_items,2200_27845_7_not_null,CHECK,null,null,null
+public,formulated_product_items,2200_27845_8_not_null,CHECK,null,null,null
+public,formulated_product_items,formulated_product_items_pct_check,CHECK,null,formulated_product_items,pct
+public,formulated_product_items,formulated_product_items_formulated_product_id_fkey,FOREIGN KEY,formulated_product_id,formulated_products,id
+public,formulated_product_items,formulated_product_items_ingredient_id_fkey,FOREIGN KEY,ingredient_id,ingredients,id
+public,formulated_product_items,formulated_product_items_pkey,PRIMARY KEY,id,formulated_product_items,id
+public,formulated_products,2200_27830_11_not_null,CHECK,null,null,null
+public,formulated_products,2200_27830_1_not_null,CHECK,null,null,null
+public,formulated_products,2200_27830_2_not_null,CHECK,null,null,null
+public,formulated_products,2200_27830_3_not_null,CHECK,null,null,null
+public,formulated_products,2200_27830_4_not_null,CHECK,null,null,null
+public,formulated_products,2200_27830_7_not_null,CHECK,null,null,null
+public,formulated_products,2200_27830_8_not_null,CHECK,null,null,null
+public,formulated_products,2200_27830_9_not_null,CHECK,null,null,null
+public,formulated_products,formulated_products_product_type_id_fkey,FOREIGN KEY,product_type_id,product_types,id
+public,formulated_products,formulated_products_pkey,PRIMARY KEY,id,formulated_products,id
+public,formulated_products,formulated_products_product_code_key,UNIQUE,product_code,formulated_products,product_code
+public,ingredients,2200_26637_1_not_null,CHECK,null,null,null
+public,ingredients,2200_26637_2_not_null,CHECK,null,null,null
+public,ingredients,2200_26637_3_not_null,CHECK,null,null,null
+public,ingredients,2200_26637_5_not_null,CHECK,null,null,null
+public,ingredients,ingredients_pkey,PRIMARY KEY,id,ingredients,id
+public,labs,2200_27761_1_not_null,CHECK,null,null,null
+public,labs,2200_27761_2_not_null,CHECK,null,null,null
+public,labs,2200_27761_3_not_null,CHECK,null,null,null
+public,labs,2200_27761_8_not_null,CHECK,null,null,null
+public,labs,2200_27761_9_not_null,CHECK,null,null,null
+public,labs,labs_pkey,PRIMARY KEY,id,labs,id
+public,labs,labs_lab_code_key,UNIQUE,lab_code,labs,lab_code
+public,order_artifacts,2200_30686_10_not_null,CHECK,null,null,null
+public,order_artifacts,2200_30686_1_not_null,CHECK,null,null,null
+public,order_artifacts,2200_30686_2_not_null,CHECK,null,null,null
+public,order_artifacts,2200_30686_3_not_null,CHECK,null,null,null
+public,order_artifacts,2200_30686_4_not_null,CHECK,null,null,null
+public,order_artifacts,2200_30686_5_not_null,CHECK,null,null,null
+public,order_artifacts,order_artifacts_order_id_fkey,FOREIGN KEY,order_id,orders,id
+public,order_artifacts,order_artifacts_pkey,PRIMARY KEY,id,order_artifacts,id
+public,order_artifacts,order_artifacts_unique_version,UNIQUE,order_id,order_artifacts,version
+public,order_artifacts,order_artifacts_unique_version,UNIQUE,order_id,order_artifacts,order_id
+public,order_artifacts,order_artifacts_unique_version,UNIQUE,order_id,order_artifacts,artifact_type
+public,order_artifacts,order_artifacts_unique_version,UNIQUE,artifact_type,order_artifacts,version
+public,order_artifacts,order_artifacts_unique_version,UNIQUE,artifact_type,order_artifacts,artifact_type
+public,order_artifacts,order_artifacts_unique_version,UNIQUE,artifact_type,order_artifacts,order_id
+public,order_artifacts,order_artifacts_unique_version,UNIQUE,version,order_artifacts,version
+public,order_artifacts,order_artifacts_unique_version,UNIQUE,version,order_artifacts,artifact_type
+public,order_artifacts,order_artifacts_unique_version,UNIQUE,version,order_artifacts,order_id
+public,order_batches,2200_30755_1_not_null,CHECK,null,null,null
+public,order_batches,2200_30755_2_not_null,CHECK,null,null,null
+public,order_batches,2200_30755_3_not_null,CHECK,null,null,null
+public,order_batches,2200_30755_4_not_null,CHECK,null,null,null
+public,order_batches,2200_30755_6_not_null,CHECK,null,null,null
+public,order_batches,order_batches_order_id_fkey,FOREIGN KEY,order_id,orders,id
+public,order_batches,order_batches_pkey,PRIMARY KEY,id,order_batches,id
+public,order_batches,order_batches_order_formula_key,UNIQUE,order_id,order_batches,order_id
+public,order_batches,order_batches_order_formula_key,UNIQUE,order_id,order_batches,formula_key
+public,order_batches,order_batches_order_formula_key,UNIQUE,formula_key,order_batches,order_id
+public,order_batches,order_batches_order_formula_key,UNIQUE,formula_key,order_batches,formula_key
+public,order_events,2200_30703_1_not_null,CHECK,null,null,null
+public,order_events,2200_30703_2_not_null,CHECK,null,null,null
+public,order_events,2200_30703_3_not_null,CHECK,null,null,null
+public,order_events,2200_30703_5_not_null,CHECK,null,null,null
+public,order_events,2200_30703_6_not_null,CHECK,null,null,null
+public,order_events,order_events_order_id_fkey,FOREIGN KEY,order_id,orders,id
+public,order_events,order_events_pkey,PRIMARY KEY,id,order_events,id
+public,order_items,2200_30661_11_not_null,CHECK,null,null,null
+public,order_items,2200_30661_1_not_null,CHECK,null,null,null
+public,order_items,2200_30661_2_not_null,CHECK,null,null,null
+public,order_items,2200_30661_3_not_null,CHECK,null,null,null
+public,order_items,2200_30661_4_not_null,CHECK,null,null,null
+public,order_items,2200_30661_5_not_null,CHECK,null,null,null
+public,order_items,2200_30661_6_not_null,CHECK,null,null,null
+public,order_items,2200_30661_7_not_null,CHECK,null,null,null
+public,order_items,2200_30661_8_not_null,CHECK,null,null,null
+public,order_items,2200_30661_9_not_null,CHECK,null,null,null
+public,order_items,order_items_kind_check,CHECK,null,order_items,product_kind_snapshot
+public,order_items,order_items_qty_check,CHECK,null,order_items,quantity
+public,order_items,order_items_order_id_fkey,FOREIGN KEY,order_id,orders,id
+public,order_items,order_items_product_id_fkey,FOREIGN KEY,product_id,products,id
+public,order_items,order_items_pkey,PRIMARY KEY,id,order_items,id
+public,orders,2200_30621_10_not_null,CHECK,null,null,null
+public,orders,2200_30621_13_not_null,CHECK,null,null,null
+public,orders,2200_30621_1_not_null,CHECK,null,null,null
+public,orders,2200_30621_21_not_null,CHECK,null,null,null
+public,orders,2200_30621_22_not_null,CHECK,null,null,null
+public,orders,2200_30621_23_not_null,CHECK,null,null,null
+public,orders,2200_30621_24_not_null,CHECK,null,null,null
+public,orders,2200_30621_27_not_null,CHECK,null,null,null
+public,orders,2200_30621_28_not_null,CHECK,null,null,null
+public,orders,2200_30621_2_not_null,CHECK,null,null,null
+public,orders,2200_30621_3_not_null,CHECK,null,null,null
+public,orders,2200_30621_4_not_null,CHECK,null,null,null
+public,orders,2200_30621_5_not_null,CHECK,null,null,null
+public,orders,2200_30621_9_not_null,CHECK,null,null,null
+public,orders,orders_confirmed_requires_lab_check,CHECK,null,orders,status
+public,orders,orders_confirmed_requires_lab_check,CHECK,null,orders,lab_id
+public,orders,orders_customer_gender_snapshot_check,CHECK,null,orders,customer_gender_snapshot
+public,orders,orders_dispatch_to_check,CHECK,null,orders,dispatch_to
+public,orders,orders_status_check,CHECK,null,orders,status
+public,orders,orders_agent_id_fkey,FOREIGN KEY,agent_id,agents,id
+public,orders,orders_customer_id_fkey,FOREIGN KEY,customer_id,customers,id
+public,orders,orders_lab_id_fkey,FOREIGN KEY,lab_id,labs,id
+public,orders,orders_pkey,PRIMARY KEY,id,orders,id
+public,orders,orders_order_code_key,UNIQUE,order_code,orders,order_code
+public,product_execution_settings,2200_32232_1_not_null,CHECK,null,null,null
+public,product_execution_settings,2200_32232_2_not_null,CHECK,null,null,null
+public,product_execution_settings,2200_32232_3_not_null,CHECK,null,null,null
+public,product_execution_settings,2200_32232_4_not_null,CHECK,null,null,null
+public,product_execution_settings,2200_32232_5_not_null,CHECK,null,null,null
+public,product_execution_settings,2200_32232_6_not_null,CHECK,null,null,null
+public,product_execution_settings,2200_32232_7_not_null,CHECK,null,null,null
+public,product_execution_settings,2200_32232_8_not_null,CHECK,null,null,null
+public,product_execution_settings,2200_32232_9_not_null,CHECK,null,null,null
+public,product_execution_settings,product_execution_settings_product_id_fkey,FOREIGN KEY,product_id,products,id
+public,product_execution_settings,product_execution_settings_pkey,PRIMARY KEY,product_id,product_execution_settings,product_id
+public,product_types,2200_27893_1_not_null,CHECK,null,null,null
+public,product_types,2200_27893_3_not_null,CHECK,null,null,null
+public,product_types,2200_27893_4_not_null,CHECK,null,null,null
+public,product_types,product_types_pkey,PRIMARY KEY,id,product_types,id
+public,product_types,product_types_type_code2_key,UNIQUE,type_code2,product_types,type_code2
+public,product_types,product_types_type_name_key,UNIQUE,type_name,product_types,type_name
+public,products,2200_30600_11_not_null,CHECK,null,null,null
+public,products,2200_30600_12_not_null,CHECK,null,null,null
+public,products,2200_30600_13_not_null,CHECK,null,null,null
+public,products,2200_30600_14_not_null,CHECK,null,null,null
+public,products,2200_30600_1_not_null,CHECK,null,null,null
+public,products,2200_30600_2_not_null,CHECK,null,null,null
+public,products,2200_30600_3_not_null,CHECK,null,null,null
+public,products,2200_30600_4_not_null,CHECK,null,null,null
+public,products,2200_30600_5_not_null,CHECK,null,null,null
+public,products,2200_30600_9_not_null,CHECK,null,null,null
+public,products,products_kind_check,CHECK,null,products,kind
+public,products,products_product_kind_chk,CHECK,null,products,product_kind
+public,products,products_pkey,PRIMARY KEY,id,products,id
+public,products,products_product_code_key,UNIQUE,product_code,products,product_code
+public,psi_ingredients,2200_26569_1_not_null,CHECK,null,null,null
+public,psi_ingredients,2200_26569_2_not_null,CHECK,null,null,null
+public,psi_ingredients,2200_26569_3_not_null,CHECK,null,null,null
+public,psi_ingredients,2200_26569_5_not_null,CHECK,null,null,null
+public,psi_ingredients,2200_26569_6_not_null,CHECK,null,null,null
+public,psi_ingredients,2200_26569_7_not_null,CHECK,null,null,null
+public,psi_ingredients,psi_ingredients_pkey,PRIMARY KEY,id,psi_ingredients,id
+public,psi_ingredients,psi_ingredients_psi_number_key,UNIQUE,psi_number,psi_ingredients,psi_number
