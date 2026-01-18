@@ -1111,6 +1111,67 @@
   </div>
 </div>
 
+            <!-- PRODUCTS (ADMIN) -->
+<div id="viewProductsAdmin" class="card" style="display:none;">
+  <div class="cardHeader">
+    <h2>Products (Admin)</h2>
+    <div class="cardHeaderRight"></div>
+  </div>
+
+  <div class="cm-actions">
+    <button id="paViewBtn" class="btn-gold" type="button">View products</button>
+    <button id="paClearBtn" type="button" style="display:none;">Clear</button>
+    <p id="paMsg" class="subtle" style="margin:0;"></p>
+  </div>
+
+  <div id="paListPanel" style="display:none; margin-top:10px;">
+    <div id="paList" class="customer-list"></div>
+  </div>
+
+  <div id="paEditPanel" style="display:none; margin-top:10px;">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+      <div>
+        <label class="subtle" style="display:block; margin-bottom:6px;">Product</label>
+        <input id="paProductName" readonly />
+      </div>
+      <div>
+        <label class="subtle" style="display:block; margin-bottom:6px;">Edge Function Name</label>
+        <input id="paEdgeFn" placeholder="exact_trio_v1_generate_pack" />
+      </div>
+    </div>
+
+    <div style="margin-top:10px;">
+      <label class="subtle" style="display:block; margin-bottom:6px;">Lab Email Subject</label>
+      <input id="paSubject" placeholder="EXACT Lab Order: {{order_code}} – {{customer_name}}" />
+    </div>
+
+    <div style="margin-top:10px;">
+      <label class="subtle" style="display:block; margin-bottom:6px;">Lab Email Body (plain text / markdown)</label>
+      <textarea id="paBody" rows="10" placeholder="Hello {{lab_name}}..."></textarea>
+      <p class="subtle" style="margin:6px 0 0 0;">
+        Placeholders: {{order_code}}, {{customer_name}}, {{lab_name}}, {{dispatch_name}}, {{dispatch_address}}, {{artifact_links}}
+      </p>
+    </div>
+
+    <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:10px;">
+      <label style="display:flex; gap:8px; align-items:center;">
+        <input id="paSendEmail" type="checkbox" /> Send lab email
+      </label>
+      <label style="display:flex; gap:8px; align-items:center;">
+        <input id="paIncludeLinks" type="checkbox" /> Include signed links
+      </label>
+      <label style="display:flex; gap:8px; align-items:center;">
+        <input id="paIncludeAttachments" type="checkbox" /> Include attachments
+      </label>
+    </div>
+
+    <div class="cm-actions" style="margin-top:12px;">
+      <button id="paSaveBtn" class="btn-primary" type="button">Save settings</button>
+      <button id="paCancelBtn" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
             <!-- PRODUCT TYPES -->
             <div id="viewProductTypes" class="card" style="display:none;">
               <div class="cardHeader">
