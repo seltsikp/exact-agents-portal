@@ -56,6 +56,7 @@ function renderMenuForRole(role, permissions = {}) {
     addMenuBtn("Agents", "agents");
     addMenuBtn("Account Managers", "accountManagers");
     addMenuBtn("Customers", "customers");
+    addMenuBtn("Products", "productsAdmin");
     addMenuBtn("Product Groups", "productTypes");
     addMenuBtn("Formulary", "formulary");
     addMenuBtn("Labs", "labs");
