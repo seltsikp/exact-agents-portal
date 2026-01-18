@@ -936,6 +936,60 @@
                 <button id="addAgentBtn" class="btn-primary" type="button">Save agent</button>
               </div>
             </div>
+<!-- =========================
+     VIEW: ORDERS
+     ========================= -->
+<section id="viewOrders" style="display:none;">
+  <div class="card">
+    <h2 style="margin-top:0;">Orders</h2>
+    <div class="subtle" id="ordersMsg"></div>
+
+    <!-- LIST PANEL -->
+    <div id="ordersListPanel" style="margin-top:12px;">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <input id="ordersSearch" placeholder="Search by order code…" style="min-width:240px;" />
+        <button id="ordersSearchBtn" class="btn-primary" type="button">Search</button>
+        <button id="ordersShowAllBtn" type="button">Show all</button>
+
+        <select id="ordersStatusFilter" style="min-width:200px;">
+          <option value="">All statuses</option>
+          <option value="draft">draft</option>
+          <option value="confirmed">confirmed</option>
+          <option value="sent_to_lab">sent_to_lab</option>
+          <option value="completed">completed</option>
+          <option value="cancelled">cancelled</option>
+        </select>
+      </div>
+
+      <div id="ordersList" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- DETAIL PANEL -->
+    <div id="ordersDetailPanel" style="margin-top:12px; display:none;">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
+        <div>
+          <div id="ordersDetailTitle" style="font-weight:800;"></div>
+          <div id="ordersDetailMeta" class="subtle" style="margin-top:4px;"></div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button id="ordersBackBtn" type="button">Back</button>
+          <button id="ordersRefreshBtn" type="button">Refresh</button>
+          <button id="ordersGeneratePackBtn" class="btn-primary" type="button">Generate Pack</button>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;">
+        <h3 style="margin:0 0 8px 0;">Batch / process summary</h3>
+        <div id="ordersBatchSummary"></div>
+      </div>
+
+      <div style="margin-top:14px;">
+        <h3 style="margin:0 0 8px 0;">Artifacts</h3>
+        <div id="ordersArtifactsList"></div>
+      </div>
+    </div>
+  </div>
+</section>
 
             <!-- CUSTOMER MANAGEMENT -->
             <div id="viewCustomerMgmt" class="card" style="display:none;">
