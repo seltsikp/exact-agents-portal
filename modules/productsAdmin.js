@@ -1,70 +1,119 @@
 // modules/productsAdmin.js
+// Admin-only editor for:
+// 1) public.products (product_kind, currency_code, unit_price_aed, is_active)
+// 2) public.product_execution_settings (ONLY when product_kind === 'dynamic')
+//
+// Assumes UI element IDs exist (from your index.html edits):
+// paViewBtn, paClearBtn, paMsg, paListPanel, paList,
+// paEditPanel, paProductName,
+// paKind, paCurrency, paUnitPrice, paIsActive,
+// paDynamicBlock, paStaticNote,
+// paEdgeFn, paSubject, paBody,
+// paSendEmail, paIncludeLinks, paIncludeAttachments,
+// paSaveBtn, paCancelBtn
+
 export function initProductsAdmin({ supabaseClient, ui, helpers }) {
   const { show, escapeHtml, confirmExact } = helpers;
 
-const {
-  paViewBtn, paClearBtn, paMsg,
-  paListPanel, paList,
-  paEditPanel,
-  paProductName,
-  paKind, paCurrency, paUnitPrice, paIsActive,
-  paDynamicBlock, paStaticNote,
-  paEdgeFn, paSubject, paBody,
-  paSendEmail, paIncludeLinks, paIncludeAttachments,
-  paSaveBtn, paCancelBtn
-} = ui;
+  const {
+    paViewBtn, paClearBtn, paMsg,
+    paListPanel, paList,
+    paEditPanel,
+    paProductName,
 
+    paKind, paCurrency, paUnitPrice, paIsActive,
+    paDynamicBlock, paStaticNote,
 
-  let selectedProduct = null; // {id, product_code, name}
+    paEdgeFn, paSubject, paBody,
+    paSendEmail, paIncludeLinks, paIncludeAttachments,
+
+    paSaveBtn, paCancelBtn
+  } = ui;
+
+  let productsCache = [];      // [{id, product_code, name, product_kind, currency_code, unit_price_aed, is_active}]
+  let selectedProduct = null;  // product object from cache
 
   const setMsg = (t) => { if (paMsg) paMsg.textContent = t || ""; };
 
-  function reset() {
-    setMsg("");
-    selectedProduct = null;
+  function safeNumOrNull(v) {
+    const s = String(v ?? "").trim();
+    if (!s) return null;
+    // accept "123" "123.45"
+    const n = Number(s);
+    if (!Number.isFinite(n)) return null;
+    // keep 2dp for display in DB numeric(12,2) is fine
+    return Math.round(n * 100) / 100;
+  }
 
-    show(paListPanel, false);
-    show(paEditPanel, false);
+  function currentKind() {
+    return String(paKind?.value || "static").trim().toLowerCase();
+  }
 
+  function toggleDynamicUI(kind) {
+    const isDyn = (kind === "dynamic");
+    show(paDynamicBlock, isDyn);
+    show(paStaticNote, !isDyn);
+  }
+
+  function clearEditorFields() {
     if (paProductName) paProductName.value = "";
-    if (paEdgeFn) paEdgeFn.value = "";
-    if (paSubject) paSubject.value = "";
-    if (paBody) paBody.value = "";
-    if (paSendEmail) paSendEmail.checked = true;
-    if (paIncludeLinks) paIncludeLinks.checked = true;
-    if (paIncludeAttachments) paIncludeAttachments.checked = false;
-    if (paClearBtn) paClearBtn.style.display = "none";
 
     if (paKind) paKind.value = "static";
     if (paCurrency) paCurrency.value = "AED";
     if (paUnitPrice) paUnitPrice.value = "";
     if (paIsActive) paIsActive.checked = true;
-    
-    show(paDynamicBlock, true);
-    show(paStaticNote, false);
 
+    if (paEdgeFn) paEdgeFn.value = "";
+    if (paSubject) paSubject.value = "";
+    if (paBody) paBody.value = "";
+
+    if (paSendEmail) paSendEmail.checked = true;
+    if (paIncludeLinks) paIncludeLinks.checked = true;
+    if (paIncludeAttachments) paIncludeAttachments.checked = false;
+
+    toggleDynamicUI("static");
+  }
+
+  function reset() {
+    setMsg("");
+    selectedProduct = null;
+    productsCache = [];
+
+    show(paListPanel, false);
+    show(paEditPanel, false);
+
+    clearEditorFields();
+
+    if (paClearBtn) paClearBtn.style.display = "none";
   }
 
   async function loadProductsList() {
     setMsg("Loading products…");
 
-    const { data: products, error } = await supabaseClient
+    const { data, error } = await supabaseClient
       .from("products")
-     .select("id, product_code, name, product_kind, currency_code, unit_price_aed, is_active")
+      .select("id, product_code, name, product_kind, currency_code, unit_price_aed, is_active")
       .order("created_at", { ascending: false });
 
     if (error) { setMsg("Load failed: " + error.message); return; }
 
-    const rows = products || [];
+    productsCache = data || [];
+
     if (!paList) return;
 
-    paList.innerHTML = rows.map(p => {
-      const label = `${escapeHtml(p.product_code || "")} — ${escapeHtml(p.name || "")}`.trim();
-      const meta = `${escapeHtml(p.product_kind || "")} | ${escapeHtml(p.currency_code || "AED")} ${escapeHtml(p.unit_price_aed ?? "")} | ${p.is_active ? "active" : "inactive"}`;
+    paList.innerHTML = productsCache.map(p => {
+      const label = `${escapeHtml(p.product_code || "")} — ${escapeHtml(p.name || "")}`.trim() || escapeHtml(p.id);
+      const kind = escapeHtml(p.product_kind || "static");
+      const cur = escapeHtml(p.currency_code || "AED");
+      const price = (p.unit_price_aed === null || p.unit_price_aed === undefined) ? "" : escapeHtml(String(p.unit_price_aed));
+      const active = (p.is_active === false) ? "inactive" : "active";
+
+      const meta = `${kind} | ${cur} ${price}`.trim();
       return `
         <div class="customer-row" data-id="${p.id}">
-          <div style="font-weight:700;">${label || escapeHtml(p.id)}</div>
-          <div class="subtle" style="margin-top:4px;">Click to edit execution settings</div>
+          <div style="font-weight:700;">${label}</div>
+          <div class="subtle" style="margin-top:4px;">${meta} | ${active}</div>
+          <div class="subtle" style="margin-top:4px;">Click to edit</div>
         </div>
       `;
     }).join("");
@@ -72,45 +121,57 @@ const {
     paList.querySelectorAll("[data-id]").forEach(el => {
       el.addEventListener("click", async () => {
         const id = el.getAttribute("data-id");
-        const p = rows.find(x => x.id === id);
+        const p = productsCache.find(x => x.id === id);
         if (!p) return;
         await openEditor(p);
       });
     });
 
-    setMsg(`Loaded ${rows.length} products.`);
+    setMsg(`Loaded ${productsCache.length} products.`);
   }
 
   async function openEditor(product) {
     selectedProduct = product;
+    setMsg("");
 
-    if (paProductName) paProductName.value =
-      `${product.product_code || ""} — ${product.name || ""}`.trim();
+    show(paListPanel, false);
+    show(paEditPanel, true);
+    if (paClearBtn) paClearBtn.style.display = "inline-block";
 
-    if (paKind) paKind.value = product.product_kind || "static";
-if (paCurrency) paCurrency.value = product.currency_code || "AED";
-if (paUnitPrice) paUnitPrice.value = (product.unit_price_aed ?? "") === null ? "" : String(product.unit_price_aed ?? "");
-if (paIsActive) paIsActive.checked = product.is_active ?? true;
+    // Product master fields
+    if (paProductName) {
+      paProductName.value = `${product.product_code || ""} — ${product.name || ""}`.trim();
+    }
 
-const isDynamic = (paKind?.value === "dynamic");
-show(paDynamicBlock, isDynamic);
-show(paStaticNote, !isDynamic);
+    const kind = (product.product_kind || "static").toLowerCase();
+    if (paKind) paKind.value = kind;
+    if (paCurrency) paCurrency.value = product.currency_code || "AED";
+    if (paUnitPrice) paUnitPrice.value = (product.unit_price_aed === null || product.unit_price_aed === undefined) ? "" : String(product.unit_price_aed);
+    if (paIsActive) paIsActive.checked = (product.is_active !== false);
 
-if (paKind && paKind.dataset.bound !== "1") {
-  paKind.addEventListener("change", () => {
-    const dyn = (paKind.value === "dynamic");
-    show(paDynamicBlock, dyn);
-    show(paStaticNote, !dyn);
-  });
-  paKind.dataset.bound = "1";
-}
-const isDynamicNow = (product.product_kind === "dynamic");
-if (!isDynamicNow) {
-  setMsg("");
-  return;
-}
+    toggleDynamicUI(kind);
 
-    // Load existing settings (admin-only RLS)
+    // Bind kind toggle once (global)
+    if (paKind && paKind.dataset.bound !== "1") {
+      paKind.addEventListener("change", () => {
+        toggleDynamicUI(currentKind());
+      });
+      paKind.dataset.bound = "1";
+    }
+
+    // If static: do not load execution settings
+    if (kind !== "dynamic") {
+      // Keep dynamic fields blank to avoid confusion
+      if (paEdgeFn) paEdgeFn.value = "";
+      if (paSubject) paSubject.value = "";
+      if (paBody) paBody.value = "";
+      if (paSendEmail) paSendEmail.checked = true;
+      if (paIncludeLinks) paIncludeLinks.checked = true;
+      if (paIncludeAttachments) paIncludeAttachments.checked = false;
+      return;
+    }
+
+    // Load existing execution settings (admin-only RLS)
     setMsg("Loading execution settings…");
 
     const { data: s, error } = await supabaseClient
@@ -129,25 +190,64 @@ if (!isDynamicNow) {
     if (paIncludeLinks) paIncludeLinks.checked = s?.include_signed_links ?? true;
     if (paIncludeAttachments) paIncludeAttachments.checked = s?.include_attachments ?? false;
 
-    show(paListPanel, false);
-    show(paEditPanel, true);
-
-    if (paClearBtn) paClearBtn.style.display = "inline-block";
     setMsg("");
   }
 
   async function saveSettings() {
     if (!selectedProduct?.id) { setMsg("No product selected."); return; }
 
+    const kind = currentKind();
+    if (kind !== "static" && kind !== "dynamic") {
+      setMsg("Invalid product_kind. Must be static or dynamic.");
+      return;
+    }
+
+    const currency = String(paCurrency?.value || "AED").trim().toUpperCase() || "AED";
+    const price = safeNumOrNull(paUnitPrice?.value);
+    const isActive = !!paIsActive?.checked;
+
+    // Confirm
+    const ok = await confirmExact("Save product settings?");
+    if (!ok) return;
+
+    setMsg("Saving product…");
+
+    // 1) Update products table (master fields)
+    const { error: pErr } = await supabaseClient
+      .from("products")
+      .update({
+        product_kind: kind,
+        currency_code: currency,
+        unit_price_aed: price,
+        is_active: isActive
+      })
+      .eq("id", selectedProduct.id);
+
+    if (pErr) { setMsg("Save product failed: " + pErr.message); return; }
+
+    // Update local cache + selectedProduct for consistency
+    selectedProduct.product_kind = kind;
+    selectedProduct.currency_code = currency;
+    selectedProduct.unit_price_aed = price;
+    selectedProduct.is_active = isActive;
+
+    // 2) If static: stop here (no execution settings required)
+    if (kind !== "dynamic") {
+      setMsg("Saved ✅ (static product — no execution settings)");
+      toggleDynamicUI("static");
+      return;
+    }
+
+    // 3) Dynamic: validate execution settings fields
     const edgeFn = String(paEdgeFn?.value || "").trim();
     const subj = String(paSubject?.value || "").trim();
     const body = String(paBody?.value || "").trim();
 
-    if (!edgeFn) { setMsg("Edge function name is required."); return; }
-    if (!subj) { setMsg("Email subject is required."); return; }
-    if (!body) { setMsg("Email body is required."); return; }
+    if (!edgeFn) { setMsg("Edge function name is required for dynamic products."); return; }
+    if (!subj) { setMsg("Email subject is required for dynamic products."); return; }
+    if (!body) { setMsg("Email body is required for dynamic products."); return; }
 
-    const payload = {
+    const execPayload = {
       product_id: selectedProduct.id,
       edge_function_name: edgeFn,
       lab_email_subject: subj,
@@ -158,21 +258,18 @@ if (!isDynamicNow) {
       settings: {}
     };
 
-    const ok = await confirmExact("Save execution settings for this product?");
-    if (!ok) return;
+    setMsg("Saving execution settings…");
 
-    setMsg("Saving…");
-
-    const { error } = await supabaseClient
+    const { error: eErr } = await supabaseClient
       .from("product_execution_settings")
-      .upsert(payload, { onConflict: "product_id" });
+      .upsert(execPayload, { onConflict: "product_id" });
 
-    if (error) { setMsg("Save failed: " + error.message); return; }
+    if (eErr) { setMsg("Save execution settings failed: " + eErr.message); return; }
 
     setMsg("Saved ✅");
   }
 
-  // Wire buttons (bind once)
+  // Bind buttons once
   if (paViewBtn && paViewBtn.dataset.bound !== "1") {
     paViewBtn.addEventListener("click", async () => {
       reset();
@@ -195,7 +292,6 @@ if (!isDynamicNow) {
 
   if (paCancelBtn && paCancelBtn.dataset.bound !== "1") {
     paCancelBtn.addEventListener("click", () => {
-      // back to list
       show(paEditPanel, false);
       show(paListPanel, true);
       setMsg("");
