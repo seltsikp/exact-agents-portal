@@ -1,0 +1,267 @@
+table_schema,table_name,policyname,permissive,roles,cmd,qual,with_check
+public,admin_users,admin_users_read,PERMISSIVE,{authenticated},SELECT,(auth.uid() = auth_user_id),null
+public,agent_users,Admin can update agent_users,PERMISSIVE,{public},UPDATE,is_active_admin(),is_active_admin()
+public,agent_users,agent_users_admin_read_all,PERMISSIVE,{authenticated},SELECT,is_active_admin(),null
+public,agent_users,agent_users_admin_select,PERMISSIVE,{authenticated},SELECT,"(EXISTS ( SELECT 1
+   FROM admin_users a
+  WHERE (a.auth_user_id = auth.uid())))",null
+public,agent_users,agent_users_admin_update,PERMISSIVE,{authenticated},UPDATE,"(EXISTS ( SELECT 1
+   FROM admin_users a
+  WHERE (a.auth_user_id = auth.uid())))","(EXISTS ( SELECT 1
+   FROM admin_users a
+  WHERE (a.auth_user_id = auth.uid())))"
+public,agent_users,agent_users_select_own,PERMISSIVE,{authenticated},SELECT,(auth.uid() = auth_user_id),null
+public,agent_users,agent_users_self_read,PERMISSIVE,{authenticated},SELECT,(auth_user_id = auth.uid()),null
+public,agents,agents_admin_all,PERMISSIVE,{authenticated},SELECT,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))",null
+public,agents,agents_admin_delete,PERMISSIVE,{authenticated},DELETE,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))",null
+public,agents,agents_admin_insert,PERMISSIVE,{authenticated},INSERT,null,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,agents,agents_admin_update,PERMISSIVE,{authenticated},UPDATE,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))","(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,agents,agents_delete_admin,PERMISSIVE,{authenticated},DELETE,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))",null
+public,agents,agents_select,PERMISSIVE,{public},SELECT,"(is_admin() OR (EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text) AND (au.agent_id = agents.id)))))",null
+public,agents,agents_select_own,PERMISSIVE,{authenticated},SELECT,"(id = ( SELECT au.agent_id
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+ LIMIT 1))",null
+public,agents,agents_update_admin,PERMISSIVE,{authenticated},UPDATE,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))","(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,bases,bases_delete_admin,PERMISSIVE,{authenticated},DELETE,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))",null
+public,bases,bases_insert_admin,PERMISSIVE,{authenticated},INSERT,null,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,bases,bases_select_admin,PERMISSIVE,{authenticated},SELECT,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))",null
+public,bases,bases_update_admin,PERMISSIVE,{authenticated},UPDATE,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))","(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,boosters,boosters_delete_admin,PERMISSIVE,{authenticated},DELETE,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))",null
+public,boosters,boosters_insert_admin,PERMISSIVE,{authenticated},INSERT,null,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,boosters,boosters_select_admin,PERMISSIVE,{authenticated},SELECT,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))",null
+public,boosters,boosters_update_admin,PERMISSIVE,{authenticated},UPDATE,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))","(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,customers,admins_delete_any_customer,PERMISSIVE,{authenticated},DELETE,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text) AND (au.role = 'admin'::text))))",null
+public,customers,admins_update_any_customer,PERMISSIVE,{authenticated},UPDATE,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text) AND (au.role = 'admin'::text))))","(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text) AND (au.role = 'admin'::text))))"
+public,customers,agents_delete_own_customers,PERMISSIVE,{authenticated},DELETE,"(agent_id = ( SELECT au.agent_id
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+ LIMIT 1))",null
+public,customers,agents_update_own_customers,PERMISSIVE,{authenticated},UPDATE,"(agent_id = ( SELECT au.agent_id
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+ LIMIT 1))","(agent_id = ( SELECT au.agent_id
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+ LIMIT 1))"
+public,customers,customers_insert,PERMISSIVE,{public},INSERT,null,"(is_admin() OR (EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text) AND (au.agent_id = customers.agent_id)))))"
+public,customers,customers_select,PERMISSIVE,{public},SELECT,"(is_admin() OR (EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text) AND (au.agent_id = customers.agent_id)))))",null
+public,customers,customers_update_admin_or_owner,PERMISSIVE,{authenticated},UPDATE,"((EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text)))) OR (EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role <> 'admin'::text) AND (au.status = 'active'::text) AND (au.agent_id = customers.agent_id)))))","((EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text)))) OR (EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role <> 'admin'::text) AND (au.status = 'active'::text) AND (au.agent_id = customers.agent_id)))))"
+public,formula_items,formula_items_admin_all,PERMISSIVE,{public},ALL,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))","(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,formulas,formulas_admin_all,PERMISSIVE,{public},ALL,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))","(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,formulated_product_items,fpi_admin_all,PERMISSIVE,{authenticated},ALL,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))","(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,formulated_products,fp_admin_all,PERMISSIVE,{authenticated},ALL,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))","(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,ingredients,ingredients_delete_admin,PERMISSIVE,{authenticated},DELETE,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))",null
+public,ingredients,ingredients_insert_admin,PERMISSIVE,{authenticated},INSERT,null,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,ingredients,ingredients_insert_admin_only,PERMISSIVE,{authenticated},INSERT,null,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,ingredients,ingredients_select_admin,PERMISSIVE,{authenticated},SELECT,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))",null
+public,ingredients,ingredients_select_admin_only,PERMISSIVE,{authenticated},SELECT,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))",null
+public,ingredients,ingredients_update_admin,PERMISSIVE,{authenticated},UPDATE,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))","(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,ingredients,ingredients_update_admin_only,PERMISSIVE,{authenticated},UPDATE,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))","(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,labs,labs_delete_admin,PERMISSIVE,{authenticated},DELETE,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))",null
+public,labs,labs_insert_admin,PERMISSIVE,{authenticated},INSERT,null,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,labs,labs_select_admin,PERMISSIVE,{authenticated},SELECT,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))",null
+public,labs,labs_update_admin,PERMISSIVE,{authenticated},UPDATE,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))","(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,order_artifacts,order_artifacts_select_via_order,PERMISSIVE,{authenticated},SELECT,"(EXISTS ( SELECT 1
+   FROM orders o
+  WHERE ((o.id = order_artifacts.order_id) AND (is_admin() OR (o.agent_id = ( SELECT au.agent_id
+           FROM agent_users au
+          WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+         LIMIT 1))))))",null
+public,order_artifacts,order_artifacts_write_admin_only,PERMISSIVE,{authenticated},ALL,is_admin(),is_admin()
+public,order_batches,order_batches_select_via_order,PERMISSIVE,{authenticated},SELECT,"(EXISTS ( SELECT 1
+   FROM orders o
+  WHERE ((o.id = order_batches.order_id) AND (is_admin() OR (o.agent_id = ( SELECT au.agent_id
+           FROM agent_users au
+          WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+         LIMIT 1))))))",null
+public,order_batches,order_batches_write_via_order,PERMISSIVE,{authenticated},ALL,"(EXISTS ( SELECT 1
+   FROM orders o
+  WHERE ((o.id = order_batches.order_id) AND (is_admin() OR (o.agent_id = ( SELECT au.agent_id
+           FROM agent_users au
+          WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+         LIMIT 1))))))","(EXISTS ( SELECT 1
+   FROM orders o
+  WHERE ((o.id = order_batches.order_id) AND (is_admin() OR (o.agent_id = ( SELECT au.agent_id
+           FROM agent_users au
+          WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+         LIMIT 1))))))"
+public,order_events,order_events_select_via_order,PERMISSIVE,{authenticated},SELECT,"(EXISTS ( SELECT 1
+   FROM orders o
+  WHERE ((o.id = order_events.order_id) AND (is_admin() OR (o.agent_id = ( SELECT au.agent_id
+           FROM agent_users au
+          WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+         LIMIT 1))))))",null
+public,order_events,order_events_write_via_order,PERMISSIVE,{authenticated},ALL,"(EXISTS ( SELECT 1
+   FROM orders o
+  WHERE ((o.id = order_events.order_id) AND (is_admin() OR (o.agent_id = ( SELECT au.agent_id
+           FROM agent_users au
+          WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+         LIMIT 1))))))","(EXISTS ( SELECT 1
+   FROM orders o
+  WHERE ((o.id = order_events.order_id) AND (is_admin() OR (o.agent_id = ( SELECT au.agent_id
+           FROM agent_users au
+          WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+         LIMIT 1))))))"
+public,order_items,order_items_select_via_order,PERMISSIVE,{authenticated},SELECT,"(EXISTS ( SELECT 1
+   FROM orders o
+  WHERE ((o.id = order_items.order_id) AND (is_admin() OR (o.agent_id = ( SELECT au.agent_id
+           FROM agent_users au
+          WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+         LIMIT 1))))))",null
+public,order_items,order_items_write_via_order,PERMISSIVE,{authenticated},ALL,"(EXISTS ( SELECT 1
+   FROM orders o
+  WHERE ((o.id = order_items.order_id) AND (is_admin() OR (o.agent_id = ( SELECT au.agent_id
+           FROM agent_users au
+          WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+         LIMIT 1))))))","(EXISTS ( SELECT 1
+   FROM orders o
+  WHERE ((o.id = order_items.order_id) AND (is_admin() OR (o.agent_id = ( SELECT au.agent_id
+           FROM agent_users au
+          WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+         LIMIT 1))))))"
+public,orders,orders_delete_admin_or_owner,PERMISSIVE,{authenticated},DELETE,"(is_admin() OR (agent_id = ( SELECT au.agent_id
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+ LIMIT 1)))",null
+public,orders,orders_insert_admin_or_owner,PERMISSIVE,{authenticated},INSERT,null,"(is_admin() OR ((agent_id = ( SELECT au.agent_id
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+ LIMIT 1)) AND (EXISTS ( SELECT 1
+   FROM customers c
+  WHERE ((c.id = orders.customer_id) AND (c.agent_id = orders.agent_id))))))"
+public,orders,orders_select_admin_or_owner,PERMISSIVE,{authenticated},SELECT,"(is_admin() OR (agent_id = ( SELECT au.agent_id
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+ LIMIT 1)))",null
+public,orders,orders_update_admin_or_owner,PERMISSIVE,{authenticated},UPDATE,"(is_admin() OR (agent_id = ( SELECT au.agent_id
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+ LIMIT 1)))","(is_admin() OR (agent_id = ( SELECT au.agent_id
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.status = 'active'::text))
+ LIMIT 1)))"
+public,product_execution_settings,admin_write_execution_settings,PERMISSIVE,{authenticated},ALL,is_admin(),is_admin()
+public,product_execution_settings,product_execution_settings_delete_admin,PERMISSIVE,{authenticated},DELETE,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))",null
+public,product_execution_settings,product_execution_settings_insert_admin,PERMISSIVE,{authenticated},INSERT,null,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,product_execution_settings,product_execution_settings_select_admin,PERMISSIVE,{authenticated},SELECT,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))",null
+public,product_execution_settings,product_execution_settings_select_auth,PERMISSIVE,{authenticated},SELECT,true,null
+public,product_execution_settings,product_execution_settings_update_admin,PERMISSIVE,{authenticated},UPDATE,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))","(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
+public,product_execution_settings,read_execution_settings,PERMISSIVE,{authenticated},SELECT,true,null
+public,products,products_admin_write,PERMISSIVE,{authenticated},ALL,is_admin(),is_admin()
+public,products,products_select_authenticated,PERMISSIVE,{authenticated},SELECT,true,null
+public,psi_ingredients,psi_ingredients_admin_all,PERMISSIVE,{public},ALL,"(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))","(EXISTS ( SELECT 1
+   FROM agent_users au
+  WHERE ((au.auth_user_id = auth.uid()) AND (au.role = 'admin'::text) AND (au.status = 'active'::text))))"
