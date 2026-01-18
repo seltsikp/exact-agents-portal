@@ -7,6 +7,8 @@ import { initProductTypesManagement } from "./modules/productTypes.js";
 import { initFormulatedProductsManagement } from "./modules/formulatedProducts.js";
 import { initAccountManagersManagement } from "./modules/accountManagers.js";
 import { initUserManagement } from "./modules/userManagement.js";
+import { initProductsAdmin } from "./modules/productsAdmin.js";
+
 
 console.log("EXACT Agents Portal loaded (v42)");
 
@@ -444,6 +446,27 @@ window.addEventListener("DOMContentLoaded", () => {
   const fxIngInci = document.getElementById("fxIngInci");
   const fxIngDesc = document.getElementById("fxIngDesc");
   const fxIngSaveBtn = document.getElementById("fxIngSaveBtn");
+
+    // Products view + UI
+ 
+  const viewProductsAdmin = document.getElementById("viewProductsAdmin");
+
+const paViewBtn = document.getElementById("paViewBtn");
+const paClearBtn = document.getElementById("paClearBtn");
+const paMsg = document.getElementById("paMsg");
+const paListPanel = document.getElementById("paListPanel");
+const paList = document.getElementById("paList");
+
+const paEditPanel = document.getElementById("paEditPanel");
+const paProductName = document.getElementById("paProductName");
+const paEdgeFn = document.getElementById("paEdgeFn");
+const paSubject = document.getElementById("paSubject");
+const paBody = document.getElementById("paBody");
+const paSendEmail = document.getElementById("paSendEmail");
+const paIncludeLinks = document.getElementById("paIncludeLinks");
+const paIncludeAttachments = document.getElementById("paIncludeAttachments");
+const paSaveBtn = document.getElementById("paSaveBtn");
+const paCancelBtn = document.getElementById("paCancelBtn");
 
   // Product Types view + UI
   const ptName = document.getElementById("pt_name");
