@@ -468,6 +468,14 @@ const paIncludeAttachments = document.getElementById("paIncludeAttachments");
 const paSaveBtn = document.getElementById("paSaveBtn");
 const paCancelBtn = document.getElementById("paCancelBtn");
 
+const paKind = document.getElementById("paKind");
+const paCurrency = document.getElementById("paCurrency");
+const paUnitPrice = document.getElementById("paUnitPrice");
+const paIsActive = document.getElementById("paIsActive");
+const paDynamicBlock = document.getElementById("paDynamicBlock");
+const paStaticNote = document.getElementById("paStaticNote");
+
+
   // Product Types view + UI
   const ptName = document.getElementById("pt_name");
   const ptAddBtn = document.getElementById("pt_addBtn");
