@@ -650,6 +650,19 @@ const paCancelBtn = document.getElementById("paCancelBtn");
     helpers: { show, confirmExact }
   });
 
+  const productsAdminModule = initProductsAdmin({
+  supabaseClient,
+  ui: {
+    paViewBtn, paClearBtn, paMsg,
+    paListPanel, paList,
+    paEditPanel,
+    paProductName, paEdgeFn, paSubject, paBody,
+    paSendEmail, paIncludeLinks, paIncludeAttachments,
+    paSaveBtn, paCancelBtn
+  },
+  helpers: { show, escapeHtml, confirmExact }
+});
+
   const productTypesModule = initProductTypesManagement({
     supabaseClient,
     ui: { ptName, ptAddBtn, ptTbody, ptStatus },
@@ -1059,6 +1072,7 @@ if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
       productTypes: viewProductTypes,
       labs: viewLabMgmt,
       formulary: viewFormulary,
+      productsAdmin: viewProductsAdmin,
       userMgmt: viewUserMgmt
     },
     show,
@@ -1094,6 +1108,7 @@ if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
       customers: () => customerModule.resetCustomerScreen(),
       agents: () => agentModule.resetAgentScreen(),
       accountManagers: () => accountManagersModule.resetAccountManagersScreen(),
+      productsAdmin: () => productsAdminModule.reset(),
       productTypes: async () => {
         productTypesModule.resetProductTypesScreen();
         await productTypesModule.loadProductTypes();
