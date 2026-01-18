@@ -1,215 +1,25 @@
-table_schema,table_name,ordinal_position,column_name,data_type,is_nullable,column_default
-public,account_manager_clinics,1,id,uuid,NO,gen_random_uuid()
-public,account_manager_clinics,2,account_manager_id,uuid,NO,null
-public,account_manager_clinics,3,agent_id,uuid,NO,null
-public,account_manager_clinics,4,commission_pct,numeric,NO,null
-public,account_manager_clinics,5,created_at,timestamp with time zone,YES,now()
-public,account_managers,1,id,uuid,NO,gen_random_uuid()
-public,account_managers,2,first_name,text,NO,null
-public,account_managers,3,last_name,text,NO,null
-public,account_managers,4,email,text,NO,null
-public,account_managers,5,phone,text,YES,null
-public,account_managers,6,address,text,YES,null
-public,account_managers,7,status,text,NO,'active'::text
-public,account_managers,8,notes,text,YES,null
-public,account_managers,9,created_at,timestamp with time zone,YES,now()
-public,account_managers,10,am_code,text,NO,null
-public,admin_users,1,auth_user_id,uuid,NO,null
-public,agent_users,1,id,uuid,NO,gen_random_uuid()
-public,agent_users,2,agent_id,uuid,YES,null
-public,agent_users,3,auth_user_id,uuid,NO,null
-public,agent_users,4,full_name,text,YES,null
-public,agent_users,5,email,text,NO,null
-public,agent_users,6,role,text,NO,'agent'::text
-public,agent_users,7,status,text,NO,'active'::text
-public,agent_users,8,created_at,timestamp with time zone,NO,now()
-public,agent_users,9,permissions,jsonb,NO,'{}'::jsonb
-public,agents,1,id,uuid,NO,gen_random_uuid()
-public,agents,2,name,text,NO,null
-public,agents,3,type,text,YES,null
-public,agents,4,country,text,YES,null
-public,agents,5,city,text,YES,null
-public,agents,6,status,text,NO,'active'::text
-public,agents,7,created_at,timestamp with time zone,NO,now()
-public,agents,8,agent_code,character varying,YES,null
-public,agents,9,default_lab_id,uuid,YES,null
-public,bases,1,id,uuid,NO,gen_random_uuid()
-public,bases,2,base_code,text,NO,null
-public,bases,3,name,text,NO,null
-public,bases,4,description,text,YES,null
-public,bases,5,created_at,timestamp with time zone,NO,now()
-public,bases,6,updated_at,timestamp with time zone,NO,now()
-public,boosters,1,id,uuid,NO,gen_random_uuid()
-public,boosters,2,booster_code,text,NO,null
-public,boosters,3,name,text,NO,null
-public,boosters,4,description,text,YES,null
-public,boosters,5,created_at,timestamp with time zone,NO,now()
-public,boosters,6,updated_at,timestamp with time zone,NO,now()
-public,customer_code_counters,1,month_key,text,NO,null
-public,customer_code_counters,2,last_seq,integer,NO,null
-public,customer_month_counter,1,ym,text,NO,null
-public,customer_month_counter,2,last_seq,integer,NO,null
-public,customers,1,id,uuid,NO,gen_random_uuid()
-public,customers,2,agent_id,uuid,NO,null
-public,customers,3,first_name,text,NO,null
-public,customers,4,last_name,text,NO,null
-public,customers,5,email,text,YES,null
-public,customers,6,phone,text,YES,null
-public,customers,7,created_at,timestamp with time zone,NO,now()
-public,customers,8,customer_code,text,YES,null
-public,customers,9,date_of_birth,date,NO,null
-public,customers,10,gender,text,NO,null
-public,formula_items,1,id,uuid,NO,gen_random_uuid()
-public,formula_items,2,formula_id,uuid,NO,null
-public,formula_items,3,ingredient_id,uuid,NO,null
-public,formula_items,4,pct,numeric,NO,0
-public,formula_items,5,sort_order,integer,NO,0
-public,formula_items,6,created_at,timestamp with time zone,NO,now()
-public,formula_items,7,updated_at,timestamp with time zone,NO,now()
-public,formulas,1,id,uuid,NO,gen_random_uuid()
-public,formulas,2,code,text,NO,null
-public,formulas,3,name,text,NO,null
-public,formulas,4,type,USER-DEFINED,NO,null
-public,formulas,5,notes,text,YES,null
-public,formulas,6,created_at,timestamp with time zone,NO,now()
-public,formulas,7,updated_at,timestamp with time zone,NO,now()
-public,formulated_product_ingredients,1,id,uuid,NO,gen_random_uuid()
-public,formulated_product_ingredients,2,product_id,uuid,NO,null
-public,formulated_product_ingredients,3,ingredient_id,uuid,NO,null
-public,formulated_product_ingredients,4,pct,numeric,NO,null
-public,formulated_product_ingredients,5,sort_order,integer,NO,1
-public,formulated_product_ingredients,6,created_at,timestamp with time zone,NO,now()
-public,formulated_product_items,1,id,uuid,NO,gen_random_uuid()
-public,formulated_product_items,2,formulated_product_id,uuid,NO,null
-public,formulated_product_items,3,ingredient_id,uuid,NO,null
-public,formulated_product_items,4,pct,numeric,NO,null
-public,formulated_product_items,5,sort_order,integer,NO,0
-public,formulated_product_items,6,phase,text,YES,null
-public,formulated_product_items,7,created_at,timestamp with time zone,NO,now()
-public,formulated_product_items,8,updated_at,timestamp with time zone,NO,now()
-public,formulated_products,1,id,uuid,NO,gen_random_uuid()
-public,formulated_products,2,code,text,NO,null
-public,formulated_products,3,name,text,NO,null
-public,formulated_products,4,type,text,NO,null
-public,formulated_products,5,category,text,YES,null
-public,formulated_products,6,notes,text,YES,null
-public,formulated_products,7,is_active,boolean,NO,true
-public,formulated_products,8,created_at,timestamp with time zone,NO,now()
-public,formulated_products,9,updated_at,timestamp with time zone,NO,now()
-public,formulated_products,10,product_code,text,YES,null
-public,formulated_products,11,product_type_id,uuid,NO,null
-public,ingredients,1,id,uuid,NO,gen_random_uuid()
-public,ingredients,2,psi_number,text,NO,null
-public,ingredients,3,inci_name,text,NO,null
-public,ingredients,4,short_description,text,YES,null
-public,ingredients,5,created_at,timestamp with time zone,NO,now()
-public,labs,1,id,uuid,NO,gen_random_uuid()
-public,labs,2,name,text,NO,null
-public,labs,3,orders_email,text,NO,null
-public,labs,4,admin_email,text,YES,null
-public,labs,5,phone,text,YES,null
-public,labs,6,address,text,YES,null
-public,labs,7,shipping_address,text,YES,null
-public,labs,8,created_at,timestamp with time zone,NO,now()
-public,labs,9,updated_at,timestamp with time zone,NO,now()
-public,labs,10,lab_code,text,YES,null
-public,order_artifacts,1,id,uuid,NO,gen_random_uuid()
-public,order_artifacts,2,order_id,uuid,NO,null
-public,order_artifacts,3,artifact_type,text,NO,null
-public,order_artifacts,4,format,text,NO,null
-public,order_artifacts,5,version,integer,NO,1
-public,order_artifacts,6,content_json,jsonb,YES,null
-public,order_artifacts,7,storage_bucket,text,YES,null
-public,order_artifacts,8,storage_path,text,YES,null
-public,order_artifacts,9,sha256,text,YES,null
-public,order_artifacts,10,created_at,timestamp with time zone,NO,now()
-public,order_batches,1,id,uuid,NO,gen_random_uuid()
-public,order_batches,2,order_id,uuid,NO,null
-public,order_batches,3,formula_key,text,NO,null
-public,order_batches,4,batch_code,text,NO,null
-public,order_batches,5,lab_batch_code,text,YES,null
-public,order_batches,6,created_at,timestamp with time zone,NO,now()
-public,order_events,1,id,uuid,NO,gen_random_uuid()
-public,order_events,2,order_id,uuid,NO,null
-public,order_events,3,event_type,text,NO,null
-public,order_events,4,message,text,YES,null
-public,order_events,5,meta,jsonb,NO,'{}'::jsonb
-public,order_events,6,created_at,timestamp with time zone,NO,now()
-public,order_events,7,created_by,uuid,YES,null
-public,order_items,1,id,uuid,NO,gen_random_uuid()
-public,order_items,2,order_id,uuid,NO,null
-public,order_items,3,product_id,uuid,NO,null
-public,order_items,4,product_code_snapshot,text,NO,null
-public,order_items,5,product_name_snapshot,text,NO,null
-public,order_items,6,product_kind_snapshot,text,NO,null
-public,order_items,7,unit_price,numeric,NO,0
-public,order_items,8,quantity,integer,NO,1
-public,order_items,9,line_total,numeric,NO,0
-public,order_items,10,notes,text,YES,null
-public,order_items,11,created_at,timestamp with time zone,NO,now()
-public,orders,1,id,uuid,NO,gen_random_uuid()
-public,orders,2,order_code,text,NO,null
-public,orders,3,agent_id,uuid,NO,null
-public,orders,4,customer_id,uuid,NO,null
-public,orders,5,status,text,NO,'draft'::text
-public,orders,6,placed_at,timestamp with time zone,YES,null
-public,orders,7,cancelled_at,timestamp with time zone,YES,null
-public,orders,8,cancel_reason,text,YES,null
-public,orders,9,dispatch_to,text,NO,'customer'::text
-public,orders,10,ship_to_name,text,NO,null
-public,orders,11,ship_to_phone,text,YES,null
-public,orders,12,ship_to_email,text,YES,null
-public,orders,13,ship_to_address,text,NO,null
-public,orders,14,ship_to_city,text,YES,null
-public,orders,15,ship_to_country,text,YES,null
-public,orders,16,lab_id,uuid,YES,null
-public,orders,17,lab_name_snapshot,text,YES,null
-public,orders,18,lab_orders_email_snapshot,text,YES,null
-public,orders,19,lab_admin_email_snapshot,text,YES,null
-public,orders,20,lab_shipping_address_snapshot,text,YES,null
-public,orders,21,currency,text,NO,'AED'::text
-public,orders,22,subtotal,numeric,NO,0
-public,orders,23,tax,numeric,NO,0
-public,orders,24,total,numeric,NO,0
-public,orders,25,agent_notes,text,YES,null
-public,orders,26,internal_notes,text,YES,null
-public,orders,27,created_at,timestamp with time zone,NO,now()
-public,orders,28,updated_at,timestamp with time zone,NO,now()
-public,orders,29,customer_dob_snapshot,date,YES,null
-public,orders,30,customer_gender_snapshot,text,YES,null
-public,product_execution_settings,1,product_id,uuid,NO,null
-public,product_execution_settings,2,edge_function_name,text,NO,null
-public,product_execution_settings,3,lab_email_subject,text,NO,null
-public,product_execution_settings,4,lab_email_body_md,text,NO,null
-public,product_execution_settings,5,send_lab_email,boolean,NO,true
-public,product_execution_settings,6,include_signed_links,boolean,NO,true
-public,product_execution_settings,7,include_attachments,boolean,NO,false
-public,product_execution_settings,8,settings,jsonb,NO,'{}'::jsonb
-public,product_execution_settings,9,updated_at,timestamp with time zone,NO,now()
-public,product_types,1,id,uuid,NO,gen_random_uuid()
-public,product_types,2,type_code,text,YES,null
-public,product_types,3,type_name,text,NO,null
-public,product_types,4,created_at,timestamp with time zone,NO,now()
-public,product_types,5,type_code2,text,YES,null
-public,products,1,id,uuid,NO,gen_random_uuid()
-public,products,2,product_code,text,NO,null
-public,products,3,name,text,NO,null
-public,products,4,kind,text,NO,null
-public,products,5,is_active,boolean,NO,true
-public,products,6,description,text,YES,null
-public,products,7,notes,text,YES,null
-public,products,8,workflow_key,text,YES,null
-public,products,9,currency,text,NO,'AED'::text
-public,products,10,price,numeric,YES,null
-public,products,11,created_at,timestamp with time zone,NO,now()
-public,products,12,updated_at,timestamp with time zone,NO,now()
-public,products,13,product_kind,text,NO,'static'::text
-public,products,14,currency_code,text,NO,'AED'::text
-public,products,15,unit_price_aed,numeric,YES,null
-public,psi_ingredients,1,id,uuid,NO,gen_random_uuid()
-public,psi_ingredients,2,psi_number,text,NO,null
-public,psi_ingredients,3,inci_name,text,NO,null
-public,psi_ingredients,4,short_description,text,YES,null
-public,psi_ingredients,5,is_aqua,boolean,NO,false
-public,psi_ingredients,6,created_at,timestamp with time zone,NO,now()
-public,psi_ingredients,7,updated_at,timestamp with time zone,NO,now()
+table_schema,table_name,trigger_name,trigger_def
+public,account_managers,trg_set_account_manager_code,CREATE TRIGGER trg_set_account_manager_code BEFORE INSERT ON account_managers FOR EACH ROW EXECUTE FUNCTION set_account_manager_code()
+public,agent_users,trg_normalize_agent_user_email,CREATE TRIGGER trg_normalize_agent_user_email BEFORE INSERT OR UPDATE ON agent_users FOR EACH ROW EXECUTE FUNCTION normalize_agent_user_email()
+public,agent_users,trg_prevent_last_active_admin,CREATE TRIGGER trg_prevent_last_active_admin BEFORE DELETE OR UPDATE ON agent_users FOR EACH ROW EXECUTE FUNCTION prevent_last_active_admin()
+public,agents,trg_set_agent_code,CREATE TRIGGER trg_set_agent_code BEFORE INSERT ON agents FOR EACH ROW EXECUTE FUNCTION set_agent_code()
+public,bases,set_bases_updated_at,CREATE TRIGGER set_bases_updated_at BEFORE UPDATE ON bases FOR EACH ROW EXECUTE FUNCTION set_updated_at()
+public,boosters,set_boosters_updated_at,CREATE TRIGGER set_boosters_updated_at BEFORE UPDATE ON boosters FOR EACH ROW EXECUTE FUNCTION set_updated_at()
+public,customers,trg_assign_customer_code,CREATE TRIGGER trg_assign_customer_code BEFORE INSERT ON customers FOR EACH ROW EXECUTE FUNCTION assign_customer_code()
+public,customers,trg_set_customer_code,CREATE TRIGGER trg_set_customer_code BEFORE INSERT ON customers FOR EACH ROW EXECUTE FUNCTION set_customer_code()
+public,formula_items,trg_touch_formula_items,CREATE TRIGGER trg_touch_formula_items BEFORE UPDATE ON formula_items FOR EACH ROW EXECUTE FUNCTION touch_updated_at()
+public,formulas,trg_touch_formulas,CREATE TRIGGER trg_touch_formulas BEFORE UPDATE ON formulas FOR EACH ROW EXECUTE FUNCTION touch_updated_at()
+public,formulated_product_items,trg_fpi_updated_at,CREATE TRIGGER trg_fpi_updated_at BEFORE UPDATE ON formulated_product_items FOR EACH ROW EXECUTE FUNCTION set_updated_at()
+public,formulated_products,trg_fp_updated_at,CREATE TRIGGER trg_fp_updated_at BEFORE UPDATE ON formulated_products FOR EACH ROW EXECUTE FUNCTION set_updated_at()
+public,formulated_products,trg_set_formulated_product_code,CREATE TRIGGER trg_set_formulated_product_code BEFORE INSERT ON formulated_products FOR EACH ROW EXECUTE FUNCTION set_formulated_product_code()
+public,formulated_products,trg_set_product_code,CREATE TRIGGER trg_set_product_code BEFORE INSERT ON formulated_products FOR EACH ROW EXECUTE FUNCTION set_product_code()
+public,formulated_products,trg_touch_formulated_products,CREATE TRIGGER trg_touch_formulated_products BEFORE UPDATE ON formulated_products FOR EACH ROW EXECUTE FUNCTION touch_updated_at()
+public,labs,set_labs_lab_code,CREATE TRIGGER set_labs_lab_code BEFORE INSERT ON labs FOR EACH ROW EXECUTE FUNCTION set_lab_code()
+public,labs,set_labs_updated_at,CREATE TRIGGER set_labs_updated_at BEFORE UPDATE ON labs FOR EACH ROW EXECUTE FUNCTION set_updated_at()
+public,orders,trg_orders_apply_default_lab,CREATE TRIGGER trg_orders_apply_default_lab BEFORE INSERT OR UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION orders_apply_default_lab()
+public,orders,trg_orders_updated_at,CREATE TRIGGER trg_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION set_updated_at()
+public,orders,trg_set_order_code,CREATE TRIGGER trg_set_order_code BEFORE INSERT ON orders FOR EACH ROW EXECUTE FUNCTION set_order_code()
+public,product_types,trg_set_product_type_code,CREATE TRIGGER trg_set_product_type_code BEFORE INSERT ON product_types FOR EACH ROW EXECUTE FUNCTION set_product_type_code()
+public,products,trg_products_updated_at,CREATE TRIGGER trg_products_updated_at BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION set_updated_at()
+public,products,trg_set_product_code,CREATE TRIGGER trg_set_product_code BEFORE INSERT ON products FOR EACH ROW EXECUTE FUNCTION set_product_code()
+public,psi_ingredients,trg_touch_psi_ingredients,CREATE TRIGGER trg_touch_psi_ingredients BEFORE UPDATE ON psi_ingredients FOR EACH ROW EXECUTE FUNCTION touch_updated_at()
