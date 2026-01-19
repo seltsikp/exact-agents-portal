@@ -69,7 +69,6 @@ function renderMenuForRole(role, permissions = {}) {
   // Non-admin: show only what permissions allow
   const p = permissions || {};
   if (p.customers) addMenuBtn("Customers", "customers");
-  if (p.accountManagers) addMenuBtn("Account Managers", "accountManagers");
   if (p.productTypes) addMenuBtn("Product Groups", "productTypes");
   if (p.formulary) addMenuBtn("Formulary", "formulary");
   if (p.labs) addMenuBtn("Labs", "labs");
