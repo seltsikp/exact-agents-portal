@@ -43,6 +43,8 @@ Object.entries(views).forEach(([key, v]) => {
   }
 
 function renderMenuForRole(role, permissions = {}) {
+  role = String(role || "").trim().toLowerCase();
+
   if (!menuItems) return;
   menuItems.innerHTML = "";
 
@@ -74,13 +76,14 @@ function renderMenuForRole(role, permissions = {}) {
   }
 
   // Non-admin: show only what permissions allow
-  const p = permissions || {};
+   const p = permissions || {};
+  if (p.orders) addMenuBtn("Orders", "orders");
+  if (p.agents) addMenuBtn("Agents", "agents");
   if (p.customers) addMenuBtn("Customers", "customers");
   if (p.productTypes) addMenuBtn("Product Groups", "productTypes");
   if (p.formulary) addMenuBtn("Formulary", "formulary");
   if (p.labs) addMenuBtn("Labs", "labs");
-  if (p.agents) addMenuBtn("Agents", "agents");
-  if (p.orders) addMenuBtn("Orders", "orders");
+
 
 
   setActiveView("welcome");
