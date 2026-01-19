@@ -35,6 +35,8 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
 
   let selectedOrderId = null;
 
+  const isAdmin = String(state?.currentProfile?.role || "") === "admin";
+
   const setMsg = (t) => { if (ordersMsg) ordersMsg.textContent = t || ""; };
 
   function resetScreen() {
@@ -282,6 +284,12 @@ function renderCreateOrderModal({ customers, agent, onSubmit, onCancel }) {
 
     show(ordersListPanel, false);
     show(ordersDetailPanel, true);
+    
+    // Agents should not see artifacts or batch summary
+show(ordersBatchSummary, isAdmin);
+show(ordersArtifactsList, isAdmin);
+show(ordersGeneratePackBtn, isAdmin);
+
 
     // Load order core fields (we only display some)
     const { data: o, error } = await supabaseClient
@@ -319,9 +327,10 @@ function renderCreateOrderModal({ customers, agent, onSubmit, onCancel }) {
       ordersDetailMeta.textContent = parts.join(" | ");
     }
 
-    await loadBatchSummaryFromLatestFormulationJson(orderId);
-    await loadArtifacts(orderId);
-  }
+  if (isAdmin) {
+  await loadBatchSummaryFromLatestFormulationJson(orderId);
+  await loadArtifacts(orderId);
+}
 
   async function loadBatchSummaryFromLatestFormulationJson(orderId) {
     if (!ordersBatchSummary) return;
