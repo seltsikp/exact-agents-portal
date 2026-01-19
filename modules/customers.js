@@ -317,8 +317,10 @@ export function initCustomerManagement({
       if (!last_name) { markField(lastNameInput, "error"); setCustMsg("Last name is required."); return; }
       markField(lastNameInput, "ok");
 
-      if (!date_of_birth) {
-      setCustMsg("Date of birth is required.");
+     if (!date_of_birth) {
+  setCustMsg("Date of birth is required.");
+  return;
+}
 
       if (email && !isValidEmail(email)) { markField(custEmailInput, "error"); setCustMsg("Please enter a valid email address."); return; }
       if (email) markField(custEmailInput, "ok");
