@@ -363,8 +363,7 @@ export function initCustomerManagement({
       clearAddForm();
       showViewCustomersPanel();
     });
-  }
-
+  
   return {
     resetCustomerScreen,
     runCustomerSearch
