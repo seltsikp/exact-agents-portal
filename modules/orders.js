@@ -87,6 +87,16 @@ function renderCreateOrderModal({ customers, onSubmit, onCancel }) {
 
   overlay.appendChild(card);
   document.body.appendChild(overlay);
+  // Auto-fill ship-to name when customer selected
+overlay.querySelector("#coCustomer")?.addEventListener("change", (e) => {
+  const id = e.target.value;
+  const c = (customers || []).find(x => x.id === id);
+  if (!c) return;
+
+  overlay.querySelector("#coShipName").value =
+    [c.first_name, c.last_name].filter(Boolean).join(" ");
+});
+
 
   const cleanup = () => overlay.remove();
 
@@ -468,8 +478,15 @@ const agent_id = profile?.agent_id;
         if (iErr) { setMsg("Add item failed: " + iErr.message); return; }
 
         // C) open detail
-        await openOrder(order_id);
-        setMsg("Draft order created ✅");
+await openOrder(order_id);
+await loadOrders({ mode: "all" });
+setMsg("Draft order created ✅");
+  
+      if (ordersGeneratePackBtn) {
+  ordersGeneratePackBtn.disabled = (o.status !== "draft");
+}
+
+
       }
     });
   });
