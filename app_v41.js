@@ -660,7 +660,7 @@ ui: {
       show,
       escapeHtml,
       formatDateShort,
-      confirmExact
+      confirmExact,
     },
     state: {
       async refreshAgents() {
