@@ -89,23 +89,34 @@ export function initAgentManagement({
     const created = formatDateShort(a.created_at);
     const createdPill = created ? `<span class="pill-soft">Created: ${escapeHtml(created)}</span>` : "";
 
-    return `
-      <div class="customer-row" data-agent-id="${id}">
-        <div class="customer-main">
-          <div class="name">${name}</div>
-          <div class="meta"><span style="opacity:.75;">${code}</span></div>
-        </div>
-
-        <div class="customer-context">
-          ${createdPill}
-        </div>
-
-        <div class="customer-actions">
-          <button class="btn btn-soft action-pill edit-pill" data-action="edit" type="button">Edit</button>
-          <button class="btn action-pill delete-pill" data-action="delete" type="button">Delete</button>
-        </div>
+  return `
+  <div class="customer-row" data-agent-id="${id}">
+    <div class="customer-main">
+      <div class="name">${name}</div>
+      <div class="meta">
+        <span style="opacity:.75;">${code}</span>
+        ${(a.email || a.phone) ? ` • ${escapeHtml(a.email || "")}${a.phone ? " • " + escapeHtml(a.phone) : ""}` : ""}
       </div>
-    `.trim();
+      ${(a.shipping_address || a.shipping_city || a.shipping_country) ? `
+        <div class="subtle">
+          ${escapeHtml(a.shipping_address || "")}
+          ${a.shipping_city ? ", " + escapeHtml(a.shipping_city) : ""}
+          ${a.shipping_country ? ", " + escapeHtml(a.shipping_country) : ""}
+        </div>
+      ` : ""}
+    </div>
+
+    <div class="customer-context">
+      ${createdPill}
+    </div>
+
+    <div class="customer-actions">
+      <button class="btn btn-soft action-pill edit-pill" data-action="edit" type="button">Edit</button>
+      <button class="btn action-pill delete-pill" data-action="delete" type="button">Delete</button>
+    </div>
+  </div>
+`.trim();
+
   }
 
   // -------------------------
