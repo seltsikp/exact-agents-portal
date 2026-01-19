@@ -634,33 +634,32 @@ const ordersArtifactsList = document.getElementById("ordersArtifactsList");
 
   const agentModule = initAgentManagement({
     supabaseClient,
-ui: {
-  amViewBtn,
-  amAddBtn,
-  amClearBtn,
-  agentMsg,
-  amViewPanel,
-  amAddPanel,
-  amSearch,
-  amSearchBtn,
-  amShowAllBtn,
-  agentList,
-  agentNameInput,
-  agentEmailInput,
-  agentPhoneInput,
-  agentShipAddressInput,
-  agentShipCityInput,
-  agentShipCountryInput,
-  addAgentBtn
-}
+    ui: {
+      amViewBtn,
+      amAddBtn,
+      amClearBtn,
+      agentMsg,
+      amViewPanel,
+      amAddPanel,
+      amSearch,
+      amSearchBtn,
+      amShowAllBtn,
+      agentList,
 
-},
+      agentNameInput,
+      agentEmailInput,
+      agentPhoneInput,
+      agentShipAddressInput,
+      agentShipCityInput,
+      agentShipCountryInput,
 
+      addAgentBtn
+    },
     helpers: {
       show,
       escapeHtml,
       formatDateShort,
-      confirmExact,
+      confirmExact
     },
     state: {
       async refreshAgents() {
