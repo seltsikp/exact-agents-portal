@@ -332,6 +332,7 @@ show(ordersGeneratePackBtn, isAdmin);
   await loadArtifacts(orderId);
 }
 
+}
   async function loadBatchSummaryFromLatestFormulationJson(orderId) {
     if (!ordersBatchSummary) return;
     ordersBatchSummary.innerHTML = `<div class="subtle">Loading…</div>`;
@@ -615,8 +616,9 @@ renderCreateOrderModal({
         if (iErr) { setMsg("Add item failed: " + iErr.message); return; }
 
         // C) open detail
-await openOrder(order_id);
-await loadOrders({ mode: "all" });
+    await loadOrders({ mode: "all" });
+    await openOrder(order_id);
+
 setMsg("Draft order created ✅");
   
     
