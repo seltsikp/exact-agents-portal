@@ -12,7 +12,7 @@ export function initAgentManagement({
     confirmExact
   } = helpers;
 
-  const {
+    const {
     amViewBtn,
     amAddBtn,
     amClearBtn,
@@ -23,7 +23,15 @@ export function initAgentManagement({
     amSearchBtn,
     amShowAllBtn,
     agentList,
-    agentNameInput
+
+    agentNameInput,
+    agentEmailInput,
+    agentPhoneInput,
+    agentShipAddressInput,
+    agentShipCityInput,
+    agentShipCountryInput,
+
+    addAgentBtn
   } = ui;
 
   let agentsById = {};
@@ -44,6 +52,12 @@ export function initAgentManagement({
     editingAgentId = null;
 
     if (agentNameInput) agentNameInput.value = "";
+    if (agentEmailInput) agentEmailInput.value = "";
+    if (agentPhoneInput) agentPhoneInput.value = "";
+    if (agentShipAddressInput) agentShipAddressInput.value = "";
+    if (agentShipCityInput) agentShipCityInput.value = "";
+    if (agentShipCountryInput) agentShipCountryInput.value = "";
+
     setAgentMsg("");
   }
 
@@ -116,6 +130,12 @@ export function initAgentManagement({
       if (action === "edit") {
         editingAgentId = a.id;
         if (agentNameInput) agentNameInput.value = a.name || "";
+        if (agentEmailInput) agentEmailInput.value = a.email || "";
+        if (agentPhoneInput) agentPhoneInput.value = a.phone || "";
+        if (agentShipAddressInput) agentShipAddressInput.value = a.shipping_address || "";
+        if (agentShipCityInput) agentShipCityInput.value = a.shipping_city || "";
+        if (agentShipCountryInput) agentShipCountryInput.value = a.shipping_country || "";
+
         showAddAgentPanel();
         setAgentMsg("Editing agent — click Save agent to update.");
         return;
@@ -158,7 +178,7 @@ export function initAgentManagement({
 
     let q = supabaseClient
       .from("agents")
-      .select("id, agent_code, name, created_at")
+      .select("id, agent_code, name, email, phone, shipping_address, shipping_city, shipping_country, created_at")
       .order("created_at", { ascending: false });
 
     const t = (term || "").trim();
@@ -197,17 +217,25 @@ export function initAgentManagement({
   // -------------------------
   // save agent
   // -------------------------
-  if (ui.addAgentBtn) {
-    ui.addAgentBtn.addEventListener("click", async () => {
+    if (addAgentBtn) {
+    addAgentBtn.addEventListener("click", async () => {
+
       setAgentMsg("");
 
       const name = (agentNameInput?.value || "").trim();
+      const email = (agentEmailInput?.value || "").trim() || null;
+      const phone = (agentPhoneInput?.value || "").trim() || null;
+      const shipping_address = (agentShipAddressInput?.value || "").trim() || null;
+      const shipping_city = (agentShipCityInput?.value || "").trim() || null;
+      const shipping_country = (agentShipCountryInput?.value || "").trim() || null;
+
       if (!name) { setAgentMsg("Agent name is required."); return; }
 
       if (editingAgentId) {
         const { error } = await supabaseClient
           .from("agents")
-          .update({ name })
+          .update({ name, email, phone, shipping_address, shipping_city, shipping_country })
+
           .eq("id", editingAgentId);
 
         if (error) { setAgentMsg("Update error: " + error.message); return; }
@@ -215,6 +243,11 @@ export function initAgentManagement({
         setAgentMsg("Saved ✅");
         editingAgentId = null;
         if (agentNameInput) agentNameInput.value = "";
+      if (agentEmailInput) agentEmailInput.value = "";
+      if (agentPhoneInput) agentPhoneInput.value = "";
+      if (agentShipAddressInput) agentShipAddressInput.value = "";
+      if (agentShipCityInput) agentShipCityInput.value = "";
+      if (agentShipCountryInput) agentShipCountryInput.value = "";
 
         await state.refreshAgents();
         showViewAgentsPanel();
@@ -224,7 +257,8 @@ export function initAgentManagement({
 
       const { error } = await supabaseClient
         .from("agents")
-        .insert([{ name }]);
+        .insert([{ name, email, phone, shipping_address, shipping_city, shipping_country }]);
+
 
       if (error) { setAgentMsg("Insert error: " + error.message); return; }
 
