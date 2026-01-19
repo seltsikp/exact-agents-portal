@@ -357,15 +357,20 @@ export function initCustomerManagement({
         .from("customers")
         .insert([{ agent_id, first_name, last_name, date_of_birth, email, phone }]);
 
-      if (error) { setCustMsg("Insert error: " + error.message); return; }
+        if (error) { 
+        setCustMsg("Insert error: " + error.message); 
+        return; 
+      }
 
       setCustMsg("Customer added ✅");
       clearAddForm();
       showViewCustomersPanel();
     });
-  
+  }
+
   return {
     resetCustomerScreen,
     runCustomerSearch
   };
 }
+
