@@ -836,9 +836,22 @@
   .customer-row {
     grid-template-columns: 1fr;
   }
+  /* ===== Spinner (orders) ===== */
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(0,0,0,0.25);
+  border-top-color: rgba(0,0,0,0.75);
+  border-radius: 50%;
+  display: inline-block;
+  vertical-align: middle;
+  animation: spin 0.7s linear infinite;
 }
 
+@keyframes spin { to { transform: rotate(360deg);}
+}
     </style>
+  
   </head>
 
   <body>
