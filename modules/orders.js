@@ -236,7 +236,8 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
       <div class="customer-row" data-order-id="${escapeHtml(o.id)}" style="cursor:pointer;">
         <div style="font-weight:800;">${code}</div>
         <div class="subtle" style="margin-top:4px;">
-          Status: ${status} • Created: ${created} • Customer: ${escapeHtml(cust)}
+          ${isAdminNow() ? `Payment: ${escapeHtml(o.payment_status || "—")} • ` : ""}Status: ${status} • Created: ${created} • Customer: ${escapeHtml(cust)}
+
         </div>
       </div>
     `;
