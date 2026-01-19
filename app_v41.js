@@ -407,9 +407,9 @@ window.addEventListener("DOMContentLoaded", () => {
   const agentList = document.getElementById("agentList");
 const agentEmailInput = document.getElementById("agentEmail");
 const agentPhoneInput = document.getElementById("agentPhone");
-const agentShippingAddressInput = document.getElementById("agentShippingAddress");
-const agentShippingCityInput = document.getElementById("agentShippingCity");
-const agentShippingCountryInput = document.getElementById("agentShippingCountry");
+const agentShipAddressInput = document.getElementById("agentShippingAddress");
+const agentShipCityInput = document.getElementById("agentShippingCity");
+const agentShipCountryInput = document.getElementById("agentShippingCountry");
 
   const agentNameInput = document.getElementById("agentName");
   const addAgentBtn = document.getElementById("addAgentBtn");
@@ -645,15 +645,15 @@ ui: {
   amSearchBtn,
   amShowAllBtn,
   agentList,
-
   agentNameInput,
   agentEmailInput,
   agentPhoneInput,
-  agentShippingAddressInput,
-  agentShippingCityInput,
-  agentShippingCountryInput,
-
+  agentShipAddressInput,
+  agentShipCityInput,
+  agentShipCountryInput,
   addAgentBtn
+}
+
 },
 
     helpers: {
