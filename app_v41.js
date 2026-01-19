@@ -413,6 +413,8 @@ window.addEventListener("DOMContentLoaded", () => {
   const firstNameInput = document.getElementById("firstName");
   const lastNameInput = document.getElementById("lastName");
   const custDobInput = document.getElementById("custDob");
+  const custGenderInput = document.getElementById("custGender");
+const custGenderInput = document.getElementById("custGender");
   const custEmailInput = document.getElementById("custEmail");
   const custPhoneInput = document.getElementById("custPhone");
   const addCustomerBtn = document.getElementById("addCustomerBtn");
@@ -601,6 +603,7 @@ const ordersArtifactsList = document.getElementById("ordersArtifactsList");
       firstNameInput,
       lastNameInput,
       custDobInput,
+      custGenderInput,
       custEmailInput,
       custPhoneInput,
       addCustomerBtn,
