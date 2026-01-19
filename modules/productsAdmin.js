@@ -266,20 +266,19 @@ let gate = gateRaw ? Number(gateRaw) : 75;
 if (!Number.isFinite(gate)) gate = 75;
 gate = Math.max(0, Math.min(100, Math.round(gate)));
 
-    const execPayload = {
-      product_id: selectedProduct.id,
-      edge_function_name: edgeFn,
-      lab_email_subject: subj,
-      lab_email_body_md: body,
-      send_lab_email: !!paSendEmail?.checked,
-      include_signed_links: !!paIncludeLinks?.checked,
-      include_attachments: !!paIncludeAttachments?.checked,
-      const gateRaw = String(paBoosterGate?.value ?? "").trim();
-let gate = gateRaw ? Number(gateRaw) : 75;
-if (!Number.isFinite(gate)) gate = 75;
-gate = Math.max(0, Math.min(100, Math.round(gate)));
-
-    };
+   const execPayload = {
+  product_id: selectedProduct.id,
+  edge_function_name: edgeFn,
+  lab_email_subject: subj,
+  lab_email_body_md: body,
+  send_lab_email: !!paSendEmail?.checked,
+  include_signed_links: !!paIncludeLinks?.checked,
+  include_attachments: !!paIncludeAttachments?.checked,
+  settings: {
+    ...(execSettingsCache?.settings || {}),
+    booster_trigger_threshold: gate,
+  },
+};
 
     setMsg("Saving execution settings…");
 
