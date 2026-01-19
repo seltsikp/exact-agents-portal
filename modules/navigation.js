@@ -17,10 +17,15 @@ if (!views || !views[viewKey]) console.warn("[NAV] Missing view element for:", v
 
     activeViewKey = viewKey;
 
-    // show/hide views (generic)
-Object.entries(views).forEach(([key, el]) => {
-  show(el, key === viewKey);
+    // show/hide views 
+Object.entries(views).forEach(([key, v]) => {
+  if (!v?.el) {
+    console.warn("[NAV] View missing el:", key);
+    return;
+  }
+  show(v.el, key === viewKey);
 });
+
 
 
     // menu highlight
