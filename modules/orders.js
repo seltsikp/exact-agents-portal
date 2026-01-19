@@ -552,15 +552,6 @@ const { data: agentRow, error: aErr } = await supabaseClient
 
 if (aErr) { setMsg("Load agent failed: " + aErr.message); return; }
 
-// Load agent (for dispatch_to = agent)
-const { data: agentRow, error: aErr } = await supabaseClient
-  .from("agents")
-  .select("id, name, email, phone, shipping_address, shipping_city, shipping_country")
-  .eq("id", agent_id)
-  .maybeSingle();
-
-if (aErr) { setMsg("Load agent failed: " + aErr.message); return; }
-
 renderCreateOrderModal({
   customers,
   agent: agentRow,
