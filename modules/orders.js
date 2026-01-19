@@ -285,16 +285,26 @@ function renderCreateOrderModal({ customers, agent, onSubmit, onCancel }) {
     show(ordersListPanel, false);
     show(ordersDetailPanel, true);
     
-    // Agents should not see artifacts or batch summary
-show(ordersBatchSummary, isAdmin);
-show(ordersArtifactsList, isAdmin);
-show(ordersGeneratePackBtn, isAdmin);
-// Hide the section headers too (they're separate from the content divs)
-const batchHeaderEl = ordersBatchSummary?.previousElementSibling;
-if (batchHeaderEl) show(batchHeaderEl, isAdmin);
+    // Visibility rules:
+    // - Admin: can generate pack, see batch summary, see artifacts
+    // - Agent: can generate pack, see batch summary, NOT artifacts
+    const canSeeArtifacts = isAdmin;
 
-const artifactsHeaderEl = ordersArtifactsList?.previousElementSibling;
-if (artifactsHeaderEl) show(artifactsHeaderEl, isAdmin);
+    // Generate pack button: visible for both admin + agent
+    show(ordersGeneratePackBtn, true);
+
+    // Batch summary block: visible for both admin + agent
+    // (hide/show the WHOLE section wrapper, not just the inner div)
+    if (ordersBatchSummary?.parentElement) show(ordersBatchSummary.parentElement, true);
+    show(ordersBatchSummary, true);
+
+    // Artifacts block: admin only
+    if (ordersArtifactsList?.parentElement) show(ordersArtifactsList.parentElement, canSeeArtifacts);
+    show(ordersArtifactsList, canSeeArtifacts);
+
+    // If agent, also clear any old artifacts HTML so headers don't look "empty"
+    if (!canSeeArtifacts && ordersArtifactsList) ordersArtifactsList.innerHTML = "";
+
 
 
     // Load order core fields (we only display some)
@@ -334,8 +344,9 @@ if (artifactsHeaderEl) show(artifactsHeaderEl, isAdmin);
     }
 
   if (isAdmin) {
-  await loadBatchSummaryFromLatestFormulationJson(orderId);
-  await loadArtifacts(orderId);
+    await loadBatchSummaryFromLatestFormulationJson(orderId);
+    if (isAdmin) await loadArtifacts(orderId);
+
 }
 
 }
@@ -475,7 +486,7 @@ if (artifactsHeaderEl) show(artifactsHeaderEl, isAdmin);
 
       // Refresh panels
       await loadBatchSummaryFromLatestFormulationJson(selectedOrderId);
-      await loadArtifacts(selectedOrderId);
+      if (isAdmin) await loadArtifacts(selectedOrderId);
 
       const v = result?.version ?? result?.pack_version ?? null;
       setMsg(v ? `Pack generated (v${v}).` : "Pack generated.");
