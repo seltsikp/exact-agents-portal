@@ -454,15 +454,15 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
     try {
       const result = await window.exactGeneratePack(selectedOrderId);
 
-      // refresh visible panels
-      await loadBatchSummaryFromBatches(selectedOrderId);
-      if (isAdminNow()) await loadArtifacts(selectedOrderId);
+// Re-open order so status/title/meta refresh (draft -> confirmed)
+await openOrder(selectedOrderId);
 
-      const v = result?.version ?? result?.pack_version ?? null;
-      setMsg(v ? `Pack generated (v${v}).` : "Pack generated.");
+const v = result?.version ?? result?.pack_version ?? null;
+setMsg(v ? `Pack generated (v${v}).` : "Pack generated.");
 
-      // Hide button after success (as requested)
-      if (btn) btn.style.display = "none";
+// Hide button after success
+if (btn) btn.style.display = "none";
+
     } catch (e) {
       // Handle 402 cleanly (payment required)
       const msg = String(e?.message || e);
