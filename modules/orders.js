@@ -35,7 +35,7 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
 
   let selectedOrderId = null;
 
-  const isAdmin = String(state?.currentProfile?.role || "") === "admin";
+ const isAdmin = String(state?.currentProfile?.role || "").toLowerCase() === "admin";
 
   const setMsg = (t) => { if (ordersMsg) ordersMsg.textContent = t || ""; };
 
@@ -289,6 +289,12 @@ function renderCreateOrderModal({ customers, agent, onSubmit, onCancel }) {
 show(ordersBatchSummary, isAdmin);
 show(ordersArtifactsList, isAdmin);
 show(ordersGeneratePackBtn, isAdmin);
+// Hide the section headers too (they're separate from the content divs)
+const batchHeaderEl = ordersBatchSummary?.previousElementSibling;
+if (batchHeaderEl) show(batchHeaderEl, isAdmin);
+
+const artifactsHeaderEl = ordersArtifactsList?.previousElementSibling;
+if (artifactsHeaderEl) show(artifactsHeaderEl, isAdmin);
 
 
     // Load order core fields (we only display some)
