@@ -58,9 +58,9 @@ window.addEventListener("DOMContentLoaded", () => {
   // =========================================================
   // BLOCK: HELPERS
   // =========================================================
- function show(el, on) {
+function show(el, on) {
   if (!el) return;
-  el.style.display = on ? "" : "none";   // IMPORTANT: overrides inline display:none
+  el.style.display = on ? "" : "none";
 }
 
 
