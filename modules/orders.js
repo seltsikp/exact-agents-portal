@@ -35,7 +35,10 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
 
   let selectedOrderId = null;
 
- const isAdmin = String(state?.currentProfile?.role || "").toLowerCase() === "admin";
+  const role = String(state?.currentProfile?.role || "").toLowerCase();
+  const isAdmin = role === "admin";
+  // Agents can generate packs + see batch summary; only admins can see artifacts.
+  const canGeneratePack = role === "admin" || role === "agent";
 
   const setMsg = (t) => { if (ordersMsg) ordersMsg.textContent = t || ""; };
 
@@ -286,25 +289,18 @@ function renderCreateOrderModal({ customers, agent, onSubmit, onCancel }) {
     show(ordersDetailPanel, true);
     
     // Visibility rules:
-    // - Admin: can generate pack, see batch summary, see artifacts
-    // - Agent: can generate pack, see batch summary, NOT artifacts
-    const canSeeArtifacts = isAdmin;
+    // - Agents + Admin: can generate pack + see batch/process summary
+    // - Admin only: can see artifacts
+    show(ordersGeneratePackBtn, canGeneratePack);
+    show(ordersBatchSummary, canGeneratePack);
+    show(ordersArtifactsList, isAdmin);
 
-    // Generate pack button: visible for both admin + agent
-    show(ordersGeneratePackBtn, true);
+    // Hide the section headers too (they're separate from the content divs)
+    const batchHeaderEl = ordersBatchSummary?.previousElementSibling;
+    if (batchHeaderEl) show(batchHeaderEl, canGeneratePack);
 
-    // Batch summary block: visible for both admin + agent
-    // (hide/show the WHOLE section wrapper, not just the inner div)
-    if (ordersBatchSummary?.parentElement) show(ordersBatchSummary.parentElement, true);
-    show(ordersBatchSummary, true);
-
-    // Artifacts block: admin only
-    if (ordersArtifactsList?.parentElement) show(ordersArtifactsList.parentElement, canSeeArtifacts);
-    show(ordersArtifactsList, canSeeArtifacts);
-
-    // If agent, also clear any old artifacts HTML so headers don't look "empty"
-    if (!canSeeArtifacts && ordersArtifactsList) ordersArtifactsList.innerHTML = "";
-
+    const artifactsHeaderEl = ordersArtifactsList?.previousElementSibling;
+    if (artifactsHeaderEl) show(artifactsHeaderEl, isAdmin);
 
 
     // Load order core fields (we only display some)
@@ -343,39 +339,33 @@ function renderCreateOrderModal({ customers, agent, onSubmit, onCancel }) {
       ordersDetailMeta.textContent = parts.join(" | ");
     }
 
-  if (isAdmin) {
-    await loadBatchSummaryFromLatestFormulationJson(orderId);
-    if (isAdmin) await loadArtifacts(orderId);
+    await loadBatchSummaryFromBatches(orderId);
+    if (isAdmin) {
+      await loadArtifacts(orderId);
+    }
 
 }
 
-}
-  async function loadBatchSummaryFromLatestFormulationJson(orderId) {
+  async function loadBatchSummaryFromBatches(orderId) {
     if (!ordersBatchSummary) return;
     ordersBatchSummary.innerHTML = `<div class="subtle">Loading…</div>`;
 
-    // We use the latest formulation_json artifact (format=json) and read content_json.formulas[]
+    // Batch summary should not depend on artifacts visibility/RLS.
+    // We read from order_batches (created by the pack generator).
     const { data, error } = await supabaseClient
-      .from("order_artifacts")
-      .select("artifact_type, format, version, content_json, created_at")
+      .from("order_batches")
+      .select("formula_key, batch_code, lab_batch_code")
       .eq("order_id", orderId)
-      .eq("artifact_type", "formulation_json")
-      .order("version", { ascending: false })
-      .limit(1);
+      .order("formula_key", { ascending: true });
 
-    if (error) { setMsg("Load formulation_json failed: " + error.message); return; }
-
-    const row = (data || [])[0];
-    if (!row || !row.content_json) {
-      ordersBatchSummary.innerHTML = `<div class="subtle">No formulation_json yet (generate pack to create).</div>`;
+    if (error) {
+      ordersBatchSummary.innerHTML = `<div class="subtle">Load batches failed: ${escapeHtml(error.message)}</div>`;
       return;
     }
 
-    const cj = row.content_json;
-    const formulas = Array.isArray(cj.formulas) ? cj.formulas : [];
-
-    if (!formulas.length) {
-      ordersBatchSummary.innerHTML = `<div class="subtle">formulation_json has no formulas[] (unexpected).</div>`;
+    const batches = Array.isArray(data) ? data : [];
+    if (!batches.length) {
+      ordersBatchSummary.innerHTML = `<div class="subtle">No batches yet (generate pack to create).</div>`;
       return;
     }
 
@@ -388,11 +378,19 @@ function renderCreateOrderModal({ customers, agent, onSubmit, onCancel }) {
       </div>
     `;
 
-    const body = formulas.map(f => {
-      const fk = escapeHtml(f.formula_key || "—");
-      const batch = escapeHtml(f.batch?.exact_batch_code || "—");
-      const fill = escapeHtml(String(f.packaging?.fill_volume_ml ?? "—"));
-      const proc = escapeHtml(f.manufacturing?.process_profile || "—");
+    const metaForKey = (k) => {
+      const key = String(k || "").toLowerCase();
+      if (key === "eye") return { fill_ml: 15, process_profile: "gel_process_v1" };
+      if (key === "day" || key === "night") return { fill_ml: 50, process_profile: "standard_emulsion_v1" };
+      return { fill_ml: "—", process_profile: "—" };
+    };
+
+    const body = batches.map(b => {
+      const fk = escapeHtml(b.formula_key || "—");
+      const batch = escapeHtml(b.batch_code || "—");
+      const meta = metaForKey(b.formula_key);
+      const fill = escapeHtml(String(meta.fill_ml));
+      const proc = escapeHtml(String(meta.process_profile));
 
       return `
         <div class="customer-row">
@@ -475,6 +473,11 @@ function renderCreateOrderModal({ customers, agent, onSubmit, onCancel }) {
   async function generatePack() {
     if (!selectedOrderId) return;
 
+    if (!canGeneratePack) {
+      setMsg("Not allowed.");
+      return;
+    }
+
     if (typeof window.exactGeneratePack !== "function") {
       setMsg("Missing window.exactGeneratePack(orderId).");
       return;
@@ -485,8 +488,10 @@ function renderCreateOrderModal({ customers, agent, onSubmit, onCancel }) {
       const result = await window.exactGeneratePack(selectedOrderId);
 
       // Refresh panels
-      await loadBatchSummaryFromLatestFormulationJson(selectedOrderId);
-      if (isAdmin) await loadArtifacts(selectedOrderId);
+      await loadBatchSummaryFromBatches(selectedOrderId);
+      if (isAdmin) {
+        await loadArtifacts(selectedOrderId);
+      }
 
       const v = result?.version ?? result?.pack_version ?? null;
       setMsg(v ? `Pack generated (v${v}).` : "Pack generated.");
