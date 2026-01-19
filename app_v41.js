@@ -424,6 +424,10 @@ const agentShipCountryInput = document.getElementById("agentShipCountry");
   const custEmailInput = document.getElementById("custEmail");
   const custPhoneInput = document.getElementById("custPhone");
   const addCustomerBtn = document.getElementById("addCustomerBtn");
+  const custShipAddressInput = document.getElementById("custShipAddress");
+  const custShipCityInput = document.getElementById("custShipCity");
+  const custShipCountryInput = document.getElementById("custShipCountry");
+
 
   // Clinic assignment
   const assignClinicRow = document.getElementById("assignClinicRow");
@@ -612,6 +616,10 @@ const ordersArtifactsList = document.getElementById("ordersArtifactsList");
       custGenderInput,
       custEmailInput,
       custPhoneInput,
+      custShipAddressInput,
+      custShipCityInput,
+      custShipCountryInput,
+
       addCustomerBtn,
       assignClinicRow,
       assignClinicSelect,
