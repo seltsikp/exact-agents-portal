@@ -553,10 +553,24 @@ if (btn) btn.style.display = "none";
     // Disable generate unless paid/comped
     const pay = String(o.payment_status || "unpaid").toLowerCase();
     const isPaidLike = (pay === "paid" || pay === "comped");
-    if (ordersGeneratePackBtn && canGeneratePack && !isPaidLike) {
-      ordersGeneratePackBtn.disabled = true;
-      ordersGeneratePackBtn.textContent = "Generate Pack (unpaid)";
-    }
+    // Detect existing pack (any batch exists)
+const { data: existingBatches } = await supabaseClient
+  .from("order_batches")
+  .select("id")
+  .eq("order_id", orderId)
+  .limit(1);
+
+const hasPack = Array.isArray(existingBatches) && existingBatches.length > 0;
+
+  if (ordersGeneratePackBtn) {
+  if (hasPack) {
+    ordersGeneratePackBtn.style.display = "none";
+  } else if (canGeneratePack && !isPaidLike) {
+    ordersGeneratePackBtn.disabled = true;
+    ordersGeneratePackBtn.textContent = "Generate Pack (unpaid)";
+  }
+}
+
 
     // Load batch summary (visible for admin+agent)
     if (canGeneratePack) {
