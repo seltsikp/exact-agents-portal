@@ -414,7 +414,6 @@ window.addEventListener("DOMContentLoaded", () => {
   const lastNameInput = document.getElementById("lastName");
   const custDobInput = document.getElementById("custDob");
   const custGenderInput = document.getElementById("custGender");
-const custGenderInput = document.getElementById("custGender");
   const custEmailInput = document.getElementById("custEmail");
   const custPhoneInput = document.getElementById("custPhone");
   const addCustomerBtn = document.getElementById("addCustomerBtn");
