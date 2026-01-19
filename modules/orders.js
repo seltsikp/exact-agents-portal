@@ -526,7 +526,13 @@ async function generatePack() {
     if (isAdmin) await loadArtifacts(selectedOrderId);
 
     const v = result?.version ?? result?.pack_version ?? null;
-    setMsg(v ? `Pack generated (v${v}). ✅` : "Pack generated. ✅");
+    setMsg(v ? `Pack generated (v${v}).` : "Pack generated.");
+
+// Hide generate button after first successful run
+if (ordersGeneratePackBtn) {
+  ordersGeneratePackBtn.style.display = "none";
+}
+
 
     // keep disabled for now (next step will hide after we detect it exists)
     if (btn) {
