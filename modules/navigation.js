@@ -17,15 +17,16 @@ if (!views || !views[viewKey]) console.warn("[NAV] Missing view element for:", v
 
     activeViewKey = viewKey;
 
-    // show/hide views 
-Object.entries(views).forEach(([key, v]) => {
-  const el = v?.el || v; // accept either {el: ...} OR direct DOM element
+  // show/hide views (views can be DOM elements OR {el: DOM})
+Object.entries(views || {}).forEach(([key, v]) => {
+  const el = v?.el || v; // accept either shape
   if (!el) {
     console.warn("[NAV] View missing el:", key);
     return;
   }
   show(el, key === viewKey);
 });
+
 
 
 
