@@ -176,11 +176,12 @@ const clinicName =
 </div>
 
 
-        <!-- MIDDLE: CLINIC + CREATED -->
-        <div>
-          <div>Clinic: ${escapeHtml(clinicName || "—")}</div>
-          <div class="subtle">Created: ${escapeHtml(created || "—")}</div>
-        </div>
+       <!-- MIDDLE: CLINIC (admin only) + CREATED -->
+<div>
+  ${role === "admin" ? `<div>Clinic: ${escapeHtml(clinicName || "—")}</div>` : ""}
+  <div class="subtle">Created: ${escapeHtml(created || "—")}</div>
+</div>
+
 
         <!-- RIGHT: ACTIONS -->
         <div class="customer-actions">
