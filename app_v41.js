@@ -1162,7 +1162,8 @@ if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
       if (viewKey === "welcome") return true;
       if (!currentProfile) return false;
 
-      const role = (currentProfile.role || "").toLowerCase();
+      const role = String(currentProfile.role || "").trim().toLowerCase();
+
 
       // userMgmt is ADMIN only, always
       if (viewKey === "userMgmt") return role === "admin";
@@ -1180,7 +1181,8 @@ if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
         showWelcomePanel({ containerEl: welcomeContent });
 
         // Non-admin: show subtle change-password link
-        const role = (currentProfile?.role || "").toLowerCase();
+        const role = String(currentProfile.role || "").trim().toLowerCase();
+
         if (role !== "admin") {
           renderChangePasswordLink(welcomeContent);
         }
