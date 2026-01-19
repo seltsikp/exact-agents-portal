@@ -58,10 +58,11 @@ window.addEventListener("DOMContentLoaded", () => {
   // =========================================================
   // BLOCK: HELPERS
   // =========================================================
-  function show(el, isVisible) {
-    if (!el) return;
-    el.style.display = isVisible ? "block" : "none";
-  }
+ function show(el, on) {
+  if (!el) return;
+  el.style.display = on ? "" : "none";   // IMPORTANT: overrides inline display:none
+}
+
 
   function escapeHtml(str) {
     return String(str ?? "")
