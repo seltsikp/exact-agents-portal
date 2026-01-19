@@ -295,6 +295,13 @@ function renderCreateOrderModal({ customers, agent, onSubmit, onCancel }) {
     // Visibility rules:
 const isAdmin = isAdminNow();
 const canGeneratePack = canGeneratePackNow();
+// RESET generate-pack button state whenever we open ANY order
+if (ordersGeneratePackBtn) {
+  ordersGeneratePackBtn.disabled = false;
+  ordersGeneratePackBtn.textContent = "Generate Pack";
+  ordersGeneratePackBtn.classList.remove("btn-disabled");
+  ordersGeneratePackBtn.removeAttribute("aria-busy");
+}
 
 // Agents can generate packs + see batch summary; only admins can see artifacts.
 show(ordersBatchSummary, canGeneratePack);
