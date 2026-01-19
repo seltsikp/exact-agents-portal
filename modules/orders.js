@@ -451,15 +451,14 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
     }
     setMsg("Generating pack…");
 
-    try {
-      const result = await window.exactGeneratePack(selectedOrderId);
-      await openOrder(selectedOrderId);
+try {
+  const result = await window.exactGeneratePack(selectedOrderId);
 
+  // Re-open order so status/title/meta refresh (draft -> confirmed)
+  await openOrder(selectedOrderId);
 
-// Re-open order so status/title/meta refresh (draft -> confirmed)
-await openOrder(selectedOrderId);
+  const v = result?.version ?? result?.pack_version ?? null;
 
-const v = result?.version ?? result?.pack_version ?? null;
 setMsg(v ? `Pack generated (v${v}).` : "Pack generated.");
 
 // Hide button after success
