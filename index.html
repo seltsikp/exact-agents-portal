@@ -267,6 +267,13 @@
         border-color: rgba(180,35,24,.35);
         color: var(--danger);
       }
+      .btn-success{
+        background:#1f9d55;
+        color:#fff;
+        border:1px solid rgba(0,0,0,0.08);
+}
+.btn-success:hover{ filter:brightness(0.95); }
+
       #logoutBtn{
         font-size: 13px;
         font-weight: 500;
@@ -941,7 +948,13 @@
      ========================= -->
 <section id="viewOrders" style="display:none;">
   <div class="card">
-    <h2 style="margin-top:0;">Orders</h2>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+  <h2 style="margin:0;">Orders</h2>
+<button id="ordersCreateBtn" class="btn-success" type="button">
+  Create Order
+</button>
+</div>
+
     <div class="subtle" id="ordersMsg"></div>
 
     <!-- LIST PANEL -->
@@ -950,11 +963,6 @@
         <input id="ordersSearch" placeholder="Search by order code…" style="min-width:240px;" />
         <button id="ordersSearchBtn" class="btn-primary" type="button">Search</button>
         <button id="ordersShowAllBtn" type="button">Show all</button>
-
-        <button id="ordersCreateBtn" class="btn-primary" type="button">
-        Create Order
-        </button>
-
 
         <select id="ordersStatusFilter" style="min-width:200px;">
           <option value="">All statuses</option>
