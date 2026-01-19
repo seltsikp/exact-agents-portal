@@ -29,6 +29,8 @@ export function initProductsAdmin({ supabaseClient, ui, helpers }) {
   const paStaticNote = el("paStaticNote", "paStaticNote");
 
   const paEdgeFn = el("paEdgeFn", "paEdgeFn");
+  const paBoosterGate = el("paBoosterGate", "paBoosterGate");
+
   const paSubject = el("paSubject", "paSubject");
   const paBody = el("paBody", "paBody");
 
@@ -41,6 +43,8 @@ export function initProductsAdmin({ supabaseClient, ui, helpers }) {
 
   let productsCache = [];
   let selectedProduct = null;
+  let execSettingsCache = null;
+
 
   const setMsg = (t) => { if (paMsg) paMsg.textContent = t || ""; };
 
@@ -92,6 +96,8 @@ export function initProductsAdmin({ supabaseClient, ui, helpers }) {
     clearEditorFields();
 
     if (paClearBtn) paClearBtn.style.display = "none";
+    if (paBoosterGate) paBoosterGate.value = "75";
+
   }
 
   async function loadProductsList() {
@@ -184,6 +190,14 @@ export function initProductsAdmin({ supabaseClient, ui, helpers }) {
       .select("*")
       .eq("product_id", p.id)
       .maybeSingle();
+    
+execSettingsCache = s || null;
+
+const gateVal = execSettingsCache?.settings?.booster_trigger_threshold;
+if (paBoosterGate) {
+  paBoosterGate.value =
+    gateVal === null || gateVal === undefined ? "75" : String(gateVal);
+}
 
     if (sErr) { setMsg("Load settings failed: " + sErr.message); return; }
 
@@ -247,6 +261,11 @@ export function initProductsAdmin({ supabaseClient, ui, helpers }) {
     if (!subj) { setMsg("Email subject is required for dynamic products."); return; }
     if (!body) { setMsg("Email body is required for dynamic products."); return; }
 
+    const gateRaw = String(paBoosterGate?.value ?? "").trim();
+let gate = gateRaw ? Number(gateRaw) : 75;
+if (!Number.isFinite(gate)) gate = 75;
+gate = Math.max(0, Math.min(100, Math.round(gate)));
+
     const execPayload = {
       product_id: selectedProduct.id,
       edge_function_name: edgeFn,
@@ -255,7 +274,11 @@ export function initProductsAdmin({ supabaseClient, ui, helpers }) {
       send_lab_email: !!paSendEmail?.checked,
       include_signed_links: !!paIncludeLinks?.checked,
       include_attachments: !!paIncludeAttachments?.checked,
-      settings: {}
+      const gateRaw = String(paBoosterGate?.value ?? "").trim();
+let gate = gateRaw ? Number(gateRaw) : 75;
+if (!Number.isFinite(gate)) gate = 75;
+gate = Math.max(0, Math.min(100, Math.round(gate)));
+
     };
 
     setMsg("Saving execution settings…");
