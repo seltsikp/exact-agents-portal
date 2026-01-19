@@ -35,10 +35,14 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
 
   let selectedOrderId = null;
 
-  const role = String(state?.currentProfile?.role || "").toLowerCase();
-  const isAdmin = role === "admin";
-  // Agents can generate packs + see batch summary; only admins can see artifacts.
-  const canGeneratePack = role === "admin" || role === "agent";
+const getRole = () => String(state?.currentProfile?.role || "").toLowerCase();
+const isAdminNow = () => getRole() === "admin";
+// Agents can generate packs + see batch summary; only admins can see artifacts.
+const canGeneratePackNow = () => {
+  const r = getRole();
+  return r === "admin" || r === "agent";
+};
+
 
   const setMsg = (t) => { if (ordersMsg) ordersMsg.textContent = t || ""; };
 
@@ -289,11 +293,14 @@ function renderCreateOrderModal({ customers, agent, onSubmit, onCancel }) {
     show(ordersDetailPanel, true);
     
     // Visibility rules:
-    // - Agents + Admin: can generate pack + see batch/process summary
-    // - Admin only: can see artifacts
-    show(ordersGeneratePackBtn, canGeneratePack);
-    show(ordersBatchSummary, canGeneratePack);
-    show(ordersArtifactsList, isAdmin);
+const isAdmin = isAdminNow();
+const canGeneratePack = canGeneratePackNow();
+
+// Agents can generate packs + see batch summary; only admins can see artifacts.
+show(ordersBatchSummary, canGeneratePack);
+show(ordersArtifactsList, isAdmin);
+show(ordersGeneratePackBtn, canGeneratePack);
+
 
     // Hide the section headers too (they're separate from the content divs)
     const batchHeaderEl = ordersBatchSummary?.previousElementSibling;
@@ -339,10 +346,18 @@ function renderCreateOrderModal({ customers, agent, onSubmit, onCancel }) {
       ordersDetailMeta.textContent = parts.join(" | ");
     }
 
-    await loadBatchSummaryFromBatches(orderId);
-    if (isAdmin) {
-      await loadArtifacts(orderId);
-    }
+if (canGeneratePack) {
+  await loadBatchSummaryFromBatches(orderId);
+} else if (ordersBatchSummary) {
+  ordersBatchSummary.innerHTML = "";
+}
+
+if (isAdmin) {
+  await loadArtifacts(orderId);
+} else if (ordersArtifactsList) {
+  ordersArtifactsList.innerHTML = "";
+}
+
 
 }
 
@@ -473,10 +488,13 @@ function renderCreateOrderModal({ customers, agent, onSubmit, onCancel }) {
   async function generatePack() {
     if (!selectedOrderId) return;
 
-    if (!canGeneratePack) {
-      setMsg("Not allowed.");
-      return;
-    }
+const isAdmin = isAdminNow();
+const canGeneratePack = canGeneratePackNow();
+
+if (!canGeneratePack) {
+  setMsg("Not allowed.");
+  return;
+}
 
     if (typeof window.exactGeneratePack !== "function") {
       setMsg("Missing window.exactGeneratePack(orderId).");
