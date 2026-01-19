@@ -9,6 +9,7 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
   const {
     // view containers
     viewOrders,
+    ordersCreateBtn,
 
     // list UI
     ordersMsg,
@@ -47,11 +48,71 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
     show(ordersListPanel, true);
     show(ordersDetailPanel, false);
   }
+function renderCreateOrderModal({ customers, onSubmit, onCancel }) {
+  const overlay = document.createElement("div");
+  overlay.style.position = "fixed";
+  overlay.style.inset = "0";
+  overlay.style.background = "rgba(0,0,0,0.35)";
+  overlay.style.display = "flex";
+  overlay.style.alignItems = "center";
+  overlay.style.justifyContent = "center";
+  overlay.style.zIndex = "999999";
+
+  const card = document.createElement("div");
+  card.className = "card";
+  card.style.width = "min(520px, calc(100vw - 32px))";
+
+  card.innerHTML = `
+    <h3 style="margin-top:0;">Create Order</h3>
+
+    <label class="subtle">Customer</label>
+    <select id="coCustomer" style="width:100%; margin-bottom:8px;">
+      <option value="">Select customer…</option>
+      ${(customers || []).map(c =>
+        `<option value="${c.id}">${c.first_name} ${c.last_name}</option>`
+      ).join("")}
+    </select>
+
+    <label class="subtle">Ship to name</label>
+    <input id="coShipName" placeholder="Full name" style="width:100%; margin-bottom:8px;" />
+
+    <label class="subtle">Ship to address</label>
+    <textarea id="coShipAddress" rows="3" placeholder="Address" style="width:100%;"></textarea>
+
+    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
+      <button id="coCancelBtn" type="button">Cancel</button>
+      <button id="coCreateBtn" class="btn-success" type="button">Create</button>
+    </div>
+  `;
+
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  const cleanup = () => overlay.remove();
+
+  overlay.querySelector("#coCancelBtn").onclick = () => {
+    cleanup();
+    onCancel?.();
+  };
+
+  overlay.querySelector("#coCreateBtn").onclick = () => {
+    const customer_id = overlay.querySelector("#coCustomer").value;
+    const ship_to_name = overlay.querySelector("#coShipName").value.trim();
+    const ship_to_address = overlay.querySelector("#coShipAddress").value.trim();
+
+    if (!customer_id || !ship_to_name || !ship_to_address) return;
+
+    cleanup();
+    onSubmit({ customer_id, ship_to_name, ship_to_address });
+  };
+}
 
   function renderOrderRow(o) {
     const code = escapeHtml(o.order_code || o.id);
     const status = escapeHtml(o.status || "—");
     const created = o.created_at ? escapeHtml(formatDateShort(o.created_at)) : "—";
+
+    
 
     // customer name may vary; use safe fallback
     const cust = o.customer?.first_name || o.customer?.last_name
@@ -353,6 +414,71 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
       });
       ordersArtifactsList.dataset.bound = "1";
     }
+
+    if (ordersCreateBtn && ordersCreateBtn.dataset.bound !== "1") {
+  ordersCreateBtn.addEventListener("click", async () => {
+    setMsg("");
+
+    const profile = (typeof state?.currentProfile === "function")
+      ? state.currentProfile()
+      : state?.currentProfile;
+
+    const agent_id = profile?.agent_id;
+    if (!agent_id) { setMsg("No agent_id in profile."); return; }
+
+    // Load customers (RLS already restricts to agent)
+    const { data: customers, error: cErr } = await supabaseClient
+      .from("customers")
+      .select("id, first_name, last_name")
+      .order("created_at", { ascending: false });
+
+    if (cErr) { setMsg("Load customers failed: " + cErr.message); return; }
+
+    renderCreateOrderModal({
+      customers,
+      onCancel: () => {},
+      onSubmit: async ({ customer_id, ship_to_name, ship_to_address }) => {
+        setMsg("Creating order…");
+
+        // A) create draft order (lab trigger applies automatically)
+        const { data: orderRow, error: oErr } = await supabaseClient
+          .from("orders")
+          .insert([{
+            agent_id,
+            customer_id,
+            ship_to_name,
+            ship_to_address
+          }])
+          .select("id")
+          .single();
+
+        if (oErr) { setMsg("Create order failed: " + oErr.message); return; }
+
+        const order_id = orderRow.id;
+
+        // B) add PRD0001 trio item
+        const { error: iErr } = await supabaseClient
+          .from("order_items")
+          .insert([{
+            order_id,
+            product_id: "29c9e7e2-c728-4860-8f64-175fbf230a7c",
+            product_code_snapshot: "PRD0001",
+            product_name_snapshot: "EXACT Personalized Skincare Set",
+            product_kind_snapshot: "dynamic"
+          }]);
+
+        if (iErr) { setMsg("Add item failed: " + iErr.message); return; }
+
+        // C) open detail
+        await openOrder(order_id);
+        setMsg("Draft order created ✅");
+      }
+    });
+  });
+
+  ordersCreateBtn.dataset.bound = "1";
+}
+
   }
 
   bindOnce();
