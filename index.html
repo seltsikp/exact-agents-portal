@@ -935,39 +935,36 @@
                 <div id="agentList" class="customer-list"></div>
               </div>
 
-             <div id="amAddPanel" style="display:none; margin-top:6px;">
+           <div id="amAddPanel" style="display:none; margin-top:6px;">
 
   <div style="margin-bottom:10px;">
-    <label class="subtle" for="agentName" style="display:block; margin-bottom:6px;">Agent / clinic name</label>
-    <input id="agentName" placeholder="e.g. Dubai Aesthetics Clinic" />
-  </div>
-
-  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-    <div>
-      <label class="subtle" for="agentEmail" style="display:block; margin-bottom:6px;">Email</label>
-      <input id="agentEmail" placeholder="e.g. clinic@example.com" />
-    </div>
-
-    <div>
-      <label class="subtle" for="agentPhone" style="display:block; margin-bottom:6px;">Phone</label>
-      <input id="agentPhone" placeholder="+971..." />
-    </div>
+    <label class="subtle">Agent / clinic name</label>
+    <input id="agentName" />
   </div>
 
   <div style="margin-bottom:10px;">
-    <label class="subtle" for="agentShippingAddress" style="display:block; margin-bottom:6px;">Shipping address</label>
-    <textarea id="agentShippingAddress" rows="3" placeholder="Address line(s)"></textarea>
+    <label class="subtle">Email</label>
+    <input id="agentEmail" type="email" />
   </div>
 
-  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-    <div>
-      <label class="subtle" for="agentShippingCity" style="display:block; margin-bottom:6px;">Shipping city</label>
-      <input id="agentShippingCity" placeholder="e.g. Dubai" />
-    </div>
+  <div style="margin-bottom:10px;">
+    <label class="subtle">Phone</label>
+    <input id="agentPhone" />
+  </div>
 
-    <div>
-      <label class="subtle" for="agentShippingCountry" style="display:block; margin-bottom:6px;">Shipping country</label>
-      <input id="agentShippingCountry" placeholder="e.g. AE" />
+  <div style="margin-bottom:10px;">
+    <label class="subtle">Shipping address</label>
+    <textarea id="agentShipAddress" rows="2"></textarea>
+  </div>
+
+  <div style="display:flex; gap:10px;">
+    <div style="flex:1;">
+      <label class="subtle">City</label>
+      <input id="agentShipCity" />
+    </div>
+    <div style="flex:1;">
+      <label class="subtle">Country</label>
+      <input id="agentShipCountry" />
     </div>
   </div>
 
