@@ -30,6 +30,7 @@ export function initCustomerManagement({
 
     firstNameInput,
     lastNameInput,
+    custDobInput,
     custEmailInput,
     custPhoneInput,
     addCustomerBtn,
@@ -68,6 +69,7 @@ export function initCustomerManagement({
   function clearAddForm() {
     if (firstNameInput) firstNameInput.value = "";
     if (lastNameInput) lastNameInput.value = "";
+    if (custDobInput) custDobInput.value = "";
     if (custEmailInput) custEmailInput.value = "";
     if (custPhoneInput) custPhoneInput.value = "";
     editingCustomerId = null;
@@ -303,6 +305,7 @@ export function initCustomerManagement({
 
       const first_name = (firstNameInput?.value || "").trim();
       const last_name  = (lastNameInput?.value || "").trim();
+      const date_of_birth = String(custDobInput?.value || "").trim();
       const email = (custEmailInput?.value || "").trim() || null;
       const phone = (custPhoneInput?.value || "").trim() || null;
 
@@ -313,6 +316,9 @@ export function initCustomerManagement({
 
       if (!last_name) { markField(lastNameInput, "error"); setCustMsg("Last name is required."); return; }
       markField(lastNameInput, "ok");
+
+      if (!date_of_birth) {
+      setCustMsg("Date of birth is required.");
 
       if (email && !isValidEmail(email)) { markField(custEmailInput, "error"); setCustMsg("Please enter a valid email address."); return; }
       if (email) markField(custEmailInput, "ok");
@@ -349,7 +355,7 @@ export function initCustomerManagement({
 
       const { error } = await supabaseClient
         .from("customers")
-        .insert([{ agent_id, first_name, last_name, email, phone }]);
+        .insert([{ agent_id, first_name, last_name, date_of_birth, email, phone }]);
 
       if (error) { setCustMsg("Insert error: " + error.message); return; }
 
