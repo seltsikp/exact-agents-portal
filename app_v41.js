@@ -405,6 +405,11 @@ window.addEventListener("DOMContentLoaded", () => {
   const amShowAllBtn = document.getElementById("amShowAllBtn");
 
   const agentList = document.getElementById("agentList");
+const agentEmailInput = document.getElementById("agentEmail");
+const agentPhoneInput = document.getElementById("agentPhone");
+const agentShippingAddressInput = document.getElementById("agentShippingAddress");
+const agentShippingCityInput = document.getElementById("agentShippingCity");
+const agentShippingCountryInput = document.getElementById("agentShippingCountry");
 
   const agentNameInput = document.getElementById("agentName");
   const addAgentBtn = document.getElementById("addAgentBtn");
@@ -629,20 +634,28 @@ const ordersArtifactsList = document.getElementById("ordersArtifactsList");
 
   const agentModule = initAgentManagement({
     supabaseClient,
-    ui: {
-      amViewBtn,
-      amAddBtn,
-      amClearBtn,
-      agentMsg,
-      amViewPanel,
-      amAddPanel,
-      amSearch,
-      amSearchBtn,
-      amShowAllBtn,
-      agentList,
-      agentNameInput,
-      addAgentBtn
-    },
+ui: {
+  amViewBtn,
+  amAddBtn,
+  amClearBtn,
+  agentMsg,
+  amViewPanel,
+  amAddPanel,
+  amSearch,
+  amSearchBtn,
+  amShowAllBtn,
+  agentList,
+
+  agentNameInput,
+  agentEmailInput,
+  agentPhoneInput,
+  agentShippingAddressInput,
+  agentShippingCityInput,
+  agentShippingCountryInput,
+
+  addAgentBtn
+},
+
     helpers: {
       show,
       escapeHtml,
