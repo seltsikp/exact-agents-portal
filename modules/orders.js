@@ -485,38 +485,56 @@ if (isAdmin) {
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  async function generatePack() {
-    if (!selectedOrderId) return;
+async function generatePack() {
+  if (!selectedOrderId) return;
 
-const isAdmin = isAdminNow();
-const canGeneratePack = canGeneratePackNow();
+  const isAdmin = isAdminNow();
+  const canGeneratePack = canGeneratePackNow();
 
-if (!canGeneratePack) {
-  setMsg("Not allowed.");
-  return;
-}
+  if (!canGeneratePack) {
+    setMsg("Not allowed.");
+    return;
+  }
 
-    if (typeof window.exactGeneratePack !== "function") {
-      setMsg("Missing window.exactGeneratePack(orderId).");
-      return;
+  if (typeof window.exactGeneratePack !== "function") {
+    setMsg("Missing window.exactGeneratePack(orderId).");
+    return;
+  }
+
+  // UI: spinner + disable
+  const btn = ordersGeneratePackBtn;
+  const prevText = btn?.textContent || "Generate Pack";
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Generating…";
+    btn.classList.add("is-loading"); // optional CSS hook (safe even if no CSS)
+  }
+  setMsg("Generating pack…");
+
+  try {
+    const result = await window.exactGeneratePack(selectedOrderId);
+
+    // refresh visible panels
+    await loadBatchSummaryFromBatches(selectedOrderId);
+    if (isAdmin) await loadArtifacts(selectedOrderId);
+
+    const v = result?.version ?? result?.pack_version ?? null;
+    setMsg(v ? `Pack generated (v${v}). ✅` : "Pack generated. ✅");
+
+    // keep disabled for now (next step will hide after we detect it exists)
+    if (btn) {
+      btn.textContent = "Pack generated";
     }
-
-    setMsg("Generating pack…");
-    try {
-      const result = await window.exactGeneratePack(selectedOrderId);
-
-      // Refresh panels
-      await loadBatchSummaryFromBatches(selectedOrderId);
-      if (isAdmin) {
-        await loadArtifacts(selectedOrderId);
-      }
-
-      const v = result?.version ?? result?.pack_version ?? null;
-      setMsg(v ? `Pack generated (v${v}).` : "Pack generated.");
-    } catch (e) {
-      setMsg("Generate pack failed: " + (e?.message || String(e)));
+  } catch (e) {
+    setMsg("Generate pack failed: " + (e?.message || String(e)));
+    // re-enable on failure
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = prevText;
+      btn.classList.remove("is-loading");
     }
   }
+}
 
   function bindOnce() {
     if (ordersList && ordersList.dataset.bound !== "1") {
