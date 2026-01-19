@@ -506,7 +506,7 @@ async function generatePack() {
   const prevText = btn?.textContent || "Generate Pack";
   if (btn) {
     btn.disabled = true;
-    btn.textContent = "Generating…";
+    btn.innerHTML = `<span class="spinner" style="margin-right:8px;"></span>Generating…`;
     btn.classList.add("is-loading"); // optional CSS hook (safe even if no CSS)
   }
   setMsg("Generating pack…");
