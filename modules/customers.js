@@ -34,6 +34,10 @@ export function initCustomerManagement({
     custGenderInput,
     custEmailInput,
     custPhoneInput,
+    custShipAddressInput,
+    custShipCityInput,
+    custShipCountryInput,
+
     addCustomerBtn,
 
     assignClinicRow,
@@ -75,6 +79,11 @@ export function initCustomerManagement({
 
     if (custEmailInput) custEmailInput.value = "";
     if (custPhoneInput) custPhoneInput.value = "";
+
+    if (custShipAddressInput) custShipAddressInput.value = "";
+    if (custShipCityInput) custShipCityInput.value = "";
+    if (custShipCountryInput) custShipCountryInput.value = "";
+
     editingCustomerId = null;
     clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
   }
@@ -215,6 +224,10 @@ export function initCustomerManagement({
         if (custPhoneInput) custPhoneInput.value = c.phone || "";
         if (custDobInput) custDobInput.value = c.date_of_birth || "";
         if (custGenderInput) custGenderInput.value = c.gender || "";
+        if (custShipAddressInput) custShipAddressInput.value = c.shipping_address || "";
+        if (custShipCityInput) custShipCityInput.value = c.shipping_city || "";
+        if (custShipCountryInput) custShipCountryInput.value = c.shipping_country || "";
+
 
 
         showAddCustomerPanel();
@@ -259,7 +272,7 @@ export function initCustomerManagement({
 
     let q = supabaseClient
       .from("customers")
-      .select("id, customer_code, agent_id, first_name, last_name, email, phone, created_at")
+      .select("id, customer_code, first_name, last_name, email, phone, date_of_birth, gender, agent_id, created_at, shipping_address, shipping_city, shipping_country")
       .order("created_at", { ascending: false });
 
     const t = (term || "").trim();
