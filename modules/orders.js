@@ -453,6 +453,8 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
 
     try {
       const result = await window.exactGeneratePack(selectedOrderId);
+      await openOrder(selectedOrderId);
+
 
 // Re-open order so status/title/meta refresh (draft -> confirmed)
 await openOrder(selectedOrderId);
