@@ -412,6 +412,7 @@ window.addEventListener("DOMContentLoaded", () => {
   // Add customer fields
   const firstNameInput = document.getElementById("firstName");
   const lastNameInput = document.getElementById("lastName");
+  const custDobInput = document.getElementById("custDob");
   const custEmailInput = document.getElementById("custEmail");
   const custPhoneInput = document.getElementById("custPhone");
   const addCustomerBtn = document.getElementById("addCustomerBtn");
@@ -599,6 +600,7 @@ const ordersArtifactsList = document.getElementById("ordersArtifactsList");
       customerList,
       firstNameInput,
       lastNameInput,
+      custDobInput,
       custEmailInput,
       custPhoneInput,
       addCustomerBtn,
