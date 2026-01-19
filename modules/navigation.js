@@ -19,12 +19,14 @@ if (!views || !views[viewKey]) console.warn("[NAV] Missing view element for:", v
 
     // show/hide views 
 Object.entries(views).forEach(([key, v]) => {
-  if (!v?.el) {
+  const el = v?.el || v; // accept either {el: ...} OR direct DOM element
+  if (!el) {
     console.warn("[NAV] View missing el:", key);
     return;
   }
-  show(v.el, key === viewKey);
+  show(el, key === viewKey);
 });
+
 
 
 
