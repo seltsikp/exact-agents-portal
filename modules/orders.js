@@ -533,8 +533,16 @@ if (btn) btn.style.display = "none";
     if (ordersDetailTitle) {
       ordersDetailTitle.textContent = `${o.order_code || "Order"} — ${o.status || ""}`;
     }
+if (ordersDetailMeta) {
+  const parts = [];
+  parts.push(`Order ID: ${o.id}`);
+  parts.push(`Status: ${o.status || "—"}`);
+  parts.push(`Payment: ${o.payment_status || "unpaid"}`);
+  if (o.dispatch_to) parts.push(`Dispatch: ${o.dispatch_to}`);
+  if (o.lab_id) parts.push(`Lab: ${o.lab_id}`);
+  ordersDetailMeta.textContent = parts.join(" | ");
+}
 
-    (o.payment_status) parts.push(`Paymen
 
     // Reset generate button state on each open
     if (ordersGeneratePackBtn) {
