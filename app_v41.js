@@ -408,9 +408,10 @@ function show(el, on) {
   const agentList = document.getElementById("agentList");
 const agentEmailInput = document.getElementById("agentEmail");
 const agentPhoneInput = document.getElementById("agentPhone");
-const agentShipAddressInput = document.getElementById("agentShippingAddress");
-const agentShipCityInput = document.getElementById("agentShippingCity");
-const agentShipCountryInput = document.getElementById("agentShippingCountry");
+const agentShipAddressInput = document.getElementById("agentShipAddress");
+const agentShipCityInput = document.getElementById("agentShipCity");
+const agentShipCountryInput = document.getElementById("agentShipCountry");
+
 
   const agentNameInput = document.getElementById("agentName");
   const addAgentBtn = document.getElementById("addAgentBtn");
