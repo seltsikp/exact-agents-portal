@@ -419,11 +419,9 @@ function renderCreateOrderModal({ customers, onSubmit, onCancel }) {
   ordersCreateBtn.addEventListener("click", async () => {
     setMsg("");
 
-    const profile = (typeof state?.currentProfile === "function")
-      ? state.currentProfile()
-      : state?.currentProfile;
+const profile = state?.currentProfile; // getter returns the live profile object
+const agent_id = profile?.agent_id;
 
-    const agent_id = profile?.agent_id;
     if (!agent_id) { setMsg("No agent_id in profile."); return; }
 
     // Load customers (RLS already restricts to agent)
