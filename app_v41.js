@@ -549,6 +549,8 @@ const ordersSearchBtn = document.getElementById("ordersSearchBtn");
 const ordersShowAllBtn = document.getElementById("ordersShowAllBtn");
 const ordersStatusFilter = document.getElementById("ordersStatusFilter");
 const ordersList = document.getElementById("ordersList");
+const ordersCreateBtn = document.getElementById("ordersCreateBtn");
+
 
 const ordersDetailPanel = document.getElementById("ordersDetailPanel");
 const ordersDetailTitle = document.getElementById("ordersDetailTitle");
@@ -738,6 +740,8 @@ const ordersModule = initOrdersManagement({
     ordersShowAllBtn,
     ordersStatusFilter,
     ordersList,
+    ordersCreateBtn,
+
 
     ordersDetailPanel,
     ordersDetailTitle,
