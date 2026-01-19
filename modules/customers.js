@@ -316,6 +316,11 @@ export function initCustomerManagement({
       const email = (custEmailInput?.value || "").trim() || null;
       const phone = (custPhoneInput?.value || "").trim() || null;
 
+  const shipping_address = (custShipAddressInput?.value || "").trim() || null;
+  const shipping_city = (custShipCityInput?.value || "").trim() || null;
+  const shipping_country = (custShipCountryInput?.value || "").trim() || null;
+
+
       clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
 
       if (!first_name) { markField(firstNameInput, "error"); setCustMsg("First name is required."); return; }
@@ -347,7 +352,18 @@ export function initCustomerManagement({
       if (editingCustomerId) {
         const { data, error } = await supabaseClient
           .from("customers")
-         .update({ first_name, last_name, date_of_birth, gender, email, phone })
+        .update({
+  first_name,
+  last_name,
+  date_of_birth,
+  gender,
+  email,
+  phone,
+  shipping_address,
+  shipping_city,
+  shipping_country
+})
+
           .eq("id", editingCustomerId)
           .select("id");
 
@@ -363,7 +379,19 @@ export function initCustomerManagement({
 
       const { error } = await supabaseClient
         .from("customers")
-        .insert([{ agent_id, first_name, last_name, date_of_birth, gender, email, phone }]);
+       .insert([{
+  agent_id,
+  first_name,
+  last_name,
+  date_of_birth,
+  gender,
+  email,
+  phone,
+  shipping_address,
+  shipping_city,
+  shipping_country
+}]);
+
 
         if (error) { 
         setCustMsg("Insert error: " + error.message); 
