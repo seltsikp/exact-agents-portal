@@ -48,7 +48,7 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
     show(ordersListPanel, true);
     show(ordersDetailPanel, false);
   }
-function renderCreateOrderModal({ customers, onSubmit, onCancel }) {
+function renderCreateOrderModal({ customers, agent, onSubmit, onCancel }) {
   const overlay = document.createElement("div");
   overlay.style.position = "fixed";
   overlay.style.inset = "0";
@@ -60,24 +60,53 @@ function renderCreateOrderModal({ customers, onSubmit, onCancel }) {
 
   const card = document.createElement("div");
   card.className = "card";
-  card.style.width = "min(520px, calc(100vw - 32px))";
+  card.style.width = "min(620px, calc(100vw - 32px))";
 
   card.innerHTML = `
     <h3 style="margin-top:0;">Create Order</h3>
 
     <label class="subtle">Customer</label>
-    <select id="coCustomer" style="width:100%; margin-bottom:8px;">
+    <select id="coCustomer" style="width:100%; margin-bottom:10px;">
       <option value="">Select customer…</option>
       ${(customers || []).map(c =>
-        `<option value="${c.id}">${c.first_name} ${c.last_name}</option>`
+        `<option value="${c.id}">${escapeHtml([c.first_name, c.last_name].filter(Boolean).join(" "))}</option>`
       ).join("")}
     </select>
 
-    <label class="subtle">Ship to name</label>
-    <input id="coShipName" placeholder="Full name" style="width:100%; margin-bottom:8px;" />
+    <label class="subtle">Dispatch to</label>
+    <select id="coDispatchTo" style="width:100%; margin-bottom:10px;">
+      <option value="customer">Customer</option>
+      <option value="agent">Agent</option>
+      <option value="other">Other</option>
+    </select>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+      <div>
+        <label class="subtle">Ship to name</label>
+        <input id="coShipName" placeholder="Full name" style="width:100%; margin-bottom:10px;" />
+      </div>
+      <div>
+        <label class="subtle">Ship to phone</label>
+        <input id="coShipPhone" placeholder="+971..." style="width:100%; margin-bottom:10px;" />
+      </div>
+    </div>
+
+    <label class="subtle">Ship to email</label>
+    <input id="coShipEmail" placeholder="email@example.com" style="width:100%; margin-bottom:10px;" />
 
     <label class="subtle">Ship to address</label>
-    <textarea id="coShipAddress" rows="3" placeholder="Address" style="width:100%;"></textarea>
+    <textarea id="coShipAddress" rows="3" placeholder="Address" style="width:100%; margin-bottom:10px;"></textarea>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+      <div>
+        <label class="subtle">City</label>
+        <input id="coShipCity" placeholder="City" style="width:100%; margin-bottom:10px;" />
+      </div>
+      <div>
+        <label class="subtle">Country</label>
+        <input id="coShipCountry" placeholder="Country" style="width:100%; margin-bottom:10px;" />
+      </div>
+    </div>
 
     <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
       <button id="coCancelBtn" type="button">Cancel</button>
@@ -87,16 +116,69 @@ function renderCreateOrderModal({ customers, onSubmit, onCancel }) {
 
   overlay.appendChild(card);
   document.body.appendChild(overlay);
-  // Auto-fill ship-to name when customer selected
-overlay.querySelector("#coCustomer")?.addEventListener("change", (e) => {
-  const id = e.target.value;
-  const c = (customers || []).find(x => x.id === id);
-  if (!c) return;
 
-  overlay.querySelector("#coShipName").value =
-    [c.first_name, c.last_name].filter(Boolean).join(" ");
-});
+  const $cust = overlay.querySelector("#coCustomer");
+  const $dispatch = overlay.querySelector("#coDispatchTo");
 
+  const $name = overlay.querySelector("#coShipName");
+  const $phone = overlay.querySelector("#coShipPhone");
+  const $email = overlay.querySelector("#coShipEmail");
+  const $addr = overlay.querySelector("#coShipAddress");
+  const $city = overlay.querySelector("#coShipCity");
+  const $country = overlay.querySelector("#coShipCountry");
+
+  function fillFromCustomer(c) {
+    if (!c) return;
+    $name.value = [c.first_name, c.last_name].filter(Boolean).join(" ");
+    $phone.value = c.phone || "";
+    $email.value = c.email || "";
+    $addr.value = c.shipping_address || "";
+    $city.value = c.shipping_city || "";
+    $country.value = c.shipping_country || "";
+  }
+
+  function fillFromAgent(a) {
+    if (!a) return;
+    $name.value = a.name || "";
+    $phone.value = a.phone || "";
+    $email.value = a.email || "";
+    $addr.value = a.shipping_address || "";
+    $city.value = a.shipping_city || "";
+    $country.value = a.shipping_country || "";
+  }
+
+  function applyDispatchDefaults() {
+    const dispatch_to = String($dispatch.value || "customer");
+
+    if (dispatch_to === "agent") {
+      fillFromAgent(agent);
+      return;
+    }
+
+    if (dispatch_to === "customer") {
+      const id = String($cust.value || "");
+      const c = (customers || []).find(x => x.id === id);
+      fillFromCustomer(c);
+      return;
+    }
+
+    // other: do nothing (leave editable fields as-is)
+  }
+
+  // When customer changes: if dispatch_to=customer, autofill
+  $cust?.addEventListener("change", () => {
+    if (String($dispatch.value) === "customer") applyDispatchDefaults();
+  });
+
+  // When dispatch changes: autofill based on selection
+  $dispatch?.addEventListener("change", () => applyDispatchDefaults());
+
+  // Default: pick first customer if exists (optional)
+  if ((customers || []).length === 1) {
+    $cust.value = customers[0].id;
+  }
+  // Fill initial values (customer by default)
+  applyDispatchDefaults();
 
   const cleanup = () => overlay.remove();
 
@@ -106,16 +188,34 @@ overlay.querySelector("#coCustomer")?.addEventListener("change", (e) => {
   };
 
   overlay.querySelector("#coCreateBtn").onclick = () => {
-    const customer_id = overlay.querySelector("#coCustomer").value;
-    const ship_to_name = overlay.querySelector("#coShipName").value.trim();
-    const ship_to_address = overlay.querySelector("#coShipAddress").value.trim();
+    const customer_id = String($cust.value || "");
+    const dispatch_to = String($dispatch.value || "customer");
 
-    if (!customer_id || !ship_to_name || !ship_to_address) return;
+    const ship_to_name = String($name.value || "").trim();
+    const ship_to_phone = String($phone.value || "").trim() || null;
+    const ship_to_email = String($email.value || "").trim() || null;
+    const ship_to_address = String($addr.value || "").trim();
+    const ship_to_city = String($city.value || "").trim() || null;
+    const ship_to_country = String($country.value || "").trim() || null;
+
+    if (!customer_id) return;
+    if (!ship_to_name) return;
+    if (!ship_to_address) return;
 
     cleanup();
-    onSubmit({ customer_id, ship_to_name, ship_to_address });
+    onSubmit({
+      customer_id,
+      dispatch_to,
+      ship_to_name,
+      ship_to_phone,
+      ship_to_email,
+      ship_to_address,
+      ship_to_city,
+      ship_to_country
+    });
   };
 }
+
 
   function renderOrderRow(o) {
     const code = escapeHtml(o.order_code || o.id);
@@ -436,27 +536,64 @@ const agent_id = profile?.agent_id;
 
     // Load customers (RLS already restricts to agent)
     const { data: customers, error: cErr } = await supabaseClient
-      .from("customers")
-      .select("id, first_name, last_name")
+.from("customers")
+.select("id, first_name, last_name, email, phone, shipping_address, shipping_city, shipping_country")
+
       .order("created_at", { ascending: false });
 
     if (cErr) { setMsg("Load customers failed: " + cErr.message); return; }
 
-    renderCreateOrderModal({
-      customers,
-      onCancel: () => {},
-      onSubmit: async ({ customer_id, ship_to_name, ship_to_address }) => {
+    // Load agent (for dispatch_to = agent)
+const { data: agentRow, error: aErr } = await supabaseClient
+  .from("agents")
+  .select("id, name, email, phone, shipping_address, shipping_city, shipping_country")
+  .eq("id", agent_id)
+  .maybeSingle();
+
+if (aErr) { setMsg("Load agent failed: " + aErr.message); return; }
+
+// Load agent (for dispatch_to = agent)
+const { data: agentRow, error: aErr } = await supabaseClient
+  .from("agents")
+  .select("id, name, email, phone, shipping_address, shipping_city, shipping_country")
+  .eq("id", agent_id)
+  .maybeSingle();
+
+if (aErr) { setMsg("Load agent failed: " + aErr.message); return; }
+
+renderCreateOrderModal({
+  customers,
+  agent: agentRow,
+  onCancel: () => {},
+  onSubmit: async ({
+    customer_id,
+    dispatch_to,
+    ship_to_name,
+    ship_to_phone,
+    ship_to_email,
+    ship_to_address,
+    ship_to_city,
+    ship_to_country
+  }) => {
+
+
         setMsg("Creating order…");
 
         // A) create draft order (lab trigger applies automatically)
         const { data: orderRow, error: oErr } = await supabaseClient
           .from("orders")
-          .insert([{
-            agent_id,
-            customer_id,
-            ship_to_name,
-            ship_to_address
-          }])
+         .insert([{
+  agent_id,
+  customer_id,
+  dispatch_to,
+  ship_to_name,
+  ship_to_phone,
+  ship_to_email,
+  ship_to_address,
+  ship_to_city,
+  ship_to_country
+}])
+
           .select("id")
           .single();
 
