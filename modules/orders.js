@@ -482,11 +482,7 @@ await openOrder(order_id);
 await loadOrders({ mode: "all" });
 setMsg("Draft order created ✅");
   
-      if (ordersGeneratePackBtn) {
-  ordersGeneratePackBtn.disabled = (o.status !== "draft");
-}
-
-
+    
       }
     });
   });
