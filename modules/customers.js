@@ -158,19 +158,23 @@ export function initCustomerManagement({
 
     const createdPill = created ? `<span class="pill-soft">Created: ${escapeHtml(created)}</span>` : "";
 
-    const clinicName =
-      role === "admin"
-        ? (agentNameMap?.[c.agent_id] || "Unknown clinic")
-        : (agentNameMap?.[state.currentProfile?.agent_id] || "Clinic");
+const clinicName =
+  role === "admin"
+    ? (agentNameMap?.[c.agent_id] || "Unknown clinic")
+    : (agentNameMap?.[c.agent_id] || "—");
+
 
     return `
       <div class="customer-row" data-customer-id="${escapeHtml(c.id)}">
 
-        <!-- LEFT: NAME + CODE -->
-        <div>
-          <div style="font-weight:700;">${name}</div>
-          <div class="subtle">${code || ""}</div>
-        </div>
+<!-- LEFT: NAME + CODE -->
+<div>
+  <div style="font-weight:700;">${name}</div>
+  <div class="subtle">${code || ""}</div>
+  ${c.date_of_birth ? `<div class="subtle">DOB: ${escapeHtml(formatDateShort(c.date_of_birth))}</div>` : ""}
+  ${(c.phone || "").trim() ? `<div class="subtle">Phone: ${escapeHtml(c.phone)}</div>` : ""}
+</div>
+
 
         <!-- MIDDLE: CLINIC + CREATED -->
         <div>
@@ -183,6 +187,19 @@ export function initCustomerManagement({
           <button data-action="edit" type="button">Edit</button>
           <button data-action="delete" type="button">Delete</button>
         </div>
+
+        ${[c.shipping_address, c.shipping_city, c.shipping_country]
+  .filter(Boolean)
+  .length
+  ? `<div class="customer-email subtle">
+       Shipping: ${escapeHtml(
+         [c.shipping_address, c.shipping_city, c.shipping_country]
+           .filter(Boolean)
+           .join(", ")
+       )}
+     </div>`
+  : ""}
+
 
         <!-- EMAIL (FULL WIDTH, LAST ROW) -->
         ${(c.email || "").trim() ? (() => {
