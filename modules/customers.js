@@ -31,6 +31,7 @@ export function initCustomerManagement({
     firstNameInput,
     lastNameInput,
     custDobInput,
+    custGenderInput,
     custEmailInput,
     custPhoneInput,
     addCustomerBtn,
@@ -70,6 +71,8 @@ export function initCustomerManagement({
     if (firstNameInput) firstNameInput.value = "";
     if (lastNameInput) lastNameInput.value = "";
     if (custDobInput) custDobInput.value = "";
+    if (custDobInput) custDobInput.value = "";
+
     if (custEmailInput) custEmailInput.value = "";
     if (custPhoneInput) custPhoneInput.value = "";
     editingCustomerId = null;
@@ -210,6 +213,9 @@ export function initCustomerManagement({
         if (lastNameInput) lastNameInput.value = c.last_name || "";
         if (custEmailInput) custEmailInput.value = c.email || "";
         if (custPhoneInput) custPhoneInput.value = c.phone || "";
+        if (custDobInput) custDobInput.value = c.date_of_birth || "";
+        if (custGenderInput) custGenderInput.value = c.gender || "";
+
 
         showAddCustomerPanel();
         setCustMsg("Editing customer — click Save customer to update.");
@@ -306,6 +312,7 @@ export function initCustomerManagement({
       const first_name = (firstNameInput?.value || "").trim();
       const last_name  = (lastNameInput?.value || "").trim();
       const date_of_birth = String(custDobInput?.value || "").trim();
+      const gender = String(custGenderInput?.value || "").trim();
       const email = (custEmailInput?.value || "").trim() || null;
       const phone = (custPhoneInput?.value || "").trim() || null;
 
@@ -317,10 +324,9 @@ export function initCustomerManagement({
       if (!last_name) { markField(lastNameInput, "error"); setCustMsg("Last name is required."); return; }
       markField(lastNameInput, "ok");
 
-     if (!date_of_birth) {
-  setCustMsg("Date of birth is required.");
-  return;
-}
+     if (!date_of_birth) {  setCustMsg("Date of birth is required.");  return; }
+      if (!gender) { setCustMsg("Gender is required."); return; }
+
 
       if (email && !isValidEmail(email)) { markField(custEmailInput, "error"); setCustMsg("Please enter a valid email address."); return; }
       if (email) markField(custEmailInput, "ok");
@@ -341,7 +347,7 @@ export function initCustomerManagement({
       if (editingCustomerId) {
         const { data, error } = await supabaseClient
           .from("customers")
-          .update({ first_name, last_name, email, phone })
+         .update({ first_name, last_name, date_of_birth, gender, email, phone })
           .eq("id", editingCustomerId)
           .select("id");
 
@@ -357,7 +363,7 @@ export function initCustomerManagement({
 
       const { error } = await supabaseClient
         .from("customers")
-        .insert([{ agent_id, first_name, last_name, date_of_birth, email, phone }]);
+        .insert([{ agent_id, first_name, last_name, date_of_birth, gender, email, phone }]);
 
         if (error) { 
         setCustMsg("Insert error: " + error.message); 
