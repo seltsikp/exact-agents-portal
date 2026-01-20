@@ -1,3 +1,10 @@
+// app_v41.js (Portal v42.1) — DROP-IN VERSION
+// Fixes:
+// - ✅ Syntax error (missing ')' / broken braces)
+// - ✅ Restores safe guards (if(loginBtn) etc)
+// - ✅ Adds clear auth debug logs (login click, signIn result, hydrate start, profile lookup, signout reasons)
+// - ✅ Keeps PASSWORD_RECOVERY flow + opens Change Password tool
+
 import { showWelcomePanel } from "./modules/welcome.js";
 import { initNavigation } from "./modules/navigation.js";
 import { initCustomerManagement } from "./modules/customers.js";
@@ -10,18 +17,19 @@ import { initUserManagement } from "./modules/userManagement.js";
 import { initProductsAdmin } from "./modules/productsAdmin.js";
 import { initOrdersManagement } from "./modules/orders.js";
 
-
-
-console.log("EXACT Agents Portal loaded (v42)");
+console.log("EXACT Agents Portal loaded (v42.1)");
 
 // =========================================================
 // BLOCK: SUPABASE CLIENT
 // =========================================================
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
-const STRIPE_PUBLISHABLE_KEY = "pk_test_51SrZvuH7nI5LR99YsjnLy2FKDx0Fcl8KAQMyWkK8LGHlg6IB1Ex97sqKJfvTOBxCw1snPG65A2WLEE2WdrlxaFS600sU5ZDKty";
-window.STRIPE_PUBLISHABLE_KEY = STRIPE_PUBLISHABLE_KEY; // optional (handy for console)
+const STRIPE_PUBLISHABLE_KEY =
+  "pk_test_51SrZvuH7nI5LR99YsjnLy2FKDx0Fcl8KAQMyWkK8LGHlg6IB1Ex97sqKJfvTOBxCw1snPG65A2WLEE2WdrlxaFS600sU5ZDKty";
 
+const SITE_URL = "https://seltsikp.github.io/exact-portal/"; // used for password reset redirect
+
+window.STRIPE_PUBLISHABLE_KEY = STRIPE_PUBLISHABLE_KEY;
 window.SUPABASE_URL = SUPABASE_URL;
 window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
 
@@ -33,20 +41,16 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
     detectSessionInUrl: true
   }
 });
-// =========================================================
-// DEVTOOLS / EDGE FUNCTION TEST HOOKS
-// (Do NOT create a new Supabase client in console. Use this one.)
-// =========================================================
+
+// DEVTOOLS HOOKS
 window.supabaseClient = supabaseClient;
-window.sb = supabaseClient; // optional short alias
+window.sb = supabaseClient;
 
 window.exactGeneratePack = async (orderId) => {
-  // 1) ensure we have a valid session JWT
   const { data: { session }, error: sessErr } = await window.supabaseClient.auth.getSession();
   if (sessErr) throw sessErr;
   if (!session?.access_token) throw new Error("No active session (JWT missing). Log in first, then retry.");
 
-  // 2) invoke Edge Function using the SAME authenticated client
   const { data, error } = await window.supabaseClient.functions.invoke(
     "exact_trio_v1_generate_pack",
     { body: { order_id: orderId } }
@@ -57,15 +61,13 @@ window.exactGeneratePack = async (orderId) => {
 };
 
 window.addEventListener("DOMContentLoaded", () => {
-
   // =========================================================
   // BLOCK: HELPERS
   // =========================================================
-function show(el, on) {
-  if (!el) return;
-  el.style.display = on ? "" : "none";
-}
-
+  function show(el, on) {
+    if (!el) return;
+    el.style.display = on ? "" : "none";
+  }
 
   function escapeHtml(str) {
     return String(str ?? "")
@@ -96,7 +98,7 @@ function show(el, on) {
     const dlg = document.getElementById("confirmDialog");
     try {
       if (dlg && dlg.open && typeof dlg.close === "function") dlg.close();
-    } catch (_e) { }
+    } catch (_e) {}
 
     return await new Promise((resolve) => {
       const overlay = document.createElement("div");
@@ -142,7 +144,7 @@ function show(el, on) {
       const cleanup = (val) => {
         if (done) return;
         done = true;
-        try { overlay.remove(); } catch (_e) { }
+        try { overlay.remove(); } catch (_e) {}
         window.removeEventListener("keydown", onKey);
         resolve(val);
       };
@@ -246,7 +248,6 @@ function show(el, on) {
 
   function renderChangePasswordLink(containerEl) {
     if (!containerEl) return;
-
     if (document.getElementById("pwLinkWrap")) return;
 
     const wrap = document.createElement("div");
@@ -322,7 +323,7 @@ function show(el, on) {
   const appBox = document.getElementById("appBox");
   const menuItems = document.getElementById("menuItems");
 
-  // Forgot password UI (now SAFE: DOM exists)
+  // Forgot password UI
   const forgotPwLink = document.getElementById("forgotPwLink");
   const forgotPwPanel = document.getElementById("forgotPwPanel");
   const forgotPwEmail = document.getElementById("forgotPwEmail");
@@ -330,6 +331,201 @@ function show(el, on) {
   const forgotPwMsg = document.getElementById("forgotPwMsg");
   const setForgotMsg = (t) => { if (forgotPwMsg) forgotPwMsg.textContent = t || ""; };
 
+  // Views
+  const viewWelcome = document.getElementById("viewWelcome");
+  const welcomeContent = document.getElementById("welcomeContent");
+  const viewCustomerMgmt = document.getElementById("viewCustomerMgmt");
+  const viewAgentMgmt = document.getElementById("viewAgentMgmt");
+  const viewFormulary = document.getElementById("viewFormulary");
+  const viewLabMgmt = document.getElementById("viewLabMgmt");
+  const viewAccountManagers = document.getElementById("viewAccountManagers");
+  const viewProductTypes = document.getElementById("viewProductTypes");
+  const viewProductsAdmin = document.getElementById("viewProductsAdmin");
+  const viewUserMgmt = document.getElementById("viewUserMgmt");
+  const viewOrders = document.getElementById("viewOrders");
+
+  // Customer Mgmt UI
+  const cmViewBtn = document.getElementById("cmViewBtn");
+  const cmAddBtn = document.getElementById("cmAddBtn");
+  const cmClearBtn = document.getElementById("cmClearBtn");
+  const custMsg = document.getElementById("custMsg");
+  const cmViewPanel = document.getElementById("cmViewPanel");
+  const cmAddPanel = document.getElementById("cmAddPanel");
+  const cmSearch = document.getElementById("cmSearch");
+  const cmSearchBtn = document.getElementById("cmSearchBtn");
+  const cmShowAllBtn = document.getElementById("cmShowAllBtn");
+  const customerList = document.getElementById("customerList");
+  const firstNameInput = document.getElementById("firstName");
+  const lastNameInput = document.getElementById("lastName");
+  const custDobInput = document.getElementById("custDob");
+  const custGenderInput = document.getElementById("custGender");
+  const custEmailInput = document.getElementById("custEmail");
+  const custPhoneInput = document.getElementById("custPhone");
+  const custShipAddressInput = document.getElementById("custShipAddress");
+  const custShipCityInput = document.getElementById("custShipCity");
+  const custShipCountryInput = document.getElementById("custShipCountry");
+  const addCustomerBtn = document.getElementById("addCustomerBtn");
+
+  // Clinic assignment
+  const assignClinicRow = document.getElementById("assignClinicRow");
+  const assignClinicSelect = document.getElementById("assignClinicSelect");
+  const agentClinicRow = document.getElementById("agentClinicRow");
+  const agentClinicName = document.getElementById("agentClinicName");
+
+  // Agent Mgmt UI
+  const amViewBtn = document.getElementById("amViewBtn");
+  const amAddBtn = document.getElementById("amAddBtn");
+  const amClearBtn = document.getElementById("amClearBtn");
+  const agentMsg = document.getElementById("agentMsg");
+  const amViewPanel = document.getElementById("amViewPanel");
+  const amAddPanel = document.getElementById("amAddPanel");
+  const amSearch = document.getElementById("amSearch");
+  const amSearchBtn = document.getElementById("amSearchBtn");
+  const amShowAllBtn = document.getElementById("amShowAllBtn");
+  const agentList = document.getElementById("agentList");
+  const agentNameInput = document.getElementById("agentName");
+  const agentEmailInput = document.getElementById("agentEmail");
+  const agentPhoneInput = document.getElementById("agentPhone");
+  const agentShipAddressInput = document.getElementById("agentShipAddress");
+  const agentShipCityInput = document.getElementById("agentShipCity");
+  const agentShipCountryInput = document.getElementById("agentShipCountry");
+  const addAgentBtn = document.getElementById("addAgentBtn");
+
+  // Lab Mgmt UI
+  const lmViewBtn = document.getElementById("lmViewBtn");
+  const lmAddBtn = document.getElementById("lmAddBtn");
+  const lmClearBtn = document.getElementById("lmClearBtn");
+  const labMsg = document.getElementById("labMsg");
+  const lmViewPanel = document.getElementById("lmViewPanel");
+  const lmAddPanel = document.getElementById("lmAddPanel");
+  const labList = document.getElementById("labList");
+  const lmName = document.getElementById("lmName");
+  const lmEmail = document.getElementById("lmEmail");
+  const lmOrdersEmail = document.getElementById("lmOrdersEmail");
+  const lmPhone = document.getElementById("lmPhone");
+  const lmAddress = document.getElementById("lmAddress");
+  const lmShipping = document.getElementById("lmShipping");
+  const lmSaveBtn = document.getElementById("lmSaveBtn");
+
+  // Product Types view + UI
+  const ptName = document.getElementById("pt_name");
+  const ptAddBtn = document.getElementById("pt_addBtn");
+  const ptTbody = document.getElementById("pt_tbody");
+  const ptStatus = document.getElementById("pt_status");
+
+  // Formulary tabs (kept for navigation; actual ingredients UI may be inside formulatedProducts module)
+  const fxTabIngredients = document.getElementById("fxTabIngredients");
+  const fxTabProducts = document.getElementById("fxTabProducts");
+  const fxSectionIngredients = document.getElementById("fxSectionIngredients");
+  const fxSectionProducts = document.getElementById("fxSectionProducts");
+
+  // Formulated Products UI
+  const fpViewBtn = document.getElementById("fpViewBtn");
+  const fpAddBtn = document.getElementById("fpAddBtn");
+  const fpClearBtn = document.getElementById("fpClearBtn");
+  const fpMsg = document.getElementById("fpMsg");
+  const fpViewPanel = document.getElementById("fpViewPanel");
+  const fpAddPanel = document.getElementById("fpAddPanel");
+  const fpSearch = document.getElementById("fpSearch");
+  const fpSearchBtn = document.getElementById("fpSearchBtn");
+  const fpShowAllBtn = document.getElementById("fpShowAllBtn");
+  const fpList = document.getElementById("fpList");
+  const fpCode = document.getElementById("fpCode");
+  const fpName = document.getElementById("fpName");
+  const fpType = document.getElementById("fpType");
+  const fpNotes = document.getElementById("fpNotes");
+  const fpAddLineBtn = document.getElementById("fpAddLineBtn");
+  const fpLines = document.getElementById("fpLines");
+  const fpSaveBtn = document.getElementById("fpSaveBtn");
+  const fpCancelEditBtn = document.getElementById("fpCancelEditBtn");
+
+  // Account Managers UI
+  const amgrViewBtn = document.getElementById("amgrViewBtn");
+  const amgrAddBtn = document.getElementById("amgrAddBtn");
+  const amgrClearBtn = document.getElementById("amgrClearBtn");
+  const amgrMsg = document.getElementById("amgrMsg");
+  const amgrViewPanel = document.getElementById("amgrViewPanel");
+  const amgrAddPanel = document.getElementById("amgrAddPanel");
+  const amgrList = document.getElementById("amgrList");
+  const amgrFirstName = document.getElementById("amgrFirstName");
+  const amgrLastName = document.getElementById("amgrLastName");
+  const amgrEmail = document.getElementById("amgrEmail");
+  const amgrPhone = document.getElementById("amgrPhone");
+  const amgrAddress = document.getElementById("amgrAddress");
+  const amgrNotes = document.getElementById("amgrNotes");
+  const amgrSaveBtn = document.getElementById("amgrSaveBtn");
+
+  // Products Admin UI
+  const paViewBtn = document.getElementById("paViewBtn");
+  const paClearBtn = document.getElementById("paClearBtn");
+  const paMsg = document.getElementById("paMsg");
+  const paListPanel = document.getElementById("paListPanel");
+  const paList = document.getElementById("paList");
+  const paEditPanel = document.getElementById("paEditPanel");
+  const paProductName = document.getElementById("paProductName");
+  const paEdgeFn = document.getElementById("paEdgeFn");
+  const paSubject = document.getElementById("paSubject");
+  const paBody = document.getElementById("paBody");
+  const paSendEmail = document.getElementById("paSendEmail");
+  const paIncludeLinks = document.getElementById("paIncludeLinks");
+  const paIncludeAttachments = document.getElementById("paIncludeAttachments");
+  const paSaveBtn = document.getElementById("paSaveBtn");
+  const paCancelBtn = document.getElementById("paCancelBtn");
+
+  // User Management UI (IMPORTANT: define all fields used by module init)
+  const umViewBtn = document.getElementById("umViewBtn");
+  const umAddBtn = document.getElementById("umAddBtn");
+  const umClearBtn = document.getElementById("umClearBtn");
+  const umMsg = document.getElementById("umMsg");
+  const umViewPanel = document.getElementById("umViewPanel");
+  const umEditPanel = document.getElementById("umEditPanel");
+  const umList = document.getElementById("umList");
+  const umSearch = document.getElementById("umSearch");
+  const umSearchBtn = document.getElementById("umSearchBtn");
+  const umShowAllBtn = document.getElementById("umShowAllBtn");
+  const umFullName = document.getElementById("umFullName");
+  const umEmail = document.getElementById("umEmail");
+  const umPassword = document.getElementById("umPassword");
+  const umRole = document.getElementById("umRole");
+  const umStatus = document.getElementById("umStatus");
+  const umPerms = document.getElementById("umPerms");
+  const umSaveBtn = document.getElementById("umSaveBtn");
+  const umCancelBtn = document.getElementById("umCancelBtn");
+
+  // Orders UI
+  const ordersMsg = document.getElementById("ordersMsg");
+  const ordersListPanel = document.getElementById("ordersListPanel");
+  const ordersSearch = document.getElementById("ordersSearch");
+  const ordersSearchBtn = document.getElementById("ordersSearchBtn");
+  const ordersShowAllBtn = document.getElementById("ordersShowAllBtn");
+  const ordersStatusFilter = document.getElementById("ordersStatusFilter");
+  const ordersList = document.getElementById("ordersList");
+  const ordersCreateBtn = document.getElementById("ordersCreateBtn");
+  const ordersDetailPanel = document.getElementById("ordersDetailPanel");
+  const ordersDetailTitle = document.getElementById("ordersDetailTitle");
+  const ordersDetailMeta = document.getElementById("ordersDetailMeta");
+  const ordersBackBtn = document.getElementById("ordersBackBtn");
+  const ordersRefreshBtn = document.getElementById("ordersRefreshBtn");
+  const ordersGeneratePackBtn = document.getElementById("ordersGeneratePackBtn");
+  const ordersBatchSummary = document.getElementById("ordersBatchSummary");
+  const ordersArtifactsList = document.getElementById("ordersArtifactsList");
+
+  // =========================================================
+  // BLOCK: STATE
+  // =========================================================
+  let currentSession = null;
+  let currentProfile = null;
+  let hydratedUserId = null;
+
+  let agentNameMap = {};
+
+  const setAgentMsg = (t) => { if (agentMsg) agentMsg.textContent = t || ""; };
+  const setAuthMsg = (t) => { if (authMsg) authMsg.textContent = t || ""; };
+  const setCustMsg = (t) => { if (custMsg) custMsg.textContent = t || ""; };
+
+  // =========================================================
+  // BLOCK: FORGOT PASSWORD
+  // =========================================================
   forgotPwLink?.addEventListener("click", (e) => {
     e.preventDefault();
     setForgotMsg("");
@@ -344,720 +540,12 @@ function show(el, on) {
     setForgotMsg("Sending…");
 
     const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-     redirectTo: "https://seltsikp.github.io/exact-portal/"
-
+      redirectTo: SITE_URL
     });
 
     if (error) { setForgotMsg("Failed: " + error.message); return; }
     setForgotMsg("Reset email sent. Check your inbox.");
   });
-
-  // Views
-  const viewWelcome = document.getElementById("viewWelcome");
-  const welcomeContent = document.getElementById("welcomeContent");
-  const viewCustomerMgmt = document.getElementById("viewCustomerMgmt");
-  const viewAgentMgmt = document.getElementById("viewAgentMgmt");
-  const viewFormulary = document.getElementById("viewFormulary");
-  const viewLabMgmt = document.getElementById("viewLabMgmt");
-  const viewAccountManagers = document.getElementById("viewAccountManagers");
-  const viewProductTypes = document.getElementById("viewProductTypes");
-  const viewUserMgmt = document.getElementById("viewUserMgmt");
-
-  // Customer Mgmt UI
-  const cmViewBtn = document.getElementById("cmViewBtn");
-  const cmAddBtn = document.getElementById("cmAddBtn");
-  const cmClearBtn = document.getElementById("cmClearBtn");
-  const custMsg = document.getElementById("custMsg");
-
-  const cmViewPanel = document.getElementById("cmViewPanel");
-  const cmAddPanel = document.getElementById("cmAddPanel");
-
-  const cmSearch = document.getElementById("cmSearch");
-  const cmSearchBtn = document.getElementById("cmSearchBtn");
-  const cmShowAllBtn = document.getElementById("cmShowAllBtn");
-
-  const customerList = document.getElementById("customerList");
-
-  // Lab Mgmt UI
-  const lmViewBtn = document.getElementById("lmViewBtn");
-  const lmAddBtn = document.getElementById("lmAddBtn");
-  const lmClearBtn = document.getElementById("lmClearBtn");
-  const labMsg = document.getElementById("labMsg");
-  const lmViewPanel = document.getElementById("lmViewPanel");
-  const lmAddPanel = document.getElementById("lmAddPanel");
-  const labList = document.getElementById("labList");
-
-  const lmName = document.getElementById("lmName");
-  const lmEmail = document.getElementById("lmEmail");
-  const lmOrdersEmail = document.getElementById("lmOrdersEmail");
-  const lmPhone = document.getElementById("lmPhone");
-  const lmAddress = document.getElementById("lmAddress");
-  const lmShipping = document.getElementById("lmShipping");
-  const lmSaveBtn = document.getElementById("lmSaveBtn");
-
-  // Agent Mgmt UI
-  const amViewBtn = document.getElementById("amViewBtn");
-  const amAddBtn = document.getElementById("amAddBtn");
-  const amClearBtn = document.getElementById("amClearBtn");
-  const agentMsg = document.getElementById("agentMsg");
-
-  const amViewPanel = document.getElementById("amViewPanel");
-  const amAddPanel = document.getElementById("amAddPanel");
-
-  const amSearch = document.getElementById("amSearch");
-  const amSearchBtn = document.getElementById("amSearchBtn");
-  const amShowAllBtn = document.getElementById("amShowAllBtn");
-
-  const agentList = document.getElementById("agentList");
-const agentEmailInput = document.getElementById("agentEmail");
-const agentPhoneInput = document.getElementById("agentPhone");
-const agentShipAddressInput = document.getElementById("agentShipAddress");
-const agentShipCityInput = document.getElementById("agentShipCity");
-const agentShipCountryInput = document.getElementById("agentShipCountry");
-
-
-  const agentNameInput = document.getElementById("agentName");
-  const addAgentBtn = document.getElementById("addAgentBtn");
-
-  // Add customer fields
-  const firstNameInput = document.getElementById("firstName");
-  const lastNameInput = document.getElementById("lastName");
-  const custDobInput = document.getElementById("custDob");
-  const custGenderInput = document.getElementById("custGender");
-  const custEmailInput = document.getElementById("custEmail");
-  const custPhoneInput = document.getElementById("custPhone");
-  const addCustomerBtn = document.getElementById("addCustomerBtn");
-  const custShipAddressInput = document.getElementById("custShipAddress");
-  const custShipCityInput = document.getElementById("custShipCity");
-  const custShipCountryInput = document.getElementById("custShipCountry");
-
-
-  // Clinic assignment
-  const assignClinicRow = document.getElementById("assignClinicRow");
-  const assignClinicSelect = document.getElementById("assignClinicSelect");
-  const agentClinicRow = document.getElementById("agentClinicRow");
-  const agentClinicName = document.getElementById("agentClinicName");
-
-  // Formulary tabs
-  const fxTabIngredients = document.getElementById("fxTabIngredients");
-  const fxTabProducts = document.getElementById("fxTabProducts");
-
-  const fxSectionIngredients = document.getElementById("fxSectionIngredients");
-  const fxSectionProducts = document.getElementById("fxSectionProducts");
-
-  // Ingredients UI
-  const fxIngViewBtn = document.getElementById("fxIngViewBtn");
-  const fxIngAddBtn = document.getElementById("fxIngAddBtn");
-  const fxIngClearBtn = document.getElementById("fxIngClearBtn");
-  const fxIngMsg = document.getElementById("fxIngMsg");
-
-  const fxIngViewPanel = document.getElementById("fxIngViewPanel");
-  const fxIngAddPanel = document.getElementById("fxIngAddPanel");
-
-  const fxIngSearch = document.getElementById("fxIngSearch");
-  const fxIngSearchBtn = document.getElementById("fxIngSearchBtn");
-  const fxIngShowAllBtn = document.getElementById("fxIngShowAllBtn");
-
-  const fxIngList = document.getElementById("fxIngList");
-
-  const fxIngPsiNum = document.getElementById("fxIngPsiNum");
-  const fxIngInci = document.getElementById("fxIngInci");
-  const fxIngDesc = document.getElementById("fxIngDesc");
-  const fxIngSaveBtn = document.getElementById("fxIngSaveBtn");
-
-    // Products view + UI
- 
-  const viewProductsAdmin = document.getElementById("viewProductsAdmin");
-
-const paViewBtn = document.getElementById("paViewBtn");
-const paClearBtn = document.getElementById("paClearBtn");
-const paMsg = document.getElementById("paMsg");
-const paListPanel = document.getElementById("paListPanel");
-const paList = document.getElementById("paList");
-
-const paEditPanel = document.getElementById("paEditPanel");
-const paProductName = document.getElementById("paProductName");
-const paEdgeFn = document.getElementById("paEdgeFn");
-const paSubject = document.getElementById("paSubject");
-const paBody = document.getElementById("paBody");
-const paSendEmail = document.getElementById("paSendEmail");
-const paIncludeLinks = document.getElementById("paIncludeLinks");
-const paIncludeAttachments = document.getElementById("paIncludeAttachments");
-const paSaveBtn = document.getElementById("paSaveBtn");
-const paCancelBtn = document.getElementById("paCancelBtn");
-
-const paKind = document.getElementById("paKind");
-const paCurrency = document.getElementById("paCurrency");
-const paUnitPrice = document.getElementById("paUnitPrice");
-const paIsActive = document.getElementById("paIsActive");
-const paDynamicBlock = document.getElementById("paDynamicBlock");
-const paStaticNote = document.getElementById("paStaticNote");
-
-
-  // Product Types view + UI
-  const ptName = document.getElementById("pt_name");
-  const ptAddBtn = document.getElementById("pt_addBtn");
-  const ptTbody = document.getElementById("pt_tbody");
-  const ptStatus = document.getElementById("pt_status");
-
-  // Formulated Products UI
-  const fpViewBtn = document.getElementById("fpViewBtn");
-  const fpAddBtn = document.getElementById("fpAddBtn");
-  const fpClearBtn = document.getElementById("fpClearBtn");
-  const fpMsg = document.getElementById("fpMsg");
-
-  const fpViewPanel = document.getElementById("fpViewPanel");
-  const fpAddPanel = document.getElementById("fpAddPanel");
-
-  const fpSearch = document.getElementById("fpSearch");
-  const fpSearchBtn = document.getElementById("fpSearchBtn");
-  const fpShowAllBtn = document.getElementById("fpShowAllBtn");
-  const fpList = document.getElementById("fpList");
-
-  const fpCode = document.getElementById("fpCode");
-  const fpName = document.getElementById("fpName");
-  const fpType = document.getElementById("fpType");
-  const fpNotes = document.getElementById("fpNotes");
-
-  const fpAddLineBtn = document.getElementById("fpAddLineBtn");
-  const fpLines = document.getElementById("fpLines");
-
-  const fpSaveBtn = document.getElementById("fpSaveBtn");
-  const fpCancelEditBtn = document.getElementById("fpCancelEditBtn");
-
-  // Account Managers UI
-  const amgrViewBtn = document.getElementById("amgrViewBtn");
-  const amgrAddBtn = document.getElementById("amgrAddBtn");
-  const amgrClearBtn = document.getElementById("amgrClearBtn");
-  const amgrMsg = document.getElementById("amgrMsg");
-  const amgrViewPanel = document.getElementById("amgrViewPanel");
-  const amgrAddPanel = document.getElementById("amgrAddPanel");
-  const amgrList = document.getElementById("amgrList");
-
-  const amgrFirstName = document.getElementById("amgrFirstName");
-  const amgrLastName = document.getElementById("amgrLastName");
-  const amgrEmail = document.getElementById("amgrEmail");
-  const amgrPhone = document.getElementById("amgrPhone");
-  const amgrAddress = document.getElementById("amgrAddress");
-  const amgrNotes = document.getElementById("amgrNotes");
-  const amgrSaveBtn = document.getElementById("amgrSaveBtn");
-
-// ==============================
-// USER MANAGEMENT UI
-// ==============================
-const umSaveBtn = document.getElementById("umSaveBtn");
-const umCancelBtn = document.getElementById("umCancelBtn");
-
-const umAddBtn = document.getElementById("umAddBtn");
-const umSearch = document.getElementById("umSearch");
-const umSearchBtn = document.getElementById("umSearchBtn");
-const umShowAllBtn = document.getElementById("umShowAllBtn");
-
-// ==============================
-// ORDERS UI
-// ==============================
-const viewOrders = document.getElementById("viewOrders");
-
-const ordersMsg = document.getElementById("ordersMsg");
-const ordersListPanel = document.getElementById("ordersListPanel");
-const ordersSearch = document.getElementById("ordersSearch");
-const ordersSearchBtn = document.getElementById("ordersSearchBtn");
-const ordersShowAllBtn = document.getElementById("ordersShowAllBtn");
-const ordersStatusFilter = document.getElementById("ordersStatusFilter");
-const ordersList = document.getElementById("ordersList");
-const ordersCreateBtn = document.getElementById("ordersCreateBtn");
-
-
-const ordersDetailPanel = document.getElementById("ordersDetailPanel");
-const ordersDetailTitle = document.getElementById("ordersDetailTitle");
-const ordersDetailMeta = document.getElementById("ordersDetailMeta");
-const ordersBackBtn = document.getElementById("ordersBackBtn");
-const ordersRefreshBtn = document.getElementById("ordersRefreshBtn");
-const ordersGeneratePackBtn = document.getElementById("ordersGeneratePackBtn");
-
-const ordersBatchSummary = document.getElementById("ordersBatchSummary");
-const ordersArtifactsList = document.getElementById("ordersArtifactsList");
-
-  // =========================================================
-  // BLOCK: STATE
-  // =========================================================
-  let currentSession = null;
-  let currentProfile = null;
-  let hydratedUserId = null;
-
-  let agentNameMap = {};
-  let customersById = {};
-  let agentsById = {};
-
-  let ingredientsById = {};
-  let editingIngredientId = null;
-
-  const setAgentMsg = (t) => { if (agentMsg) agentMsg.textContent = t || ""; };
-  const setAuthMsg = (t) => { if (authMsg) authMsg.textContent = t || ""; };
-  const setCustMsg = (t) => { if (custMsg) custMsg.textContent = t || ""; };
-  const setFxIngMsg = (t) => { if (fxIngMsg) fxIngMsg.textContent = t || ""; };
-
-  // =========================================================
-  // BLOCK: MODULE INITS
-  // =========================================================
-  const customerModule = initCustomerManagement({
-    supabaseClient,
-    ui: {
-      cmViewBtn,
-      cmAddBtn,
-      cmClearBtn,
-      custMsg,
-      cmViewPanel,
-      cmAddPanel,
-      cmSearch,
-      cmSearchBtn,
-      cmShowAllBtn,
-      customerList,
-      firstNameInput,
-      lastNameInput,
-      custDobInput,
-      custGenderInput,
-      custEmailInput,
-      custPhoneInput,
-      custShipAddressInput,
-      custShipCityInput,
-      custShipCountryInput,
-
-      addCustomerBtn,
-      assignClinicRow,
-      assignClinicSelect,
-      agentClinicRow,
-      agentClinicName
-    },
-    helpers: {
-      show,
-      escapeHtml,
-      formatDateShort,
-      confirmExact,
-      isValidEmail,
-      isValidPhone,
-      markField,
-      clearFieldMarks
-    },
-    state: {
-      get currentProfile() { return currentProfile; },
-      get agentNameMap() { return agentNameMap; }
-    }
-  });
-
-  const agentModule = initAgentManagement({
-    supabaseClient,
-    ui: {
-      amViewBtn,
-      amAddBtn,
-      amClearBtn,
-      agentMsg,
-      amViewPanel,
-      amAddPanel,
-      amSearch,
-      amSearchBtn,
-      amShowAllBtn,
-      agentList,
-
-      agentNameInput,
-      agentEmailInput,
-      agentPhoneInput,
-      agentShipAddressInput,
-      agentShipCityInput,
-      agentShipCountryInput,
-
-      addAgentBtn
-    },
-    helpers: {
-      show,
-      escapeHtml,
-      formatDateShort,
-      confirmExact
-    },
-    state: {
-      async refreshAgents() {
-        await loadAgentNameMap();
-        await loadAgentsForAssignDropdown();
-      }
-    }
-  });
-
-  const labsModule = initLabManagement({
-    supabaseClient,
-    ui: {
-      lmViewBtn,
-      lmAddBtn,
-      lmClearBtn,
-      labMsg,
-      lmViewPanel,
-      lmAddPanel,
-      labList,
-      lmName,
-      lmEmail,
-      lmOrdersEmail,
-      lmPhone,
-      lmAddress,
-      lmShipping,
-      lmSaveBtn
-    },
-    helpers: { show, confirmExact }
-  });
-
-  const productsAdminModule = initProductsAdmin({
-  supabaseClient,
-  ui: {
-    paViewBtn, paClearBtn, paMsg,
-    paListPanel, paList,
-    paEditPanel,
-    paProductName, paEdgeFn, paSubject, paBody,
-    paSendEmail, paIncludeLinks, paIncludeAttachments,
-    paSaveBtn, paCancelBtn
-  },
-  helpers: { show, escapeHtml, confirmExact }
-});
-
-  const productTypesModule = initProductTypesManagement({
-    supabaseClient,
-    ui: { ptName, ptAddBtn, ptTbody, ptStatus },
-    helpers: { confirmExact }
-  });
-
-  const formulatedProductsModule = initFormulatedProductsManagement({
-    supabaseClient,
-    ui: {
-      fpViewBtn, fpAddBtn, fpClearBtn, fpMsg,
-      fpViewPanel, fpAddPanel,
-      fpSearch, fpSearchBtn, fpShowAllBtn,
-      fpList,
-      fpCode, fpName, fpType, fpNotes,
-      fpAddLineBtn, fpLines,
-      fpSaveBtn, fpCancelEditBtn
-    },
-    helpers: { show, escapeHtml, confirmExact }
-  });
-
-  const accountManagersModule = initAccountManagersManagement({
-    supabaseClient,
-    ui: {
-      amgrViewBtn,
-      amgrAddBtn,
-      amgrClearBtn,
-      amgrMsg,
-      amgrViewPanel,
-      amgrAddPanel,
-      amgrList,
-      amgrFirstName,
-      amgrLastName,
-      amgrEmail,
-      amgrPhone,
-      amgrAddress,
-      amgrNotes,
-      amgrSaveBtn
-    },
-    helpers: { show, confirmExact }
-  });
-
-const ordersModule = initOrdersManagement({
-  supabaseClient,
-  ui: {
-    viewOrders,
-
-    ordersMsg,
-    ordersListPanel,
-    ordersSearch,
-    ordersSearchBtn,
-    ordersShowAllBtn,
-    ordersStatusFilter,
-    ordersList,
-    ordersCreateBtn,
-
-
-    ordersDetailPanel,
-    ordersDetailTitle,
-    ordersDetailMeta,
-    ordersBackBtn,
-    ordersRefreshBtn,
-    ordersGeneratePackBtn,
-
-    ordersBatchSummary,
-    ordersArtifactsList,
-  },
-  helpers: {
-    show,
-    escapeHtml,
-    formatDateShort,
-    confirmExact,
-  },
-  state: {
-    // IMPORTANT: currentProfile changes after login,
-    // so give the module a getter instead of a fixed snapshot
-    get currentProfile() { return currentProfile; },
-    get stripePublishableKey() { return STRIPE_PUBLISHABLE_KEY; }
-  }
-});
-
-
-  const userMgmtModule = initUserManagement({
-    supabaseClient,
-    ui: {
-      umViewBtn, umAddBtn, umClearBtn, umMsg,
-      umViewPanel, umEditPanel, umList,
-      umSearch, umSearchBtn, umShowAllBtn,
-      umFullName, umEmail, umPassword, umRole, umStatus,
-      umPerms, umSaveBtn, umCancelBtn
-    },
-    helpers: { show, escapeHtml, confirmExact },
-    state: {
-      get currentProfile() { return currentProfile; }
-    }
-  });
-
-  // =========================================================
-  // BLOCK: RESET INGREDIENTS SCREEN
-  // =========================================================
-  function resetIngredientsScreen() {
-    show(fxIngViewPanel, false);
-    show(fxIngAddPanel, false);
-    show(fxIngClearBtn, false);
-    setFxIngMsg("");
-    ingredientsById = {};
-    editingIngredientId = null;
-
-    if (fxIngSearch) fxIngSearch.value = "";
-    if (fxIngPsiNum) fxIngPsiNum.value = "";
-    if (fxIngInci) fxIngInci.value = "";
-    if (fxIngDesc) fxIngDesc.value = "";
-    if (fxIngList) fxIngList.innerHTML = "";
-  }
-// =========================================================
-// BLOCK: INGREDIENTS MANAGEMENT (VIEW/ADD/EDIT/DELETE)
-// =========================================================
-function setActiveIngPill(which) {
-  // which = "view" or "add"
-  fxIngViewBtn?.classList.toggle("btn-gold", which === "view");
-  fxIngViewBtn?.classList.toggle("btn-primary", which !== "view");
-
-  fxIngAddBtn?.classList.toggle("btn-gold", which === "add");
-  fxIngAddBtn?.classList.toggle("btn-primary", which !== "add");
-}
-
-function showIngView() {
-  setActiveIngPill("view");
-  show(fxIngViewPanel, true);
-  show(fxIngAddPanel, false);
-  show(fxIngClearBtn, true);
-  setFxIngMsg("");
-  loadIngredients("");
-}
-
-function showIngAdd() {
-  setActiveIngPill("add");
-  show(fxIngViewPanel, false);
-  show(fxIngAddPanel, true);
-  show(fxIngClearBtn, true);
-  setFxIngMsg("");
-
-  editingIngredientId = null;
-
-  if (fxIngPsiNum) fxIngPsiNum.value = "";
-  if (fxIngInci) fxIngInci.value = "";
-  if (fxIngDesc) fxIngDesc.value = "";
-
-  fxIngPsiNum?.focus();
-}
-
-async function loadIngredients(term) {
-  if (!fxIngList) { setFxIngMsg("Ingredients list container missing (fxIngList)."); return; }
-
-  setFxIngMsg("Loading…");
-  ingredientsById = {};
-  fxIngList.innerHTML = "";
-
-  let q = supabaseClient
-    .from("ingredients")
-    .select("id, psi_number, inci_name, short_description, created_at")
-    .order("psi_number", { ascending: true });
-
-  const t = (term || "").trim();
-  if (t) {
-    const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
-    q = q.or([
-      `psi_number.ilike.%${esc}%`,
-      `inci_name.ilike.%${esc}%`,
-      `short_description.ilike.%${esc}%`
-    ].join(","));
-  }
-
-  const { data, error } = await q;
-  if (error) { setFxIngMsg("Load failed: " + error.message); return; }
-
-  const rows = data || [];
-  rows.forEach(r => { ingredientsById[r.id] = r; });
-
-  if (rows.length === 0) {
-    setFxIngMsg("No ingredients found.");
-    return;
-  }
-
-  setFxIngMsg(`Found ${rows.length} ingredient${rows.length === 1 ? "" : "s"}.`);
-
-  fxIngList.innerHTML = rows.map(r => {
-    const id = escapeHtml(r.id);
-    const psi = escapeHtml(r.psi_number || "");
-    const inci = escapeHtml(r.inci_name || "");
-    const desc = escapeHtml(r.short_description || "");
-
-    return `
-      <div class="customer-row" data-id="${id}">
-        <div>${psi}</div>
-        <div>${inci}</div>
-        <div class="subtle">${desc}</div>
-        <div class="customer-actions">
-          <button class="btn-primary fxIng-edit" type="button">Edit</button>
-          <button class="btn-danger fxIng-del" type="button">Delete</button>
-        </div>
-      </div>
-    `.trim();
-  }).join("");
-
-  // Edit buttons
-  fxIngList.querySelectorAll(".fxIng-edit").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const row = btn.closest(".customer-row");
-      const id = row?.getAttribute("data-id");
-      if (id) editIngredient(id);
-    });
-  });
-
-  // Delete buttons
-  fxIngList.querySelectorAll(".fxIng-del").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const row = btn.closest(".customer-row");
-      const id = row?.getAttribute("data-id");
-      if (id) deleteIngredient(id);
-    });
-  });
-}
-
-function editIngredient(id) {
-  const r = ingredientsById[id];
-  if (!r) return;
-
-  setActiveIngPill("add");
-  editingIngredientId = id;
-
-  show(fxIngViewPanel, false);
-  show(fxIngAddPanel, true);
-  show(fxIngClearBtn, true);
-
-  setFxIngMsg("Editing — change and Save ingredient.");
-
-  if (fxIngPsiNum) fxIngPsiNum.value = r.psi_number || "";
-  if (fxIngInci) fxIngInci.value = r.inci_name || "";
-  if (fxIngDesc) fxIngDesc.value = r.short_description || "";
-
-  fxIngInci?.focus();
-}
-
-async function deleteIngredient(id) {
-  const r = ingredientsById[id];
-  const label = r ? `${r.psi_number || ""} — ${r.inci_name || ""}` : "this ingredient";
-
-  const ok = await confirmExact(`Delete "${label}"? This cannot be undone.`);
-  if (!ok) return;
-
-  const { data, error } = await supabaseClient
-    .from("ingredients")
-    .delete()
-    .eq("id", id)
-    .select("id");
-
-  if (error) { setFxIngMsg("Delete failed: " + error.message); return; }
-  if (!data || data.length === 0) { setFxIngMsg("Delete blocked (RLS) — no rows deleted."); return; }
-
-  setFxIngMsg("Deleted ✅");
-  await loadIngredients(fxIngSearch?.value || "");
-}
-
-async function saveIngredient() {
-  setFxIngMsg("");
-
-  const psi_number = String(fxIngPsiNum?.value || "").trim();
-  const inci_name = String(fxIngInci?.value || "").trim();
-  const short_description = String(fxIngDesc?.value || "").trim() || null;
-
-  if (!psi_number) return setFxIngMsg("PSI number is required.");
-  if (!inci_name) return setFxIngMsg("INCI name is required.");
-
-  if (editingIngredientId) {
-    const { data, error } = await supabaseClient
-      .from("ingredients")
-  .update({ psi_number, inci_name, short_description })
-
-      .eq("id", editingIngredientId)
-      .select("id");
-
-    if (error) return setFxIngMsg("Save failed: " + error.message);
-    if (!data || data.length === 0) return setFxIngMsg("Save blocked (RLS).");
-  } else {
-    const { error } = await supabaseClient
-      .from("ingredients")
-      .insert([{ psi_number, inci_name, short_description }]);
-
-
-    if (error) return setFxIngMsg("Save failed: " + error.message);
-  }
-
-  setFxIngMsg("Saved ✅");
-  editingIngredientId = null;
-  showIngView();
-}
-
-function bindIngredientsOnce() {
-  if (fxIngViewBtn && fxIngViewBtn.dataset.bound !== "1") {
-    fxIngViewBtn.addEventListener("click", showIngView);
-    fxIngViewBtn.dataset.bound = "1";
-  }
-
-  if (fxIngAddBtn && fxIngAddBtn.dataset.bound !== "1") {
-    fxIngAddBtn.addEventListener("click", showIngAdd);
-    fxIngAddBtn.dataset.bound = "1";
-  }
-
-  if (fxIngClearBtn && fxIngClearBtn.dataset.bound !== "1") {
-    fxIngClearBtn.addEventListener("click", resetIngredientsScreen);
-    fxIngClearBtn.dataset.bound = "1";
-  }
-
-  if (fxIngSaveBtn && fxIngSaveBtn.dataset.bound !== "1") {
-    fxIngSaveBtn.addEventListener("click", saveIngredient);
-    fxIngSaveBtn.dataset.bound = "1";
-  }
-
-  if (fxIngSearchBtn && fxIngSearchBtn.dataset.bound !== "1") {
-    fxIngSearchBtn.addEventListener("click", () => loadIngredients(fxIngSearch?.value || ""));
-    fxIngSearchBtn.dataset.bound = "1";
-  }
-
-  if (fxIngShowAllBtn && fxIngShowAllBtn.dataset.bound !== "1") {
-    fxIngShowAllBtn.addEventListener("click", () => loadIngredients(""));
-    fxIngShowAllBtn.dataset.bound = "1";
-  }
-
-  if (fxIngSearch && fxIngSearch.dataset.bound !== "1") {
-    fxIngSearch.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") loadIngredients(fxIngSearch.value || "");
-    });
-    fxIngSearch.dataset.bound = "1";
-  }
-}
-
-// Bind Ingredients buttons now
-bindIngredientsOnce();
 
   // =========================================================
   // BLOCK: AUTH + PROFILE LOOKUPS
@@ -1076,8 +564,7 @@ bindIngredientsOnce();
       throw error;
     }
 
-    if (!data) return null;
-    return data;
+    return data || null;
   }
 
   async function loadAgentName(agentId) {
@@ -1126,31 +613,220 @@ bindIngredientsOnce();
   }
 
   // =========================================================
-  // BLOCK: FORMULARY TABS
+  // BLOCK: FORMULARY TABS (simple shell)
   // =========================================================
   function setActiveFormularyTab(tabKey) {
     fxTabIngredients?.classList.toggle("active", tabKey === "ingredients");
     fxTabProducts?.classList.toggle("active", tabKey === "products");
-
     show(fxSectionIngredients, tabKey === "ingredients");
     show(fxSectionProducts, tabKey === "products");
   }
-// Wire Formulary tabs (Ingredients / Products)
-if (fxTabIngredients && fxTabIngredients.dataset.bound !== "1") {
-  fxTabIngredients.addEventListener("click", () => {
-    setActiveFormularyTab("ingredients");
-    resetIngredientsScreen();
-  });
-  fxTabIngredients.dataset.bound = "1";
-}
 
-if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
-  fxTabProducts.addEventListener("click", async () => {
-    setActiveFormularyTab("products");
-    await formulatedProductsModule.enter();
+  if (fxTabIngredients && fxTabIngredients.dataset.bound !== "1") {
+    fxTabIngredients.addEventListener("click", () => setActiveFormularyTab("ingredients"));
+    fxTabIngredients.dataset.bound = "1";
+  }
+
+  if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
+    fxTabProducts.addEventListener("click", async () => {
+      setActiveFormularyTab("products");
+      try { await formulatedProductsModule.enter(); } catch (_e) {}
+    });
+    fxTabProducts.dataset.bound = "1";
+  }
+
+  // =========================================================
+  // BLOCK: MODULE INITS
+  // =========================================================
+  const customerModule = initCustomerManagement({
+    supabaseClient,
+    ui: {
+      cmViewBtn,
+      cmAddBtn,
+      cmClearBtn,
+      custMsg,
+      cmViewPanel,
+      cmAddPanel,
+      cmSearch,
+      cmSearchBtn,
+      cmShowAllBtn,
+      customerList,
+      firstNameInput,
+      lastNameInput,
+      custDobInput,
+      custGenderInput,
+      custEmailInput,
+      custPhoneInput,
+      custShipAddressInput,
+      custShipCityInput,
+      custShipCountryInput,
+      addCustomerBtn,
+      assignClinicRow,
+      assignClinicSelect,
+      agentClinicRow,
+      agentClinicName
+    },
+    helpers: {
+      show,
+      escapeHtml,
+      formatDateShort,
+      confirmExact,
+      isValidEmail,
+      isValidPhone,
+      markField,
+      clearFieldMarks
+    },
+    state: {
+      get currentProfile() { return currentProfile; },
+      get agentNameMap() { return agentNameMap; }
+    }
   });
-  fxTabProducts.dataset.bound = "1";
-}
+
+  const agentModule = initAgentManagement({
+    supabaseClient,
+    ui: {
+      amViewBtn,
+      amAddBtn,
+      amClearBtn,
+      agentMsg,
+      amViewPanel,
+      amAddPanel,
+      amSearch,
+      amSearchBtn,
+      amShowAllBtn,
+      agentList,
+      agentNameInput,
+      agentEmailInput,
+      agentPhoneInput,
+      agentShipAddressInput,
+      agentShipCityInput,
+      agentShipCountryInput,
+      addAgentBtn
+    },
+    helpers: { show, escapeHtml, formatDateShort, confirmExact },
+    state: {
+      async refreshAgents() {
+        await loadAgentNameMap();
+        await loadAgentsForAssignDropdown();
+      }
+    }
+  });
+
+  const labsModule = initLabManagement({
+    supabaseClient,
+    ui: {
+      lmViewBtn,
+      lmAddBtn,
+      lmClearBtn,
+      labMsg,
+      lmViewPanel,
+      lmAddPanel,
+      labList,
+      lmName,
+      lmEmail,
+      lmOrdersEmail,
+      lmPhone,
+      lmAddress,
+      lmShipping,
+      lmSaveBtn
+    },
+    helpers: { show, confirmExact }
+  });
+
+  const productsAdminModule = initProductsAdmin({
+    supabaseClient,
+    ui: {
+      paViewBtn, paClearBtn, paMsg,
+      paListPanel, paList,
+      paEditPanel,
+      paProductName, paEdgeFn, paSubject, paBody,
+      paSendEmail, paIncludeLinks, paIncludeAttachments,
+      paSaveBtn, paCancelBtn
+    },
+    helpers: { show, escapeHtml, confirmExact }
+  });
+
+  const productTypesModule = initProductTypesManagement({
+    supabaseClient,
+    ui: { ptName, ptAddBtn, ptTbody, ptStatus },
+    helpers: { confirmExact }
+  });
+
+  const formulatedProductsModule = initFormulatedProductsManagement({
+    supabaseClient,
+    ui: {
+      fpViewBtn, fpAddBtn, fpClearBtn, fpMsg,
+      fpViewPanel, fpAddPanel,
+      fpSearch, fpSearchBtn, fpShowAllBtn,
+      fpList,
+      fpCode, fpName, fpType, fpNotes,
+      fpAddLineBtn, fpLines,
+      fpSaveBtn, fpCancelEditBtn
+    },
+    helpers: { show, escapeHtml, confirmExact }
+  });
+
+  const accountManagersModule = initAccountManagersManagement({
+    supabaseClient,
+    ui: {
+      amgrViewBtn,
+      amgrAddBtn,
+      amgrClearBtn,
+      amgrMsg,
+      amgrViewPanel,
+      amgrAddPanel,
+      amgrList,
+      amgrFirstName,
+      amgrLastName,
+      amgrEmail,
+      amgrPhone,
+      amgrAddress,
+      amgrNotes,
+      amgrSaveBtn
+    },
+    helpers: { show, confirmExact }
+  });
+
+  const ordersModule = initOrdersManagement({
+    supabaseClient,
+    ui: {
+      viewOrders,
+      ordersMsg,
+      ordersListPanel,
+      ordersSearch,
+      ordersSearchBtn,
+      ordersShowAllBtn,
+      ordersStatusFilter,
+      ordersList,
+      ordersCreateBtn,
+      ordersDetailPanel,
+      ordersDetailTitle,
+      ordersDetailMeta,
+      ordersBackBtn,
+      ordersRefreshBtn,
+      ordersGeneratePackBtn,
+      ordersBatchSummary,
+      ordersArtifactsList
+    },
+    helpers: { show, escapeHtml, formatDateShort, confirmExact },
+    state: {
+      get currentProfile() { return currentProfile; },
+      get stripePublishableKey() { return STRIPE_PUBLISHABLE_KEY; }
+    }
+  });
+
+  const userMgmtModule = initUserManagement({
+    supabaseClient,
+    ui: {
+      umViewBtn, umAddBtn, umClearBtn, umMsg,
+      umViewPanel, umEditPanel, umList,
+      umSearch, umSearchBtn, umShowAllBtn,
+      umFullName, umEmail, umPassword, umRole, umStatus,
+      umPerms, umSaveBtn, umCancelBtn
+    },
+    helpers: { show, escapeHtml, confirmExact },
+    state: { get currentProfile() { return currentProfile; } }
+  });
 
   // =========================================================
   // BLOCK: VIEWS + MENU (MODULE)
@@ -1177,14 +853,9 @@ if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
 
       const role = String(currentProfile.role || "").trim().toLowerCase();
 
-
-      // userMgmt is ADMIN only, always
       if (viewKey === "userMgmt") return role === "admin";
-
-      // admins can access everything
       if (role === "admin") return true;
 
-      // otherwise respect permissions json
       const p = currentProfile.permissions || {};
       return !!p[viewKey];
     },
@@ -1193,12 +864,8 @@ if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
       welcome: () => {
         showWelcomePanel({ containerEl: welcomeContent });
 
-        // Non-admin: show subtle change-password link
-        const role = String(currentProfile.role || "").trim().toLowerCase();
-
-        if (role !== "admin") {
-          renderChangePasswordLink(welcomeContent);
-        }
+        const role = String(currentProfile?.role || "").trim().toLowerCase();
+        if (role !== "admin") renderChangePasswordLink(welcomeContent);
       },
 
       customers: () => customerModule.resetCustomerScreen(),
@@ -1214,7 +881,6 @@ if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
       userMgmt: () => userMgmtModule.resetUserScreen(),
       formulary: () => {
         setActiveFormularyTab("ingredients");
-        resetIngredientsScreen();
       }
     }
   });
@@ -1233,23 +899,18 @@ if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
 
     setAuthMsg(message);
     setCustMsg("");
+    setAgentMsg("");
 
     currentSession = null;
     currentProfile = null;
     hydratedUserId = null;
 
     agentNameMap = {};
-    customersById = {};
-    agentsById = {};
 
-    ingredientsById = {};
-    editingIngredientId = null;
-
-    customerModule.resetCustomerScreen();
-    agentModule.resetAgentScreen();
-    labsModule.resetLabsScreen();
-    productTypesModule.resetProductTypesScreen();
-    resetIngredientsScreen();
+    try { customerModule.resetCustomerScreen(); } catch (_e) {}
+    try { agentModule.resetAgentScreen(); } catch (_e) {}
+    try { labsModule.resetLabsScreen(); } catch (_e) {}
+    try { productTypesModule.resetProductTypesScreen(); } catch (_e) {}
 
     show(viewWelcome, false);
   }
@@ -1265,39 +926,44 @@ if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
   // =========================================================
   // BLOCK: HYDRATION (AFTER LOGIN)
   // =========================================================
- async function hydrateAfterLogin(session) {
+  async function hydrateAfterLogin(session) {
+    console.log("[AUTH] hydrateAfterLogin start:", {
+      user_id: session?.user?.id,
+      email: session?.user?.email
+    });
 
-  console.log("[AUTH] hydrateAfterLogin start:", {
-    user_id: session?.user?.id,
-    email: session?.user?.email
-  });
+    if (!session?.user?.id) {
+      console.warn("[AUTH] hydrateAfterLogin aborted (no user id)");
+      return;
+    }
 
-  if (!session?.user?.id) return;
+    if (hydratedUserId === session.user.id) {
+      console.log("[AUTH] hydrateAfterLogin skipped (already hydrated)", session.user.id);
+      return;
+    }
+    hydratedUserId = session.user.id;
 
-  if (hydratedUserId === session.user.id) return;
-  hydratedUserId = session.user.id;
-
-  try {
-    setLoggedInShell(session);
-
+    try {
+      setLoggedInShell(session);
 
       let profile = null;
       try {
         profile = await loadProfileForUser(session.user.id);
+        console.log("[AUTH] profile lookup:", profile ? { role: profile.role, status: profile.status } : null);
       } catch (e) {
-        console.error("loadProfileForUser failed:", e?.message || e, e);
+        console.error("[AUTH] loadProfileForUser failed:", e?.message || e, e);
       }
 
       if (!profile) {
-       console.warn("[AUTH] signing out (no profile)", { user_id: session?.user?.id, email: session?.user?.email });
-await supabaseClient.auth.signOut();
-
+        console.warn("[AUTH] signing out (no profile)", { user_id: session.user.id, email: session.user.email });
+        await supabaseClient.auth.signOut();
         setLoggedOutUI("Access not provisioned");
         setAuthMsg("Login blocked: your account is not provisioned. Please contact admin.");
         return;
       }
 
       if ((profile.status || "").toLowerCase() !== "active") {
+        console.warn("[AUTH] signing out (inactive)", { status: profile.status });
         await supabaseClient.auth.signOut();
         setLoggedOutUI("Account inactive");
         setAuthMsg("Your account is inactive. Please contact admin.");
@@ -1320,14 +986,14 @@ await supabaseClient.auth.signOut();
 
       nav.renderMenuForRole(profile.role, profile.permissions || {});
 
-      customerModule.resetCustomerScreen();
-      agentModule.resetAgentScreen();
-      labsModule.resetLabsScreen();
-      productTypesModule.resetProductTypesScreen();
-      resetIngredientsScreen();
+      try { customerModule.resetCustomerScreen(); } catch (_e) {}
+      try { agentModule.resetAgentScreen(); } catch (_e) {}
+      try { labsModule.resetLabsScreen(); } catch (_e) {}
+      try { productTypesModule.resetProductTypesScreen(); } catch (_e) {}
 
+      console.log("[AUTH] hydrateAfterLogin complete");
     } catch (e) {
-      console.error("hydrateAfterLogin error:", e);
+      console.error("[AUTH] hydrateAfterLogin error:", e);
       setAuthMsg("Error after login: " + (e?.message || "Unknown error"));
     }
   }
@@ -1335,32 +1001,32 @@ await supabaseClient.auth.signOut();
   // =========================================================
   // BLOCK: LOGIN / LOGOUT
   // =========================================================
+  if (loginBtn) {
+    loginBtn.addEventListener("click", async () => {
+      console.log("[AUTH] login click fired");
+      setAuthMsg("Logging in…");
 
- loginBtn.addEventListener("click", async () => {
-  console.log("[AUTH] login click fired");
-  setAuthMsg("Logging in…");
-
-
-      const email = (emailInput?.value || "").trim();
+      const email = (emailInput?.value || "").trim().toLowerCase();
       const password = passwordInput?.value || "";
 
       if (!email || !password) { setAuthMsg("Enter email + password."); return; }
 
       try {
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
         console.log("[AUTH] signInWithPassword result:", {
-  hasError: !!error,
-  error: error?.message,
-  hasSession: !!data?.session,
-  userId: data?.session?.user?.id
-});
+          hasError: !!error,
+          error: error?.message,
+          hasSession: !!data?.session,
+          userId: data?.session?.user?.id
+        });
 
         if (error) { setAuthMsg("Login failed: " + error.message); return; }
         if (!data?.session) { setAuthMsg("Login succeeded but session missing."); return; }
 
         await hydrateAfterLogin(data.session);
       } catch (e) {
-        console.error("Login crashed:", e);
+        console.error("[AUTH] Login crashed:", e);
         setAuthMsg("Login crashed: " + (e?.message || "Unknown error"));
       }
     });
@@ -1379,17 +1045,27 @@ await supabaseClient.auth.signOut();
   (async () => {
     try {
       const { data, error } = await supabaseClient.auth.getSession();
-      if (error) { setLoggedOutUI("Not logged in"); return; }
-      if (data?.session) await hydrateAfterLogin(data.session);
-      else setLoggedOutUI("Not logged in");
+      if (error) {
+        console.warn("[AUTH] getSession error:", error.message);
+        setLoggedOutUI("Not logged in");
+        return;
+      }
+
+      if (data?.session) {
+        console.log("[AUTH] Initial restore: session found");
+        await hydrateAfterLogin(data.session);
+      } else {
+        console.log("[AUTH] Initial restore: no session");
+        setLoggedOutUI("Not logged in");
+      }
     } catch (e) {
-      console.error("Initial restore crashed:", e);
+      console.error("[AUTH] Initial restore crashed:", e);
       setLoggedOutUI("Not logged in");
     }
   })();
 
   supabaseClient.auth.onAuthStateChange((event, session) => {
-    console.log("Auth state change:", event);
+    console.log("[AUTH] Auth state change:", event, { hasSession: !!session });
 
     if (event === "SIGNED_OUT") {
       setLoggedOutUI("Logged out");
@@ -1400,10 +1076,9 @@ await supabaseClient.auth.signOut();
     if (event === "PASSWORD_RECOVERY" && session) {
       hydrateAfterLogin(session).then(() => {
         try {
-          // Ensure Welcome is visible and open Change Password card
           show(viewWelcome, true);
           renderChangePasswordTool(welcomeContent);
-        } catch (_e) { }
+        } catch (_e) {}
       });
       return;
     }
@@ -1413,5 +1088,4 @@ await supabaseClient.auth.signOut();
       return;
     }
   });
-
 });
