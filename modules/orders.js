@@ -836,15 +836,37 @@ const hasPack = Array.isArray(existingBatches) && existingBatches.length > 0;
 
             const order_id = orderRow.id;
 
-            const { error: iErr } = await supabaseClient
-              .from("order_items")
-              .insert([{
-                order_id,
-                product_id: "29c9e7e2-c728-4860-8f64-175fbf230a7c",
-                product_code_snapshot: "PRD0001",
-                product_name_snapshot: "EXACT Personalized Skincare Set",
-                product_kind_snapshot: "dynamic",
-              }]);
+const product_id = "29c9e7e2-c728-4860-8f64-175fbf230a7c";
+const qty = 1;
+
+// Load product price + currency from products table
+const { data: p, error: pErr } = await supabaseClient
+  .from("products")
+  .select("product_code, product_name, product_kind, currency_code, unit_price_aed")
+  .eq("id", product_id)
+  .maybeSingle();
+
+if (pErr) { setMsg("Load product failed: " + pErr.message); return; }
+if (!p) { setMsg("Product not found for pricing."); return; }
+
+const unit_price = Number(p.unit_price_aed || 0);
+const line_total = unit_price * qty;
+
+const { error: iErr } = await supabaseClient
+  .from("order_items")
+  .insert([{
+    order_id,
+    product_id,
+    product_code_snapshot: p.product_code || "PRD0001",
+    product_name_snapshot: p.product_name || "EXACT Personalized Skincare Set",
+    product_kind_snapshot: p.product_kind || "dynamic",
+    unit_price,
+    quantity: qty,
+    line_total,
+  }]);
+
+if (iErr) { setMsg("Add item failed: " + iErr.message); return; }
+
 
             if (iErr) { setMsg("Add item failed: " + iErr.message); return; }
 
