@@ -615,6 +615,21 @@ if (ordersDetailMeta) {
   ordersDetailMeta.textContent = parts.join(" | ");
 }
 
+    // ===== PAYMENT (Stripe) =====
+if (ordersPayPanel) ordersPayPanel.style.display = "";
+if (stripePaymentEl) { stripePaymentEl.style.display = "none"; stripePaymentEl.innerHTML = ""; }
+if (ordersPayMsg) ordersPayMsg.textContent = "";
+
+// Show Pay panel only if not already paid/comped
+const ps = String(o.payment_status || "").toLowerCase();
+if (ps === "paid" || ps === "comped") {
+  if (ordersPayPanel) ordersPayPanel.style.display = "none";
+} else {
+  if (ordersPayMsg) ordersPayMsg.textContent = "Ready to take payment.";
+  if (ordersPayBtn) ordersPayBtn.disabled = false;
+  if (ordersPayBtn) ordersPayBtn.onclick = () => mountStripePaymentForOrder(o.id);
+}
+
 
     // Reset generate button state on each open
     if (ordersGeneratePackBtn) {
