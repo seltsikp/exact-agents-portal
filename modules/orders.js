@@ -512,10 +512,17 @@ const res = await supabaseClient.functions.invoke("stripe_create_payment_intent"
 });
 
 
-    if (res.error) {
-      ordersPayMsg.textContent = "Payment init failed: " + (res.error.message || "");
-      return;
-    }
+if (res.error?.context) {
+  const txt = await res.error.context.text();
+  console.log("stripe_create_payment_intent error body:", txt);
+  ordersPayMsg.textContent = "Payment init failed: " + txt;
+  return;
+}
+if (res.error) {
+  ordersPayMsg.textContent = "Payment init failed: " + (res.error.message || "");
+  return;
+}
+
 
     const clientSecret = res.data?.client_secret;
     if (!clientSecret) {
@@ -642,7 +649,6 @@ if (ps === "paid" || ps === "comped") {
   if (ordersPayBtn) ordersPayBtn.disabled = false;
   if (ordersPayBtn) ordersPayBtn.onclick = () => mountStripePaymentForOrder(o.id);
 }
-
 
     // Reset generate button state on each open
     if (ordersGeneratePackBtn) {
