@@ -482,7 +482,9 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
       });
 
       if (res.error?.context) {
-        const txt = await res.error.context.text();
+        const txt = res.error?.context?.response
+  ? await res.error.context.response.text()
+  : (res.error?.message || "");
         throw new Error(txt || res.error.message || "Sync failed");
       }
       if (res.error) throw new Error(res.error.message || "Sync failed");
