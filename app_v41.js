@@ -1265,14 +1265,21 @@ if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
   // =========================================================
   // BLOCK: HYDRATION (AFTER LOGIN)
   // =========================================================
-  async function hydrateAfterLogin(session) {
-    if (!session?.user?.id) return;
+ async function hydrateAfterLogin(session) {
 
-    if (hydratedUserId === session.user.id) return;
-    hydratedUserId = session.user.id;
+  console.log("[AUTH] hydrateAfterLogin start:", {
+    user_id: session?.user?.id,
+    email: session?.user?.email
+  });
 
-    try {
-      setLoggedInShell(session);
+  if (!session?.user?.id) return;
+
+  if (hydratedUserId === session.user.id) return;
+  hydratedUserId = session.user.id;
+
+  try {
+    setLoggedInShell(session);
+
 
       let profile = null;
       try {
@@ -1282,7 +1289,9 @@ if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
       }
 
       if (!profile) {
-        await supabaseClient.auth.signOut();
+       console.warn("[AUTH] signing out (no profile)", { user_id: session?.user?.id, email: session?.user?.email });
+await supabaseClient.auth.signOut();
+
         setLoggedOutUI("Access not provisioned");
         setAuthMsg("Login blocked: your account is not provisioned. Please contact admin.");
         return;
