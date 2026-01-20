@@ -484,6 +484,71 @@ if (btn) btn.style.display = "none";
     }
   }
 
+    async function mountStripePaymentForOrder(orderId) {
+    if (!ordersPayMsg || !ordersPayBtn || !stripePaymentEl || !ordersPayPanel) return;
+
+    const pk = state?.stripePublishableKey;
+    if (!pk) { ordersPayMsg.textContent = "Stripe publishable key missing."; return; }
+    if (!window.Stripe) { ordersPayMsg.textContent = "Stripe.js not loaded."; return; }
+
+    ordersPayMsg.textContent = "Creating payment…";
+    stripePaymentEl.style.display = "none";
+    stripePaymentEl.innerHTML = "";
+
+    const res = await supabaseClient.functions.invoke("stripe_create_payment_intent", {
+      body: { order_id: orderId }
+    });
+
+    if (res.error) {
+      ordersPayMsg.textContent = "Payment init failed: " + (res.error.message || "");
+      return;
+    }
+
+    const clientSecret = res.data?.client_secret;
+    if (!clientSecret) {
+      ordersPayMsg.textContent = "Missing client_secret.";
+      return;
+    }
+
+    // Mount Payment Element
+    const stripe = window.Stripe(pk);
+    const elements = stripe.elements({ clientSecret });
+
+    stripePaymentEl.style.display = "block";
+    const paymentElement = elements.create("payment");
+    paymentElement.mount(stripePaymentEl);
+
+    ordersPayMsg.textContent = "";
+
+    // Confirm payment on button click
+    ordersPayBtn.onclick = async () => {
+      ordersPayBtn.disabled = true;
+      ordersPayMsg.textContent = "Processing…";
+
+      const { error } = await stripe.confirmPayment({
+        elements,
+        confirmParams: { return_url: window.location.href }
+      });
+
+      if (error) {
+        ordersPayMsg.textContent = error.message || "Payment failed";
+        ordersPayBtn.disabled = false;
+        return;
+      }
+
+      ordersPayMsg.textContent = "Redirecting…";
+    };
+
+    // Cancel hides Stripe element
+    if (ordersPayCancelBtn) {
+      ordersPayCancelBtn.onclick = () => {
+        stripePaymentEl.style.display = "none";
+        stripePaymentEl.innerHTML = "";
+        ordersPayMsg.textContent = "";
+      };
+    }
+  }
+
   // ---------------------------------------------------------
   // Detail view
   // ---------------------------------------------------------
