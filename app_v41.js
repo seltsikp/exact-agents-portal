@@ -1326,8 +1326,7 @@ if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
   // =========================================================
   // BLOCK: LOGIN / LOGOUT
   // =========================================================
-  const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
+
   if (loginBtn) {
     loginBtn.addEventListener("click", async () => {
       setAuthMsg("Logging in…");
