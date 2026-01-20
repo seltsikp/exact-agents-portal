@@ -495,9 +495,22 @@ if (btn) btn.style.display = "none";
     stripePaymentEl.style.display = "none";
     stripePaymentEl.innerHTML = "";
 
-    const res = await supabaseClient.functions.invoke("stripe_create_payment_intent", {
-      body: { order_id: orderId }
-    });
+    const { data: sessData, error: sessErr } = await supabaseClient.auth.getSession();
+if (sessErr) {
+  ordersPayMsg.textContent = "Session error: " + sessErr.message;
+  return;
+}
+const token = sessData?.session?.access_token;
+if (!token) {
+  ordersPayMsg.textContent = "No active session token (please log in again).";
+  return;
+}
+
+const res = await supabaseClient.functions.invoke("stripe_create_payment_intent", {
+  body: { order_id: orderId },
+  headers: { Authorization: `Bearer ${token}` }
+});
+
 
     if (res.error) {
       ordersPayMsg.textContent = "Payment init failed: " + (res.error.message || "");
