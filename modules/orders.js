@@ -605,21 +605,26 @@ if (res.error) {
     // Load order (includes payment_status)
     const { data: o, error } = await supabaseClient
       .from("orders")
-      .select(`
-        id,
-        order_code,
-        status,
-        payment_status,
-        created_at,
-        dispatch_to,
-        ship_to_name,
-        ship_to_phone,
-        ship_to_email,
-        ship_to_address,
-        ship_to_city,
-        ship_to_country,
-        lab_id
-      `)
+     .select(`
+  id,
+  order_code,
+  status,
+  payment_status,
+  subtotal,
+  tax,
+  total,
+  currency,
+  created_at,
+  dispatch_to,
+  ship_to_name,
+  ship_to_phone,
+  ship_to_email,
+  ship_to_address,
+  ship_to_city,
+  ship_to_country,
+  lab_id
+`)
+
       .eq("id", orderId)
       .maybeSingle();
 
