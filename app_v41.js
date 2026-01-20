@@ -19,6 +19,9 @@ console.log("EXACT Agents Portal loaded (v42)");
 // =========================================================
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
+const STRIPE_PUBLISHABLE_KEY = "pk_test_51SrYh2H9toS7wJ5YYEfJU2fifkcdCbbcuJ8TWUCMaJW3nVFPKFxvHfI2O44KYjolmwGisO7dPvcze03Bhsm2zo6700eUF22TSa";
+window.STRIPE_PUBLISHABLE_KEY = STRIPE_PUBLISHABLE_KEY; // optional (handy for console)
+
 window.SUPABASE_URL = SUPABASE_URL;
 window.SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
 
@@ -789,6 +792,7 @@ const ordersModule = initOrdersManagement({
     // IMPORTANT: currentProfile changes after login,
     // so give the module a getter instead of a fixed snapshot
     get currentProfile() { return currentProfile; }
+    get stripePublishableKey() { return STRIPE_PUBLISHABLE_KEY; }
   }
 });
 
