@@ -263,6 +263,10 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
         order_code,
         status,
         payment_status,
+        subtotal,
+        tax,
+        total,
+        currency,
         created_at,
         customer_id,
         customer:customers (
@@ -645,7 +649,10 @@ const ps = String(o.payment_status || "").toLowerCase();
 if (ps === "paid" || ps === "comped") {
   if (ordersPayPanel) ordersPayPanel.style.display = "none";
 } else {
-  if (ordersPayMsg) ordersPayMsg.textContent = "Ready to take payment.";
+  const ccy = String(o.currency || "AED");
+const amt = (o.total ?? o.subtotal ?? 0);
+if (ordersPayMsg) ordersPayMsg.textContent = `Amount to charge: ${amt} ${ccy}`;
+
   if (ordersPayBtn) ordersPayBtn.disabled = false;
   if (ordersPayBtn) ordersPayBtn.onclick = () => mountStripePaymentForOrder(o.id);
 }
