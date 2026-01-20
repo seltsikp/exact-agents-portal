@@ -179,8 +179,7 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
         fillFromCustomer(c);
         return;
       }
-
-      // other: do nothing (leave editable fields as-is)
+      // other: leave as-is
     }
 
     $cust?.addEventListener("change", () => {
@@ -243,8 +242,8 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
       <div class="customer-row" data-order-id="${escapeHtml(o.id)}" style="cursor:pointer;">
         <div style="font-weight:800;">${code}</div>
         <div class="subtle" style="margin-top:4px;">
-          ${isAdminNow() ? `Payment: ${escapeHtml(o.payment_status || "—")} • ` : ""}Status: ${status} • Created: ${created} • Customer: ${escapeHtml(cust)}
-
+          ${isAdminNow() ? `Payment: ${escapeHtml(o.payment_status || "—")} • ` : ""}
+          Status: ${status} • Created: ${created} • Customer: ${escapeHtml(cust)}
         </div>
       </div>
     `;
@@ -279,10 +278,7 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
       .limit(50);
 
     if (status) query = query.eq("status", status);
-
-    if (mode === "search" && q) {
-      query = query.ilike("order_code", `%${q}%`);
-    }
+    if (mode === "search" && q) query = query.ilike("order_code", `%${q}%`);
 
     const { data, error } = await query;
     if (error) { setMsg("Load failed: " + error.message); return; }
@@ -404,16 +400,10 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
       p_version: version,
     });
 
-    if (error) {
-      setMsg("Signed URL failed: " + error.message);
-      return;
-    }
+    if (error) { setMsg("Signed URL failed: " + error.message); return; }
 
     const url = typeof data === "string" ? data : (data?.url || data?.signed_url || null);
-    if (!url) {
-      setMsg("Signed URL returned no url.");
-      return;
-    }
+    if (!url) { setMsg("Signed URL returned no url."); return; }
 
     window.open(url, "_blank", "noopener,noreferrer");
   }
@@ -444,15 +434,8 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
   async function generatePack() {
     if (!selectedOrderId) return;
 
-    if (!canGeneratePackNow()) {
-      setMsg("Not allowed.");
-      return;
-    }
-
-    if (typeof window.exactGeneratePack !== "function") {
-      setMsg("Missing window.exactGeneratePack(orderId).");
-      return;
-    }
+    if (!canGeneratePackNow()) { setMsg("Not allowed."); return; }
+    if (typeof window.exactGeneratePack !== "function") { setMsg("Missing window.exactGeneratePack(orderId)."); return; }
 
     const btn = ordersGeneratePackBtn;
     const prevHtml = btn?.innerHTML || "Generate Pack";
@@ -463,21 +446,15 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
     }
     setMsg("Generating pack…");
 
-try {
-  const result = await window.exactGeneratePack(selectedOrderId);
+    try {
+      const result = await window.exactGeneratePack(selectedOrderId);
+      await openOrder(selectedOrderId);
 
-  // Re-open order so status/title/meta refresh (draft -> confirmed)
-  await openOrder(selectedOrderId);
+      const v = result?.version ?? result?.pack_version ?? null;
+      setMsg(v ? `Pack generated (v${v}).` : "Pack generated.");
 
-  const v = result?.version ?? result?.pack_version ?? null;
-
-setMsg(v ? `Pack generated (v${v}).` : "Pack generated.");
-
-// Hide button after success
-if (btn) btn.style.display = "none";
-
+      if (btn) btn.style.display = "none";
     } catch (e) {
-      // Handle 402 cleanly (payment required)
       const msg = String(e?.message || e);
       setMsg(msg.includes("402") ? "Payment required (admin: Mark Paid or Comp)." : ("Generate pack failed: " + msg));
 
@@ -488,7 +465,37 @@ if (btn) btn.style.display = "none";
     }
   }
 
-    async function mountStripePaymentForOrder(orderId) {
+  // ---------------------------------------------------------
+  // Stripe payment (client)
+  // ---------------------------------------------------------
+  async function syncPaymentStatus(orderId) {
+    // Calls server-side edge function to check PI status and update orders.payment_status
+    try {
+      const { data: sessData, error: sessErr } = await supabaseClient.auth.getSession();
+      if (sessErr) throw new Error(sessErr.message);
+      const token = sessData?.session?.access_token;
+      if (!token) throw new Error("No session token");
+
+      const res = await supabaseClient.functions.invoke("stripe_sync_payment_status", {
+        body: { order_id: orderId },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.error?.context) {
+        const txt = await res.error.context.text();
+        throw new Error(txt || res.error.message || "Sync failed");
+      }
+      if (res.error) throw new Error(res.error.message || "Sync failed");
+      return res.data || null;
+    } catch (e) {
+      // Don’t hard-fail the UI; just show the message.
+      if (ordersPayMsg) ordersPayMsg.textContent = "Payment completed — awaiting confirmation sync (webhook).";
+      console.warn("[PAY] syncPaymentStatus failed:", e);
+      return null;
+    }
+  }
+
+  async function mountStripePaymentForOrder(orderId) {
     if (!ordersPayMsg || !ordersPayBtn || !stripePaymentEl || !ordersPayPanel) return;
 
     const pk = state?.stripePublishableKey;
@@ -500,40 +507,28 @@ if (btn) btn.style.display = "none";
     stripePaymentEl.innerHTML = "";
 
     const { data: sessData, error: sessErr } = await supabaseClient.auth.getSession();
-if (sessErr) {
-  ordersPayMsg.textContent = "Session error: " + sessErr.message;
-  return;
-}
-const token = sessData?.session?.access_token;
-if (!token) {
-  ordersPayMsg.textContent = "No active session token (please log in again).";
-  return;
-}
-console.log("PAYMENT INIT order_id =", orderId);
+    if (sessErr) { ordersPayMsg.textContent = "Session error: " + sessErr.message; return; }
+    const token = sessData?.session?.access_token;
+    if (!token) { ordersPayMsg.textContent = "No active session token (please log in again)."; return; }
 
-const res = await supabaseClient.functions.invoke("stripe_create_payment_intent", {
-  body: { order_id: orderId },
-  headers: { Authorization: `Bearer ${token}` }
-});
+    const res = await supabaseClient.functions.invoke("stripe_create_payment_intent", {
+      body: { order_id: orderId },
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-
-if (res.error?.context) {
-  const txt = await res.error.context.text();
-  console.log("stripe_create_payment_intent error body:", txt);
-  ordersPayMsg.textContent = "Payment init failed: " + txt;
-  return;
-}
-if (res.error) {
-  ordersPayMsg.textContent = "Payment init failed: " + (res.error.message || "");
-  return;
-}
-
-
-    const clientSecret = res.data?.client_secret;
-    if (!clientSecret) {
-      ordersPayMsg.textContent = "Missing client_secret.";
+    if (res.error?.context) {
+      const txt = await res.error.context.text();
+      console.log("stripe_create_payment_intent error body:", txt);
+      ordersPayMsg.textContent = "Payment init failed: " + txt;
       return;
     }
+    if (res.error) {
+      ordersPayMsg.textContent = "Payment init failed: " + (res.error.message || "");
+      return;
+    }
+
+    const clientSecret = res.data?.client_secret;
+    if (!clientSecret) { ordersPayMsg.textContent = "Missing client_secret."; return; }
 
     // Mount Payment Element
     const stripe = window.Stripe(pk);
@@ -542,21 +537,25 @@ if (res.error) {
     stripePaymentEl.style.display = "block";
     const paymentElement = elements.create("payment");
     paymentElement.mount(stripePaymentEl);
-      
-      ordersPayBtn.textContent = "Confirm payment";
-ordersPayMsg.textContent = "";
+
+    // Button text now becomes "Confirm payment"
+    ordersPayBtn.textContent = "Confirm payment";
+    ordersPayBtn.disabled = false;
+    ordersPayMsg.textContent = "";
 
     // Confirm payment on button click
     ordersPayBtn.onclick = async () => {
       ordersPayBtn.disabled = true;
       ordersPayMsg.textContent = "Processing…";
 
-      const { error } = await stripe.confirmPayment({
+      // Keep user inside the portal unless Stripe *requires* redirect (3DS, etc.)
+      const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
-       confirmParams: {
-  return_url: `${window.location.origin}${window.location.pathname}?view=orders&order_id=${encodeURIComponent(orderId)}`
-}
-
+        redirect: "if_required",
+        confirmParams: {
+          // If redirect is required, return to the SAME page (you stay logged in)
+          return_url: window.location.href
+        }
       });
 
       if (error) {
@@ -565,16 +564,30 @@ ordersPayMsg.textContent = "";
         return;
       }
 
-      ordersPayMsg.textContent = "Redirecting…";
+      // If we got here with no redirect, we can immediately sync status & refresh.
+      const piStatus = String(paymentIntent?.status || "").toLowerCase();
+
+      if (piStatus === "succeeded") {
+        ordersPayMsg.textContent = "Payment succeeded ✅ Updating order…";
+        await syncPaymentStatus(orderId);
+        await openOrder(orderId);
+        return;
+      }
+
+      // For statuses that may complete async
+      ordersPayMsg.textContent = "Payment submitted. Refreshing…";
+      await syncPaymentStatus(orderId);
+      await openOrder(orderId);
     };
 
-    // Cancel hides Stripe element
+    // Cancel hides Stripe element + resets button
     if (ordersPayCancelBtn) {
       ordersPayCancelBtn.onclick = () => {
         stripePaymentEl.style.display = "none";
         stripePaymentEl.innerHTML = "";
         ordersPayMsg.textContent = "";
-          ordersPayBtn.textContent = "Pay now";
+        ordersPayBtn.textContent = "Pay now";
+        ordersPayBtn.disabled = false;
       };
     }
   }
@@ -608,32 +621,27 @@ ordersPayMsg.textContent = "";
     const artifactsHeaderEl = ordersArtifactsList?.previousElementSibling;
     if (artifactsHeaderEl) show(artifactsHeaderEl, isAdmin);
 
-    // Load order (includes payment_status)
     const { data: o, error } = await supabaseClient
-.from("orders")
-.select(`
-  id,
-  order_code,
-  status,
-  payment_status,
-  created_at,
-
-  currency,
-  subtotal,
-  tax,
-  total,
-
-  dispatch_to,
-  ship_to_name,
-  ship_to_phone,
-  ship_to_email,
-  ship_to_address,
-  ship_to_city,
-  ship_to_country,
-  lab_id
-`)
-
-
+      .from("orders")
+      .select(`
+        id,
+        order_code,
+        status,
+        payment_status,
+        created_at,
+        currency,
+        subtotal,
+        tax,
+        total,
+        dispatch_to,
+        ship_to_name,
+        ship_to_phone,
+        ship_to_email,
+        ship_to_address,
+        ship_to_city,
+        ship_to_country,
+        lab_id
+      `)
       .eq("id", orderId)
       .maybeSingle();
 
@@ -643,34 +651,36 @@ ordersPayMsg.textContent = "";
     if (ordersDetailTitle) {
       ordersDetailTitle.textContent = `${o.order_code || "Order"} — ${o.status || ""}`;
     }
-if (ordersDetailMeta) {
-  const parts = [];
-  parts.push(`Order ID: ${o.id}`);
-  parts.push(`Status: ${o.status || "—"}`);
-  parts.push(`Payment: ${o.payment_status || "unpaid"}`);
-  if (o.dispatch_to) parts.push(`Dispatch: ${o.dispatch_to}`);
-  if (o.lab_id) parts.push(`Lab: ${o.lab_id}`);
-  ordersDetailMeta.textContent = parts.join(" | ");
-}
+
+    if (ordersDetailMeta) {
+      const parts = [];
+      parts.push(`Order ID: ${o.id}`);
+      parts.push(`Status: ${o.status || "—"}`);
+      parts.push(`Payment: ${o.payment_status || "unpaid"}`);
+      if (o.dispatch_to) parts.push(`Dispatch: ${o.dispatch_to}`);
+      if (o.lab_id) parts.push(`Lab: ${o.lab_id}`);
+      ordersDetailMeta.textContent = parts.join(" | ");
+    }
 
     // ===== PAYMENT (Stripe) =====
-if (ordersPayPanel) ordersPayPanel.style.display = "";
-if (stripePaymentEl) { stripePaymentEl.style.display = "none"; stripePaymentEl.innerHTML = ""; }
-if (ordersPayMsg) ordersPayMsg.textContent = "";
+    if (ordersPayPanel) ordersPayPanel.style.display = "";
+    if (stripePaymentEl) { stripePaymentEl.style.display = "none"; stripePaymentEl.innerHTML = ""; }
+    if (ordersPayMsg) ordersPayMsg.textContent = "";
 
-// Show Pay panel only if not already paid/comped
-const ps = String(o.payment_status || "").toLowerCase();
-if (ps === "paid" || ps === "comped") {
-  if (ordersPayPanel) ordersPayPanel.style.display = "none";
-} else {
-  const ccy = String(o.currency || "AED");
-const amt = (o.total ?? o.subtotal ?? 0);
-if (ordersPayMsg) ordersPayMsg.textContent = `Amount to charge: ${amt} ${ccy}`;
+    const ps = String(o.payment_status || "").toLowerCase();
+    if (ps === "paid" || ps === "comped") {
+      if (ordersPayPanel) ordersPayPanel.style.display = "none";
+    } else {
+      const ccy = String(o.currency || "AED");
+      const amt = Number(o.total ?? o.subtotal ?? 0);
+      if (ordersPayMsg) ordersPayMsg.textContent = `Amount to charge: ${amt} ${ccy}`;
 
-  if (ordersPayBtn) ordersPayBtn.disabled = false;
-   ordersPayBtn.textContent = "Pay now";
-  if (ordersPayBtn) ordersPayBtn.onclick = () => mountStripePaymentForOrder(o.id);
-}
+      if (ordersPayBtn) {
+        ordersPayBtn.disabled = false;
+        ordersPayBtn.textContent = "Pay now";
+        ordersPayBtn.onclick = () => mountStripePaymentForOrder(o.id);
+      }
+    }
 
     // Reset generate button state on each open
     if (ordersGeneratePackBtn) {
@@ -682,38 +692,32 @@ if (ordersPayMsg) ordersPayMsg.textContent = `Amount to charge: ${amt} ${ccy}`;
     // Disable generate unless paid/comped
     const pay = String(o.payment_status || "unpaid").toLowerCase();
     const isPaidLike = (pay === "paid" || pay === "comped");
+
     // Detect existing pack (any batch exists)
-const { data: existingBatches } = await supabaseClient
-  .from("order_batches")
-  .select("id")
-  .eq("order_id", orderId)
-  .limit(1);
+    const { data: existingBatches } = await supabaseClient
+      .from("order_batches")
+      .select("id")
+      .eq("order_id", orderId)
+      .limit(1);
 
-const hasPack = Array.isArray(existingBatches) && existingBatches.length > 0;
+    const hasPack = Array.isArray(existingBatches) && existingBatches.length > 0;
 
-  if (ordersGeneratePackBtn) {
-  if (hasPack) {
-    ordersGeneratePackBtn.style.display = "none";
-  } else if (canGeneratePack && !isPaidLike) {
-    ordersGeneratePackBtn.disabled = true;
-    ordersGeneratePackBtn.textContent = "Generate Pack (unpaid)";
-  }
-}
-
+    if (ordersGeneratePackBtn) {
+      if (hasPack) {
+        ordersGeneratePackBtn.style.display = "none";
+      } else if (canGeneratePack && !isPaidLike) {
+        ordersGeneratePackBtn.disabled = true;
+        ordersGeneratePackBtn.textContent = "Generate Pack (unpaid)";
+      }
+    }
 
     // Load batch summary (visible for admin+agent)
-    if (canGeneratePack) {
-      await loadBatchSummaryFromBatches(orderId);
-    } else if (ordersBatchSummary) {
-      ordersBatchSummary.innerHTML = "";
-    }
+    if (canGeneratePack) await loadBatchSummaryFromBatches(orderId);
+    else if (ordersBatchSummary) ordersBatchSummary.innerHTML = "";
 
     // Artifacts admin-only
-    if (isAdmin) {
-      await loadArtifacts(orderId);
-    } else if (ordersArtifactsList) {
-      ordersArtifactsList.innerHTML = "";
-    }
+    if (isAdmin) await loadArtifacts(orderId);
+    else if (ordersArtifactsList) ordersArtifactsList.innerHTML = "";
   }
 
   // ---------------------------------------------------------
@@ -792,7 +796,6 @@ const hasPack = Array.isArray(existingBatches) && existingBatches.length > 0;
 
         const profile = state?.currentProfile;
         const agent_id = profile?.agent_id;
-
         if (!agent_id) { setMsg("No agent_id in profile."); return; }
 
         const { data: customers, error: cErr } = await supabaseClient
@@ -846,43 +849,52 @@ const hasPack = Array.isArray(existingBatches) && existingBatches.length > 0;
 
             const order_id = orderRow.id;
 
-const product_id = "29c9e7e2-c728-4860-8f64-175fbf230a7c";
-const qty = 1;
+            // === ITEM + PRICING SNAPSHOT ===
+            const product_id = "29c9e7e2-c728-4860-8f64-175fbf230a7c";
+            const qty = 1;
 
-// Load product price + currency from products table
-const { data: p, error: pErr } = await supabaseClient
-  .from("products")
-  .select("product_code, name, product_kind, currency_code, unit_price_aed")
-  .eq("id", product_id)
-  .maybeSingle();
+            const { data: p, error: pErr } = await supabaseClient
+              .from("products")
+              .select("product_code, name, product_kind, currency_code, unit_price_aed")
+              .eq("id", product_id)
+              .maybeSingle();
 
-if (pErr) { setMsg("Load product failed: " + pErr.message); return; }
-if (!p) { setMsg("Product not found for pricing."); return; }
+            if (pErr) { setMsg("Load product failed: " + pErr.message); return; }
+            if (!p) { setMsg("Product not found for pricing."); return; }
 
-const unit_price = Number(p.unit_price_aed || 0);
-const line_total = unit_price * qty;
+            const unit_price = Number(p.unit_price_aed || 0);
+            const line_total = Number((unit_price * qty).toFixed(2));
 
-const { error: iErr } = await supabaseClient
-  .from("order_items")
-  .insert([{
-    order_id,
-    product_id,
-    product_code_snapshot: p.product_code || "PRD0001",
-    product_name_snapshot: p.name || "EXACT Personalized Skincare Set",
-    product_kind_snapshot: p.product_kind || "dynamic",
-    unit_price,
-    quantity: qty,
-    line_total,
-  }]);
-
-if (iErr) { setMsg("Add item failed: " + iErr.message); return; }
-
+            const { error: iErr } = await supabaseClient
+              .from("order_items")
+              .insert([{
+                order_id,
+                product_id,
+                product_code_snapshot: p.product_code || "PRD0001",
+                product_name_snapshot: p.name || "EXACT Personalized Skincare Set",
+                product_kind_snapshot: p.product_kind || "dynamic",
+                unit_price,
+                quantity: qty,
+                line_total,
+              }]);
 
             if (iErr) { setMsg("Add item failed: " + iErr.message); return; }
 
+            // Write totals onto orders immediately (so Stripe amount is never 0)
+            const currency = String(p.currency_code || "AED");
+            const subtotal = line_total;
+            const tax = 0;
+            const total = subtotal + tax;
+
+            const { error: tErr } = await supabaseClient
+              .from("orders")
+              .update({ currency, subtotal, tax, total })
+              .eq("id", order_id);
+
+            if (tErr) { setMsg("Update totals failed: " + tErr.message); return; }
+
             await loadOrders({ mode: "all" });
             await openOrder(order_id);
-
             setMsg("Draft order created ✅");
           },
         });
@@ -896,21 +908,9 @@ if (iErr) { setMsg("Add item failed: " + iErr.message); return; }
 
   return {
     reset: resetScreen,
-enter: async () => {
-  resetScreen();
-
-  const params = new URLSearchParams(window.location.search || "");
-  const orderId = params.get("order_id");
-
-  // If Stripe returned us here, auto-open that order
-  if (orderId) {
-    await openOrder(orderId);
-    setMsg("");
-    return;
-  }
-
-  setMsg("Use Search or Show all.");
-},
-
+    enter: async () => {
+      resetScreen();
+      setMsg("Use Search or Show all.");
+    },
   };
 }
