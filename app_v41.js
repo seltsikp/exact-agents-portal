@@ -1336,9 +1336,10 @@ await supabaseClient.auth.signOut();
   // BLOCK: LOGIN / LOGOUT
   // =========================================================
 
-  if (loginBtn) {
-    loginBtn.addEventListener("click", async () => {
-      setAuthMsg("Logging in…");
+ loginBtn.addEventListener("click", async () => {
+  console.log("[AUTH] login click fired");
+  setAuthMsg("Logging in…");
+
 
       const email = (emailInput?.value || "").trim();
       const password = passwordInput?.value || "";
