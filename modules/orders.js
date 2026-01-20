@@ -509,6 +509,7 @@ if (!token) {
   ordersPayMsg.textContent = "No active session token (please log in again).";
   return;
 }
+console.log("PAYMENT INIT order_id =", orderId);
 
 const res = await supabaseClient.functions.invoke("stripe_create_payment_intent", {
   body: { order_id: orderId },
