@@ -791,7 +791,7 @@ const ordersModule = initOrdersManagement({
   state: {
     // IMPORTANT: currentProfile changes after login,
     // so give the module a getter instead of a fixed snapshot
-    get currentProfile() { return currentProfile; }
+    get currentProfile() { return currentProfile; },
     get stripePublishableKey() { return STRIPE_PUBLISHABLE_KEY; }
   }
 });
