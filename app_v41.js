@@ -1347,6 +1347,13 @@ await supabaseClient.auth.signOut();
 
       try {
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        console.log("[AUTH] signInWithPassword result:", {
+  hasError: !!error,
+  error: error?.message,
+  hasSession: !!data?.session,
+  userId: data?.session?.user?.id
+});
+
         if (error) { setAuthMsg("Login failed: " + error.message); return; }
         if (!data?.session) { setAuthMsg("Login succeeded but session missing."); return; }
 
