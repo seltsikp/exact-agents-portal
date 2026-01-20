@@ -542,8 +542,9 @@ if (res.error) {
     stripePaymentEl.style.display = "block";
     const paymentElement = elements.create("payment");
     paymentElement.mount(stripePaymentEl);
-
-    ordersPayMsg.textContent = "";
+      
+      ordersPayBtn.textContent = "Confirm payment";
+ordersPayMsg.textContent = "";
 
     // Confirm payment on button click
     ordersPayBtn.onclick = async () => {
@@ -552,7 +553,10 @@ if (res.error) {
 
       const { error } = await stripe.confirmPayment({
         elements,
-        confirmParams: { return_url: window.location.href }
+       confirmParams: {
+  return_url: `${window.location.origin}${window.location.pathname}?view=orders&order_id=${encodeURIComponent(orderId)}`
+}
+
       });
 
       if (error) {
@@ -570,6 +574,7 @@ if (res.error) {
         stripePaymentEl.style.display = "none";
         stripePaymentEl.innerHTML = "";
         ordersPayMsg.textContent = "";
+          ordersPayBtn.textContent = "Pay now";
       };
     }
   }
@@ -605,17 +610,19 @@ if (res.error) {
 
     // Load order (includes payment_status)
     const { data: o, error } = await supabaseClient
-      .from("orders")
-     .select(`
+.from("orders")
+.select(`
   id,
   order_code,
   status,
   payment_status,
+  created_at,
+
+  currency,
   subtotal,
   tax,
   total,
-  currency,
-  created_at,
+
   dispatch_to,
   ship_to_name,
   ship_to_phone,
@@ -625,6 +632,7 @@ if (res.error) {
   ship_to_country,
   lab_id
 `)
+
 
       .eq("id", orderId)
       .maybeSingle();
@@ -660,6 +668,7 @@ const amt = (o.total ?? o.subtotal ?? 0);
 if (ordersPayMsg) ordersPayMsg.textContent = `Amount to charge: ${amt} ${ccy}`;
 
   if (ordersPayBtn) ordersPayBtn.disabled = false;
+   ordersPayBtn.textContent = "Pay now";
   if (ordersPayBtn) ordersPayBtn.onclick = () => mountStripePaymentForOrder(o.id);
 }
 
@@ -887,9 +896,21 @@ if (iErr) { setMsg("Add item failed: " + iErr.message); return; }
 
   return {
     reset: resetScreen,
-    enter: async () => {
-      resetScreen();
-      setMsg("Use Search or Show all.");
-    },
+enter: async () => {
+  resetScreen();
+
+  const params = new URLSearchParams(window.location.search || "");
+  const orderId = params.get("order_id");
+
+  // If Stripe returned us here, auto-open that order
+  if (orderId) {
+    await openOrder(orderId);
+    setMsg("");
+    return;
+  }
+
+  setMsg("Use Search or Show all.");
+},
+
   };
 }
