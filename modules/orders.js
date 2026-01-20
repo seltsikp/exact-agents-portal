@@ -33,6 +33,13 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
   const ordersMarkPaidBtn = document.getElementById("ordersMarkPaidBtn");
   const ordersCompBtn = document.getElementById("ordersCompBtn");
 
+  // Payment (Stripe) UI lives in index.html (not in ui map)
+  const ordersPayPanel = document.getElementById("ordersPayPanel");
+  const ordersPayMsg = document.getElementById("ordersPayMsg");
+  const ordersPayBtn = document.getElementById("ordersPayBtn");
+  const ordersPayCancelBtn = document.getElementById("ordersPayCancelBtn");
+  const stripePaymentEl = document.getElementById("stripePaymentEl");
+
   let selectedOrderId = null;
 
   const getRole = () => String(state?.currentProfile?.role || "").toLowerCase();
