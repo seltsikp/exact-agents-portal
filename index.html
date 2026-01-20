@@ -1042,6 +1042,19 @@
 </div>
 
       </div>
+<!-- PAYMENT (Stripe) -->
+<div id="ordersPayPanel" style="margin-top:14px; display:none;">
+  <h3 style="margin:0 0 8px 0;">Payment</h3>
+
+  <div id="ordersPayMsg" class="subtle" style="margin:0 0 10px 0;"></div>
+
+  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+    <button id="ordersPayBtn" class="btn-success" type="button">Pay now</button>
+    <button id="ordersPayCancelBtn" type="button">Cancel</button>
+  </div>
+
+  <div id="stripePaymentEl" class="card" style="box-shadow:none; margin-top:12px; display:none;"></div>
+</div>
 
       <div style="margin-top:14px;">
         <h3 style="margin:0 0 8px 0;">Batch / process summary</h3>
@@ -1632,7 +1645,7 @@
            SCRIPTS
            ========================================================= -->
       <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+      <script src="https://js.stripe.com/v3/"></script>
       <!-- IMPORTANT: change this to the JS file you are actually using -->
       <script type="module" src="./app_v41.js?v=42"></script>
 
