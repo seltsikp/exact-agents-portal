@@ -912,13 +912,46 @@ window.addEventListener("DOMContentLoaded", () => {
 
 return `
   <div class="customer-row" data-id="${id}" style="
-    grid-template-columns: 78px 1fr auto;
-    column-gap: 12px;
-    align-items: start;
+    grid-template-columns: 1fr;
+    row-gap: 6px;
   ">
 
-  ${psi}
-</div>
+    <!-- TOP LINE: PSI + NAME + ACTIONS -->
+    <div style="
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    ">
+      <div style="
+        font-weight: 600;
+        white-space: nowrap;
+      ">
+        ${psi}
+      </div>
+
+      <div style="
+        font-weight: 600;
+        flex: 1;
+        min-width: 0;
+        white-space: normal;
+      ">
+        ${inci}
+      </div>
+
+      <div class="customer-actions" style="white-space: nowrap;">
+        <button class="btn-primary fxIng-edit" type="button">Edit</button>
+        <button class="btn-danger fxIng-del" type="button">Delete</button>
+      </div>
+    </div>
+
+    <!-- DESCRIPTION -->
+    <div class="subtle" style="white-space: normal;">
+      ${desc}
+    </div>
+
+  </div>
+`.trim();
+
 
 
     <!-- INCI + Description stacked in ONE column -->
