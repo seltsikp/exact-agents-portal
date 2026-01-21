@@ -1058,6 +1058,59 @@ function bindIngredientsOnce() {
 // Bind now
 bindIngredientsOnce();
 
+
+  // =========================================================
+  // BLOCK: FORMULARY MENU SHORTCUTS (Ingredients / Formulated Products)
+  // - Handles Formulary submenu items that should open the Formulary view + select the correct tab.
+  // - Works even if the submenu uses a viewKey not registered in initNavigation (no dependency on navigation.js internals).
+  // =========================================================
+  function bindFormularyMenuShortcutsOnce() {
+    if (!menuItems) return;
+    if (menuItems.dataset.formularyShortcutsBound === "1") return;
+
+    menuItems.addEventListener("click", async (e) => {
+      const btn = e.target?.closest?.("button");
+      if (!btn || !menuItems.contains(btn)) return;
+
+      const label = String(btn.textContent || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+
+      const isIngredients = label === "ingredients";
+      const isFormulatedProducts =
+        label === "formulated products" || label === "formulated product";
+
+      if (!isIngredients && !isFormulatedProducts) return;
+
+      // Prevent any existing (wrong) handler attached by navigation.js
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Ensure the main Formulary view is active
+      const mainFormularyBtn = menuItems.querySelector('button[data-view="formulary"]');
+      if (mainFormularyBtn) {
+        mainFormularyBtn.click();
+      }
+
+      // Switch the internal tab
+      if (isIngredients) {
+        setActiveFormularyTab("ingredients");
+        // Optional: open the Ingredients "View" screen automatically if you prefer.
+        // showIngView();
+        return;
+      }
+
+      // Formulated Products
+      setActiveFormularyTab("products");
+      try {
+        await formulatedProductsModule.enter();
+      } catch (_e) {}
+    }, true); // capture so we beat other handlers
+
+    menuItems.dataset.formularyShortcutsBound = "1";
+  }
+
   // =========================================================
   // BLOCK: VIEWS + MENU (MODULE)
   // =========================================================
@@ -1117,6 +1170,10 @@ bindIngredientsOnce();
 
     }
   });
+
+  // Bind Formulary menu shortcuts (Ingredients / Formulated Products)
+  bindFormularyMenuShortcutsOnce();
+
 
   // =========================================================
   // BLOCK: LOGIN/LOGOUT SHELL
