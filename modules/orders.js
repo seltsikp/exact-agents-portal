@@ -961,7 +961,6 @@ async function generatePack() {
 setMsg("Draft order created ✅ (Pay now to enable Generate Pack)");
 
             }
-          }
         });
       });
 
