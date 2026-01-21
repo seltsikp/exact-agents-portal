@@ -475,7 +475,7 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
 
       // If admin creating/editing USER/agent, clinic is required
       if (admin && String(role).toLowerCase() === "agent" && !agent_id) {
-        setMsg("Please select an assigned clinic.");
+        setMsg("Please select an assigned agent.");
         umSaveBtn.disabled = false; umSaveBtn.textContent = originalSaveLabel;
         return;
       }
