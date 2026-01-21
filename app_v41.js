@@ -927,11 +927,7 @@ window.addEventListener("DOMContentLoaded", () => {
   // BLOCK: HYDRATION (AFTER LOGIN)
   // =========================================================
   async function hydrateAfterLogin(session) {
-    console.log("[AUTH] hydrateAfterLogin start:", {
-      user_id: session?.user?.id,
-      email: session?.user?.email
-    });
-
+   
     if (!session?.user?.id) {
       console.warn("[AUTH] hydrateAfterLogin aborted (no user id)");
       return;
@@ -951,11 +947,9 @@ window.addEventListener("DOMContentLoaded", () => {
         profile = await loadProfileForUser(session.user.id);
         console.log("[AUTH] profile lookup:", profile ? { role: profile.role, status: profile.status } : null);
       } catch (e) {
-        console.error("[AUTH] loadProfileForUser failed:", e?.message || e, e);
       }
 
       if (!profile) {
-        console.warn("[AUTH] signing out (no profile)", { user_id: session.user.id, email: session.user.email });
         await supabaseClient.auth.signOut();
         setLoggedOutUI("Access not provisioned");
         setAuthMsg("Login blocked: your account is not provisioned. Please contact admin.");
@@ -963,7 +957,6 @@ window.addEventListener("DOMContentLoaded", () => {
       }
 
       if ((profile.status || "").toLowerCase() !== "active") {
-        console.warn("[AUTH] signing out (inactive)", { status: profile.status });
         await supabaseClient.auth.signOut();
         setLoggedOutUI("Account inactive");
         setAuthMsg("Your account is inactive. Please contact admin.");
@@ -993,8 +986,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
       console.log("[AUTH] hydrateAfterLogin complete");
     } catch (e) {
-      console.error("[AUTH] hydrateAfterLogin error:", e);
-      setAuthMsg("Error after login: " + (e?.message || "Unknown error"));
+     setAuthMsg("Error after login: " + (e?.message || "Unknown error"));
     }
   }
 
@@ -1003,7 +995,6 @@ window.addEventListener("DOMContentLoaded", () => {
   // =========================================================
   if (loginBtn) {
     loginBtn.addEventListener("click", async () => {
-      console.log("[AUTH] login click fired");
       setAuthMsg("Logging in…");
 
       const email = (emailInput?.value || "").trim().toLowerCase();
@@ -1013,13 +1004,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
       try {
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-
-        console.log("[AUTH] signInWithPassword result:", {
-          hasError: !!error,
-          error: error?.message,
-          hasSession: !!data?.session,
-          userId: data?.session?.user?.id
-        });
 
         if (error) { setAuthMsg("Login failed: " + error.message); return; }
         if (!data?.session) { setAuthMsg("Login succeeded but session missing."); return; }
@@ -1059,7 +1043,6 @@ window.addEventListener("DOMContentLoaded", () => {
         setLoggedOutUI("Not logged in");
       }
     } catch (e) {
-      console.error("[AUTH] Initial restore crashed:", e);
       setLoggedOutUI("Not logged in");
     }
   })();
