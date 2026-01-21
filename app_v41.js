@@ -869,132 +869,106 @@ window.addEventListener("DOMContentLoaded", () => {
     return "PSI-" + String(num).padStart(3, "0");
   }
 
-  async function loadIngredients(term) {
-    if (!fxIngList) { setFxIngMsg("Ingredients list container missing (fxIngList)."); return; }
+async function loadIngredients(term) {
+  if (!fxIngList) { setFxIngMsg("Ingredients list container missing (fxIngList)."); return; }
 
-    setFxIngMsg("Loading…");
-    ingredientsById = {};
-    fxIngList.innerHTML = "";
+  setFxIngMsg("Loading…");
+  ingredientsById = {};
+  fxIngList.innerHTML = "";
 
-    let q = supabaseClient
-      .from("ingredients")
-      .select("id, psi_number, inci_name, short_description, created_at")
-      .order("psi_number", { ascending: true });
+  let q = supabaseClient
+    .from("ingredients")
+    .select("id, psi_number, inci_name, short_description, created_at")
+    .order("psi_number", { ascending: true });
 
-    const t = (term || "").trim();
-    if (t) {
-      const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
-      q = q.or([
-        `psi_number.ilike.%${esc}%`,
-        `inci_name.ilike.%${esc}%`,
-        `short_description.ilike.%${esc}%`
-      ].join(","));
-    }
-
-    const { data, error } = await q;
-    if (error) { setFxIngMsg("Load failed: " + error.message); return; }
-
-    const rows = data || [];
-    rows.forEach(r => { ingredientsById[r.id] = r; });
-
-    if (rows.length === 0) {
-      setFxIngMsg("No ingredients found.");
-      return;
-    }
-
-    setFxIngMsg(`Found ${rows.length} ingredient${rows.length === 1 ? "" : "s"}.`);
-
-    fxIngList.innerHTML = rows.map(r => {
-      const id = escapeHtml(r.id);
-      const psi = escapeHtml(r.psi_number || "");
-      const inci = escapeHtml(r.inci_name || "");
-      const desc = escapeHtml(r.short_description || "");
-
-return `
-  <div class="customer-row" data-id="${id}" style="
-    grid-template-columns: 1fr;
-    row-gap: 6px;
-  ">
-
-    <!-- TOP LINE: PSI + NAME + ACTIONS -->
-    <div style="
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    ">
-      <div style="
-        font-weight: 600;
-        white-space: nowrap;
-      ">
-        ${psi}
-      </div>
-
-      <div style="
-        font-weight: 600;
-        flex: 1;
-        min-width: 0;
-        white-space: normal;
-      ">
-        ${inci}
-      </div>
-
-      <div class="customer-actions" style="white-space: nowrap;">
-        <button class="btn-primary fxIng-edit" type="button">Edit</button>
-        <button class="btn-danger fxIng-del" type="button">Delete</button>
-      </div>
-    </div>
-
-    <!-- DESCRIPTION -->
-    <div class="subtle" style="white-space: normal;">
-      ${desc}
-    </div>
-
-  </div>
-`.trim();
-
-}).join("");
-
-
-
-    <!-- INCI + Description stacked in ONE column -->
-    <div style="min-width:0;">
-      <div style="font-weight:600; line-height:1.2; white-space:normal; word-break:normal;">
-        ${inci}
-      </div>
-      <div class="subtle" style="margin-top:4px; white-space:normal; word-break:normal;">
-        ${desc}
-      </div>
-    </div>
-
-    <div class="customer-actions">
-      <button class="btn-primary fxIng-edit" type="button">Edit</button>
-      <button class="btn-danger fxIng-del" type="button">Delete</button>
-    </div>
-  </div>
-`.trim();
-
-    }).join("");
-
-    fxIngList.querySelectorAll(".fxIng-edit").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const row = btn.closest(".customer-row");
-        const id = row?.getAttribute("data-id");
-        if (id) editIngredient(id);
-      });
-    });
-
-    fxIngList.querySelectorAll(".fxIng-del").forEach(btn => {
-      btn.addEventListener("click", async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const row = btn.closest(".customer-row");
-        const id = row?.getAttribute("data-id");
-        if (id) await deleteIngredient(id);
-      });
-    });
+  const t = (term || "").trim();
+  if (t) {
+    const esc = t.replaceAll("%", "\\%").replaceAll("_", "\\_");
+    q = q.or([
+      `psi_number.ilike.%${esc}%`,
+      `inci_name.ilike.%${esc}%`,
+      `short_description.ilike.%${esc}%`
+    ].join(","));
   }
+
+  const { data, error } = await q;
+  if (error) { setFxIngMsg("Load failed: " + error.message); return; }
+
+  const rows = data || [];
+  rows.forEach(r => { ingredientsById[r.id] = r; });
+
+  if (rows.length === 0) {
+    setFxIngMsg("No ingredients found.");
+    return;
+  }
+
+  setFxIngMsg(`Found ${rows.length} ingredient${rows.length === 1 ? "" : "s"}.`);
+
+  fxIngList.innerHTML = rows.map(r => {
+    const id = escapeHtml(r.id);
+    const psi = escapeHtml(r.psi_number || "");
+    const inci = escapeHtml(r.inci_name || "");
+    const desc = escapeHtml(r.short_description || "");
+
+    return `
+      <div class="customer-row" data-id="${id}" style="
+        grid-template-columns: 1fr;
+        row-gap: 6px;
+      ">
+
+        <div style="
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        ">
+          <div style="font-weight: 600; white-space: nowrap;">
+            ${psi}
+          </div>
+
+          <div style="
+            font-weight: 600;
+            flex: 1;
+            min-width: 0;
+            white-space: normal;
+          ">
+            ${inci}
+          </div>
+
+          <div class="customer-actions" style="white-space: nowrap;">
+            <button class="btn-primary fxIng-edit" type="button">Edit</button>
+            <button class="btn-danger fxIng-del" type="button">Delete</button>
+          </div>
+        </div>
+
+        <div class="subtle" style="white-space: normal;">
+          ${desc}
+        </div>
+
+      </div>
+    `.trim();
+  }).join("");
+
+  fxIngList.querySelectorAll(".fxIng-edit").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const row = btn.closest(".customer-row");
+      const id = row?.getAttribute("data-id");
+      if (id) editIngredient(id);
+    });
+  });
+
+  fxIngList.querySelectorAll(".fxIng-del").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const row = btn.closest(".customer-row");
+      const id = row?.getAttribute("data-id");
+      if (id) await deleteIngredient(id);
+    });
+  });
+}
+
 
   function editIngredient(id) {
     const r = ingredientsById[id];
