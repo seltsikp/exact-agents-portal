@@ -52,13 +52,19 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
   ];
 
   // =========================================================
-  // Clinic assignment UI helpers
+  // Clinic assignment helpers
   // =========================================================
   function fillClinicSelect() {
     if (!umAssignClinicSelect) return;
 
-    const map = state.agentNameMap || {};
+    const map = state?.agentNameMap || {};
     const entries = Object.entries(map); // [agent_id, clinicName]
+
+    if (!entries.length) {
+      umAssignClinicSelect.innerHTML =
+        `<option value="">— No clinics loaded —</option>`;
+      return;
+    }
 
     umAssignClinicSelect.innerHTML =
       `<option value="">— Select clinic —</option>` +
@@ -68,24 +74,20 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
         .join("");
   }
 
-  function getRoleValueLower() {
-    return String((umRole?.value || "agent")).trim().toLowerCase();
+  function getRoleLower() {
+    return String(umRole?.value || "agent").trim().toLowerCase();
   }
 
-  function refreshClinicAssignmentVisibility() {
-    const admin = isAdmin();
-
+  function syncClinicAssignUI() {
     // Only admins can see/assign clinic
-    if (!admin) {
+    if (!isAdmin()) {
       show(umAssignClinicRow, false);
       if (umAssignClinicSelect) umAssignClinicSelect.value = "";
       return;
     }
 
-    // Admin: show dropdown only when role is "agent"
-    const roleLower = getRoleValueLower();
-    const shouldShow = roleLower === "agent";
-
+    // Admin: show dropdown only when role is agent
+    const shouldShow = getRoleLower() === "agent";
     show(umAssignClinicRow, shouldShow);
 
     if (shouldShow) {
@@ -96,7 +98,7 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
   }
 
   function getSelectedAgentIdOrNullForPayload(roleLower) {
-    if (!isAdmin()) return null;          // only admin assigns clinic
+    if (!isAdmin()) return null;
     if (roleLower !== "agent") return null;
     return (umAssignClinicSelect?.value || null);
   }
@@ -133,14 +135,14 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
 
     if (umRole) {
       umRole.disabled = !admin;
-      if (!admin) umRole.value = "agent"; // USER
+      if (!admin) umRole.value = "agent";
     }
 
     if (umStatus) {
       umStatus.disabled = !admin;
     }
 
-    refreshClinicAssignmentVisibility();
+    syncClinicAssignUI();
   }
 
   function clearForm() {
@@ -150,10 +152,8 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
     if (umFullName) umFullName.value = "";
     if (umEmail) { umEmail.value = ""; umEmail.readOnly = false; }
     if (umPassword) { umPassword.value = ""; umPassword.disabled = false; }
-
     if (umRole) umRole.value = "agent";
     if (umStatus) umStatus.value = "active";
-
     renderPerms({});
 
     if (umAssignClinicSelect) umAssignClinicSelect.value = "";
@@ -194,32 +194,24 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
   }
 
   function openAddUser() {
-    if (umSaveBtn) {
-      umSaveBtn.disabled = false;
-      umSaveBtn.textContent = "Save";
-    }
+    if (umSaveBtn) { umSaveBtn.disabled = false; umSaveBtn.textContent = "Save"; }
 
     clearForm();
     addingNew = true;
 
     if (umPassword) umPassword.disabled = false;
 
-    applyRoleControls(); // also refreshes clinic dropdown visibility
+    applyRoleControls();
     showEditPanel();
-
     setMsg("Adding user — enter email + password, permissions, then Save.");
   }
 
   function openEditUser(u) {
-    if (umSaveBtn) {
-      umSaveBtn.disabled = false;
-      umSaveBtn.textContent = "Save";
-    }
+    if (umSaveBtn) { umSaveBtn.disabled = false; umSaveBtn.textContent = "Save"; }
 
     editingId = u.id;
     addingNew = false;
 
-    // Password never editable here
     if (umPassword) {
       umPassword.value = "";
       umPassword.disabled = true;
@@ -227,7 +219,6 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
 
     if (umFullName) umFullName.value = u.full_name || "";
 
-    // Email locked on edit to avoid mismatch with Supabase Auth email
     if (umEmail) {
       umEmail.value = u.email || "";
       umEmail.readOnly = true;
@@ -238,14 +229,16 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
     if (umStatus) umStatus.value = u.status || "active";
     renderPerms(u.permissions || {});
 
-    applyRoleControls(); // also refreshes clinic dropdown visibility
+    applyRoleControls();
 
     // If admin + role agent, preselect current clinic
-    if (isAdmin() && getRoleValueLower() === "agent") {
+    if (isAdmin() && getRoleLower() === "agent") {
       fillClinicSelect();
       if (umAssignClinicSelect) umAssignClinicSelect.value = u.agent_id || "";
+      show(umAssignClinicRow, true);
     } else {
       if (umAssignClinicSelect) umAssignClinicSelect.value = "";
+      show(umAssignClinicRow, false);
     }
 
     showEditPanel();
@@ -304,30 +297,19 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
       }
 
       if (action === "delete") {
-        if (!isAdmin()) {
-          setMsg("Permission denied.");
-          return;
-        }
+        if (!isAdmin()) { setMsg("Permission denied."); return; }
 
         const label = (u.full_name || u.email || "this user").trim();
-
         const ok = await confirmExact(
           `Delete ${label}?\n\nThis will permanently delete this user and prevent them from logging in again.\n\nThis action cannot be undone.`
         );
         if (!ok) return;
 
-        const { data: sessionData } = await supabaseClient.auth.getSession();
-        if (!sessionData?.session) {
-          await supabaseClient.auth.refreshSession();
-        }
+        await supabaseClient.auth.refreshSession();
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const accessToken = session?.access_token;
 
-        const { data: freshSession } = await supabaseClient.auth.getSession();
-        const accessToken = freshSession?.session?.access_token;
-
-        if (!accessToken) {
-          setMsg("Session expired. Please log in again.");
-          return;
-        }
+        if (!accessToken) { setMsg("Session expired. Please log in again."); return; }
 
         const anonKey = window.SUPABASE_ANON_KEY || "";
         const baseUrl = window.SUPABASE_URL || "";
@@ -342,8 +324,8 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${accessToken}`,
-              "apikey": anonKey
+              Authorization: `Bearer ${accessToken}`,
+              apikey: anonKey
             },
             body: JSON.stringify({
               auth_user_id: u.auth_user_id,
@@ -351,7 +333,7 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
             })
           });
           text = await res.text();
-        } catch (err) {
+        } catch {
           setMsg("Delete failed: network error.");
           return;
         }
@@ -363,7 +345,6 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
 
         setMsg("Deleted ✅");
         await runSearch(umSearch?.value || "");
-        return;
       }
     });
 
@@ -407,7 +388,7 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
   }
 
   // =========================================================
-  // Buttons + role change handler
+  // Buttons + handlers
   // =========================================================
   if (umViewBtn) umViewBtn.addEventListener("click", () => showViewUsersPanel());
   if (umAddBtn) umAddBtn.addEventListener("click", () => openAddUser());
@@ -432,23 +413,19 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
     showViewUsersPanel();
   });
 
-  // Admin changing role in the editor should show/hide clinic dropdown
+  // Admin changing role in editor should show/hide clinic dropdown
   if (umRole) {
     umRole.addEventListener("change", () => {
-      refreshClinicAssignmentVisibility();
+      syncClinicAssignUI();
     });
   }
 
-  // =========================================================
-  // Save
-  // =========================================================
   if (umSaveBtn) {
     umSaveBtn.addEventListener("click", async () => {
       const originalSaveLabel = umSaveBtn.textContent;
-
       if (umSaveBtn.disabled) return;
-      umSaveBtn.disabled = true;
 
+      umSaveBtn.disabled = true;
       setMsg("");
 
       const admin = isAdmin();
@@ -458,6 +435,7 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
       const roleFromUI = (umRole?.value || "agent").trim();
       const statusFromUI = (umStatus?.value || "active").trim();
       const permissions = readPermsFromUI();
+
       const editingUser = (!addingNew && editingId) ? (usersById[editingId] || null) : null;
 
       if (!email) {
@@ -477,7 +455,6 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
       const roleLower = String(role || "").toLowerCase();
       const agent_id = getSelectedAgentIdOrNullForPayload(roleLower);
 
-      // Clinic required for agent users (admin only, because only admin can assign)
       if (admin && roleLower === "agent" && !agent_id) {
         setMsg("Please select an assigned clinic.");
         umSaveBtn.disabled = false;
@@ -485,7 +462,6 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
         return;
       }
 
-      // CONFIRM before inactivating a user
       if (admin && !addingNew && status === "inactive") {
         const ok = await confirmExact(
           "Set this user to INACTIVE?\n\nThey will be immediately signed out and will not be able to log in again unless reactivated."
@@ -513,15 +489,14 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
 
         await supabaseClient.auth.refreshSession();
         const { data: { session } } = await supabaseClient.auth.getSession();
+        const accessToken = session?.access_token;
 
-        if (!session || !session.access_token) {
+        if (!accessToken) {
           setMsg("Session expired. Please log in again.");
           umSaveBtn.disabled = false;
           umSaveBtn.textContent = originalSaveLabel;
           return;
         }
-
-        const accessToken = session.access_token;
 
         const anonKey = window.SUPABASE_ANON_KEY || "";
         const baseUrl = window.SUPABASE_URL || "";
@@ -542,7 +517,7 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
             body: JSON.stringify({ email, password, full_name, role, status, permissions, agent_id })
           });
           text = await res.text();
-        } catch (e) {
+        } catch {
           setMsg("Create user failed: network error.");
           umSaveBtn.disabled = false;
           umSaveBtn.textContent = originalSaveLabel;
@@ -552,27 +527,10 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
         if (!res.ok) {
           if (res.status === 409) setMsg("Email already exists.");
           else if (res.status === 403) setMsg("Permission denied.");
-          else setMsg(`Create user failed (${res.status}).`);
+          else setMsg(`Create user failed (${res.status}): ${text || ""}`);
           umSaveBtn.disabled = false;
           umSaveBtn.textContent = originalSaveLabel;
           return;
-        }
-
-        // Fallback: if edge function ignores agent_id, enforce it here (best-effort)
-        if (admin && roleLower === "agent" && agent_id) {
-          const { data: rows, error: findErr } = await supabaseClient
-            .from("agent_users")
-            .select("id")
-            .eq("email", email)
-            .order("created_at", { ascending: false })
-            .limit(1);
-
-          if (!findErr && rows && rows[0]?.id) {
-            await supabaseClient
-              .from("agent_users")
-              .update({ agent_id })
-              .eq("id", rows[0].id);
-          }
         }
 
         setMsg("User created ✅");
@@ -635,7 +593,6 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
           umSaveBtn.textContent = originalSaveLabel;
           return;
         }
-
         if (!adminCount || adminCount < 1) {
           setMsg("Cannot downgrade the last active admin.");
           umSaveBtn.disabled = false;
@@ -678,7 +635,7 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
     });
   }
 
-  // Ensure controls are correct even before any click
+  // ensure correct controls even before clicks
   applyRoleControls();
 
   return {
