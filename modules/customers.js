@@ -367,8 +367,10 @@ const clinicName =
       if (email && !isValidEmail(email)) { markField(custEmailInput, "error"); setCustMsg("Please enter a valid email address."); return; }
       if (email) markField(custEmailInput, "ok");
 
-      if (phone && !isValidPhone(phone)) { markField(custPhoneInput, "error"); setCustMsg("Please enter a valid phone number."); return; }
-      if (phone) markField(custPhoneInput, "ok");
+     if (!phone) { markField(custPhoneInput, "error"); setCustMsg("Phone is required."); return; }
+    markField(custPhoneInput, "ok");
+    if (!isValidPhone(phone)) { markField(custPhoneInput, "error"); setCustMsg("Please enter a valid phone number."); return; }
+
 
       let agent_id = null;
 
@@ -408,36 +410,32 @@ const clinicName =
         return;
       }
 
-      const { error } = await supabaseClient
-        .from("customers")
-       .insert([{
-  agent_id,
-  first_name,
-  last_name,
-  date_of_birth,
-  gender,
-  email,
-  phone,
-  shipping_address,
-  shipping_city,
-  shipping_country
-}]);
+     const { data, error } = await supabaseClient
+  .rpc("customer_register_by_phone", {
+    p_agent_id: agent_id,
+    p_first_name: first_name,
+    p_last_name: last_name,
+    p_phone: phone,
+    p_email: email,
+    p_gender: gender,
+    p_date_of_birth: date_of_birth,
+    p_shipping_address: shipping_address,
+    p_shipping_city: shipping_city,
+    p_shipping_country: shipping_country
+  });
 
-
-        if (error) { 
-        setCustMsg("Insert error: " + error.message); 
-        return; 
-      }
-
-      setCustMsg("Customer added ✅");
-      clearAddForm();
-      showViewCustomersPanel();
-    });
-  }
-
-  return {
-    resetCustomerScreen,
-    runCustomerSearch
-  };
+if (error) {
+  setCustMsg("Create/link error: " + error.message);
+  return;
 }
 
+const row = (data && data[0]) ? data[0] : null;
+if (!row?.customer_id) {
+  setCustMsg("Create/link error: No customer_id returned.");
+  return;
+}
+
+setCustMsg(row.was_created ? "Customer created ✅" : "Customer linked to your clinic ✅");
+clearAddForm();
+showViewCustomersPanel();
+await runCustomerSearch(cmSearch?.value || "");
