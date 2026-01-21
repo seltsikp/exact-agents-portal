@@ -448,7 +448,7 @@ if (error) {
 }
 
 const row = (data && data[0]) ? data[0] : null;
-if (!row?.customer_id) {
+if (!row?.out_customer_id) {
   setCustMsg("Create/link error: No customer_id returned.");
   return;
 }
