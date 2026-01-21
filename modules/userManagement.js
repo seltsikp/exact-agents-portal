@@ -139,6 +139,19 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
     if (umStatus) {
       umStatus.disabled = !admin;
     }
+function syncClinicAssignUI() {
+  if (!umAssignClinicRow) return;
+
+  const admin = isAdmin();
+  const roleVal = (umRole?.value || "agent").toLowerCase();
+
+  // only show for ADMIN creating/editing a USER/agent
+  const shouldShow = admin && roleVal === "agent";
+
+  show(umAssignClinicRow, shouldShow);
+  if (shouldShow) fillClinicSelect();
+  if (!shouldShow && umAssignClinicSelect) umAssignClinicSelect.value = "";
+}
 
     // keep clinic dropdown consistent with role/admin
     refreshClinicAssignmentVisibility();
@@ -204,6 +217,7 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
     if (umPassword) umPassword.disabled = false;
 
     applyRoleControls(); // will also set clinic row visibility
+    syncClinicAssignUI();
     showEditPanel();
 
     setMsg("Adding user — enter email + password, permissions, then Save.");
@@ -236,6 +250,8 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
     renderPerms(u.permissions || {});
 
     applyRoleControls(); // sets dropdown visibility correctly
+syncClinicAssignUI();
+if (umAssignClinicSelect) umAssignClinicSelect.value = u.agent_id || "";
 
     // If admin + role agent, preselect current clinic
     if (isAdmin() && getRoleValueLower() === "agent") {
@@ -428,6 +444,9 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
   if (umCancelBtn) umCancelBtn.addEventListener("click", () => {
     clearForm();
     showViewUsersPanel();
+
+    if (umRole) umRole.addEventListener("change", () => syncClinicAssignUI());
+
   });
 
   // Admin changing role in the editor should show/hide clinic dropdown
