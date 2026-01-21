@@ -1228,9 +1228,9 @@ async function loadIngredients(term) {
         await loadAgentsForAssignDropdown();
       } else {
         const agentName = await loadAgentName(profile.agent_id);
-        if (topBarTitle) topBarTitle.textContent = `Agent — ${agentName || "Unknown clinic"}`;
+        if (topBarTitle) topBarTitle.textContent = `Agent — ${agentName || "Unknown agent"}`;
         if (topBarSub) topBarSub.textContent = session.user.email || "";
-        if (agentClinicName) agentClinicName.value = agentName || "Unknown clinic";
+        if (agentClinicName) agentClinicName.value = agentName || "Unknown agent";
       }
 
       nav.renderMenuForRole(profile.role, profile.permissions || {});
