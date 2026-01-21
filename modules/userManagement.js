@@ -40,15 +40,16 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
   let searchDebounceTimer = null;
   const SEARCH_DEBOUNCE_MS = 300;
 
-  const MODULES = [
-    { key: "customers", label: "Customer Management" },
-    { key: "agents", label: "Agent Management" },
-    { key: "accountManagers", label: "Account Managers" },
-    { key: "productTypes", label: "Product Groups" },
-    { key: "formulary", label: "EXACT Formulary" },
-    { key: "labs", label: "Lab Management" },
-    { key: "userMgmt", label: "User Management" }
-  ];
+const MODULES = [
+  { key: "customers", label: "Customer Management" },
+  { key: "orders", label: "Orders" },                 // ✅ ADD THIS
+  { key: "agents", label: "Agent Management" },
+  { key: "accountManagers", label: "Account Managers" },
+  { key: "productTypes", label: "Product Groups" },
+  { key: "formulary", label: "EXACT Formulary" },
+  { key: "labs", label: "Lab Management" },
+  { key: "userMgmt", label: "User Management" }
+];
 
   // =========================================================
   // Authoritative Agent map: agents.id -> agents.name
