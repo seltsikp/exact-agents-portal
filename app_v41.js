@@ -912,7 +912,15 @@ window.addEventListener("DOMContentLoaded", () => {
 
 return `
   <div class="customer-row" data-id="${id}">
-    <div>${psi}</div>
+    <div style="
+  width: 72px;
+  min-width: 72px;
+  font-weight: 600;
+  white-space: nowrap;
+">
+  ${psi}
+</div>
+
 
     <!-- INCI + Description stacked in ONE column -->
     <div style="min-width:0;">
