@@ -754,7 +754,31 @@ window.addEventListener("DOMContentLoaded", () => {
     show(fxSectionProducts, tabKey === "products");
   }
 
-  
+  function bindFormularyTabsOnce() {
+  // Ingredients tab
+  if (fxTabIngredients && fxTabIngredients.dataset.bound !== "1") {
+    fxTabIngredients.addEventListener("click", () => {
+      setActiveFormularyTab("ingredients");
+    });
+    fxTabIngredients.dataset.bound = "1";
+  }
+
+  // Formulated Products tab
+  if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
+    fxTabProducts.addEventListener("click", async () => {
+      setActiveFormularyTab("products");
+      try {
+        // load/refresh products list when opening the Products tab
+        await formulatedProductsModule.enter();
+      } catch (_e) {}
+    });
+    fxTabProducts.dataset.bound = "1";
+  }
+}
+
+// Bind now (so it works even if you click tabs immediately)
+bindFormularyTabsOnce();
+
 
   // =========================================================
   // BLOCK: VIEWS + MENU (MODULE)
@@ -806,8 +830,8 @@ window.addEventListener("DOMContentLoaded", () => {
       orders: async () => { await ordersModule.enter(); },
       userMgmt: () => userMgmtModule.resetUserScreen(),
       formulary: async () => {
+  bindFormularyTabsOnce();
   setActiveFormularyTab("ingredients");
-  // Optional: if your formulated products module needs a first-time init later, leave it.
 }
 
     }
