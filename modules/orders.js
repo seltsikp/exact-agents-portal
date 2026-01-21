@@ -66,7 +66,7 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
   // ---------------------------------------------------------
   // Create Order modal
   // ---------------------------------------------------------
-function renderCreateOrderModal({ products, defaultProductId, customers, agent, onSubmit, onCancel }) {
+  function renderCreateOrderModal({ products, defaultProductId, customers, agent, onSubmit, onCancel }) {
     const overlay = document.createElement("div");
     overlay.style.position = "fixed";
     overlay.style.inset = "0";
@@ -82,6 +82,14 @@ function renderCreateOrderModal({ products, defaultProductId, customers, agent, 
 
     card.innerHTML = `
       <h3 style="margin-top:0;">Create Order</h3>
+
+      <label class="subtle">Product</label>
+      <select id="coProduct" style="width:100%; margin-bottom:10px;">
+        <option value="">Select product…</option>
+        ${(products || []).map(p =>
+          `<option value="${p.id}">${escapeHtml((p.product_code ? (p.product_code + " — ") : "") + (p.name || ""))}</option>`
+        ).join("")}
+      </select>
 
       <label class="subtle">Customer</label>
       <select id="coCustomer" style="width:100%; margin-bottom:10px;">
@@ -135,6 +143,7 @@ function renderCreateOrderModal({ products, defaultProductId, customers, agent, 
     overlay.appendChild(card);
     document.body.appendChild(overlay);
 
+    const $product = overlay.querySelector("#coProduct");
     const $cust = overlay.querySelector("#coCustomer");
     const $dispatch = overlay.querySelector("#coDispatchTo");
 
@@ -190,6 +199,13 @@ function renderCreateOrderModal({ products, defaultProductId, customers, agent, 
     if ((customers || []).length === 1) $cust.value = customers[0].id;
     applyDispatchDefaults();
 
+    // Product defaulting
+    if ((products || []).length === 1) {
+      $product.value = products[0].id;
+    } else if (defaultProductId && (products || []).some(p => p.id === defaultProductId)) {
+      $product.value = defaultProductId;
+    }
+
     const cleanup = () => overlay.remove();
 
     overlay.querySelector("#coCancelBtn").onclick = () => {
@@ -198,6 +214,7 @@ function renderCreateOrderModal({ products, defaultProductId, customers, agent, 
     };
 
     overlay.querySelector("#coCreateBtn").onclick = () => {
+      const product_id = String($product.value || "");
       const customer_id = String($cust.value || "");
       const dispatch_to = String($dispatch.value || "customer");
 
@@ -208,12 +225,15 @@ function renderCreateOrderModal({ products, defaultProductId, customers, agent, 
       const ship_to_city = String($city.value || "").trim() || null;
       const ship_to_country = String($country.value || "").trim() || null;
 
+      if (!product_id) return;
       if (!customer_id) return;
       if (!ship_to_name) return;
       if (!ship_to_address) return;
 
       cleanup();
-      onSubmit({
+
+      onSubmit?.({
+        product_id,
         customer_id,
         dispatch_to,
         ship_to_name,
@@ -483,8 +503,8 @@ function renderCreateOrderModal({ products, defaultProductId, customers, agent, 
 
       if (res.error?.context) {
         const txt = res.error?.context?.response
-  ? await res.error.context.response.text()
-  : (res.error?.message || "");
+          ? await res.error.context.response.text()
+          : (res.error?.message || "");
         throw new Error(txt || res.error.message || "Sync failed");
       }
       if (res.error) throw new Error(res.error.message || "Sync failed");
@@ -815,11 +835,24 @@ function renderCreateOrderModal({ products, defaultProductId, customers, agent, 
 
         if (aErr) { setMsg("Load agent failed: " + aErr.message); return; }
 
+        // Load products for dropdown
+        const { data: products, error: prErr } = await supabaseClient
+          .from("products")
+          .select("id, product_code, name, workflow_key, product_kind, currency_code, unit_price_aed, is_active")
+          .eq("is_active", true)
+          .order("product_code", { ascending: true });
+
+        if (prErr) { setMsg("Load products failed: " + prErr.message); return; }
+        if (!products || products.length === 0) { setMsg("No active products found."); return; }
+
         renderCreateOrderModal({
+          products,
+          defaultProductId: "29c9e7e2-c728-4860-8f64-175fbf230a7c",
           customers,
           agent: agentRow,
           onCancel: () => {},
           onSubmit: async ({
+            product_id,
             customer_id,
             dispatch_to,
             ship_to_name,
@@ -831,6 +864,17 @@ function renderCreateOrderModal({ products, defaultProductId, customers, agent, 
           }) => {
             setMsg("Creating order…");
 
+            // Validate/Load chosen product FIRST (prevents orphan draft orders)
+            const { data: p, error: pErr } = await supabaseClient
+              .from("products")
+              .select("product_code, name, product_kind, currency_code, unit_price_aed, workflow_key")
+              .eq("id", product_id)
+              .maybeSingle();
+
+            if (pErr) { setMsg("Load product failed: " + pErr.message); return; }
+            if (!p) { setMsg("Product not found for pricing."); return; }
+
+            // Create order
             const { data: orderRow, error: oErr } = await supabaseClient
               .from("orders")
               .insert([{
@@ -852,17 +896,7 @@ function renderCreateOrderModal({ products, defaultProductId, customers, agent, 
             const order_id = orderRow.id;
 
             // === ITEM + PRICING SNAPSHOT ===
-            const product_id = "29c9e7e2-c728-4860-8f64-175fbf230a7c";
             const qty = 1;
-
-            const { data: p, error: pErr } = await supabaseClient
-              .from("products")
-              .select("product_code, name, product_kind, currency_code, unit_price_aed")
-              .eq("id", product_id)
-              .maybeSingle();
-
-            if (pErr) { setMsg("Load product failed: " + pErr.message); return; }
-            if (!p) { setMsg("Product not found for pricing."); return; }
 
             const unit_price = Number(p.unit_price_aed || 0);
             const line_total = Number((unit_price * qty).toFixed(2));
@@ -897,8 +931,15 @@ function renderCreateOrderModal({ products, defaultProductId, customers, agent, 
 
             await loadOrders({ mode: "all" });
             await openOrder(order_id);
-            setMsg("Draft order created ✅");
-          },
+
+            // Run workflow immediately after create (current product uses exact_trio_v1_generate_pack)
+            if (p.workflow_key === "exact_trio_v1" && typeof window.exactGeneratePack === "function") {
+              setMsg("Draft order created ✅ Generating pack…");
+              await generatePack(); // uses selectedOrderId set by openOrder()
+            } else {
+              setMsg("Draft order created ✅");
+            }
+          }
         });
       });
 
