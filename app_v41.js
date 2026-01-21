@@ -504,6 +504,9 @@ window.addEventListener("DOMContentLoaded", () => {
   const umPerms = document.getElementById("umPerms");
   const umSaveBtn = document.getElementById("umSaveBtn");
   const umCancelBtn = document.getElementById("umCancelBtn");
+  const umAssignClinicRow = document.getElementById("umAssignClinicRow");
+  const umAssignClinicSelect = document.getElementById("umAssignClinicSelect");
+
 
   // Orders UI
   const ordersMsg = document.getElementById("ordersMsg");
@@ -758,7 +761,8 @@ window.addEventListener("DOMContentLoaded", () => {
       umViewPanel, umEditPanel, umList,
       umSearch, umSearchBtn, umShowAllBtn,
       umFullName, umEmail, umPassword, umRole, umStatus,
-      umPerms, umSaveBtn, umCancelBtn
+      umPerms, umSaveBtn, umCancelBtn,umAssignClinicRow, umAssignClinicSelect
+
     },
     helpers: { show, escapeHtml, confirmExact },
     state: { get currentProfile() { return currentProfile; } }
