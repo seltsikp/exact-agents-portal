@@ -37,6 +37,7 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
   let usersById = {};
   let editingId = null;   // agent_users.id
   let addingNew = false;
+
   let searchDebounceTimer = null;
   const SEARCH_DEBOUNCE_MS = 300;
 
@@ -95,7 +96,7 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
   }
 
   function getSelectedAgentIdOrNullForPayload(roleLower) {
-    if (!isAdmin()) return null; // only admin assigns clinic
+    if (!isAdmin()) return null;          // only admin assigns clinic
     if (roleLower !== "agent") return null;
     return (umAssignClinicSelect?.value || null);
   }
@@ -128,7 +129,6 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
   }
 
   function applyRoleControls() {
-    // Only ADMIN can choose role + status
     const admin = isAdmin();
 
     if (umRole) {
@@ -139,21 +139,7 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
     if (umStatus) {
       umStatus.disabled = !admin;
     }
-function syncClinicAssignUI() {
-  if (!umAssignClinicRow) return;
 
-  const admin = isAdmin();
-  const roleVal = (umRole?.value || "agent").toLowerCase();
-
-  // only show for ADMIN creating/editing a USER/agent
-  const shouldShow = admin && roleVal === "agent";
-
-  show(umAssignClinicRow, shouldShow);
-  if (shouldShow) fillClinicSelect();
-  if (!shouldShow && umAssignClinicSelect) umAssignClinicSelect.value = "";
-}
-
-    // keep clinic dropdown consistent with role/admin
     refreshClinicAssignmentVisibility();
   }
 
@@ -164,8 +150,10 @@ function syncClinicAssignUI() {
     if (umFullName) umFullName.value = "";
     if (umEmail) { umEmail.value = ""; umEmail.readOnly = false; }
     if (umPassword) { umPassword.value = ""; umPassword.disabled = false; }
+
     if (umRole) umRole.value = "agent";
     if (umStatus) umStatus.value = "active";
+
     renderPerms({});
 
     if (umAssignClinicSelect) umAssignClinicSelect.value = "";
@@ -216,8 +204,7 @@ function syncClinicAssignUI() {
 
     if (umPassword) umPassword.disabled = false;
 
-    applyRoleControls(); // will also set clinic row visibility
-    syncClinicAssignUI();
+    applyRoleControls(); // also refreshes clinic dropdown visibility
     showEditPanel();
 
     setMsg("Adding user — enter email + password, permissions, then Save.");
@@ -232,6 +219,7 @@ function syncClinicAssignUI() {
     editingId = u.id;
     addingNew = false;
 
+    // Password never editable here
     if (umPassword) {
       umPassword.value = "";
       umPassword.disabled = true;
@@ -239,6 +227,7 @@ function syncClinicAssignUI() {
 
     if (umFullName) umFullName.value = u.full_name || "";
 
+    // Email locked on edit to avoid mismatch with Supabase Auth email
     if (umEmail) {
       umEmail.value = u.email || "";
       umEmail.readOnly = true;
@@ -249,9 +238,7 @@ function syncClinicAssignUI() {
     if (umStatus) umStatus.value = u.status || "active";
     renderPerms(u.permissions || {});
 
-    applyRoleControls(); // sets dropdown visibility correctly
-syncClinicAssignUI();
-if (umAssignClinicSelect) umAssignClinicSelect.value = u.agent_id || "";
+    applyRoleControls(); // also refreshes clinic dropdown visibility
 
     // If admin + role agent, preselect current clinic
     if (isAdmin() && getRoleValueLower() === "agent") {
@@ -291,7 +278,6 @@ if (umAssignClinicSelect) umAssignClinicSelect.value = u.agent_id || "";
           <button data-action="edit" type="button">Edit</button>
           ${isAdmin() ? `<button data-action="delete" type="button" class="btn-danger">Delete</button>` : ``}
         </div>
-
       </div>
     `.trim();
   }
@@ -444,9 +430,6 @@ if (umAssignClinicSelect) umAssignClinicSelect.value = u.agent_id || "";
   if (umCancelBtn) umCancelBtn.addEventListener("click", () => {
     clearForm();
     showViewUsersPanel();
-
-    if (umRole) umRole.addEventListener("change", () => syncClinicAssignUI());
-
   });
 
   // Admin changing role in the editor should show/hide clinic dropdown
@@ -456,6 +439,9 @@ if (umAssignClinicSelect) umAssignClinicSelect.value = u.agent_id || "";
     });
   }
 
+  // =========================================================
+  // Save
+  // =========================================================
   if (umSaveBtn) {
     umSaveBtn.addEventListener("click", async () => {
       const originalSaveLabel = umSaveBtn.textContent;
@@ -485,7 +471,6 @@ if (umAssignClinicSelect) umAssignClinicSelect.value = u.agent_id || "";
         return;
       }
 
-      // Enforce role rules (UI + hard client-side)
       const role = admin ? roleFromUI : "agent";
       const status = admin ? statusFromUI : "active";
 
@@ -554,7 +539,6 @@ if (umAssignClinicSelect) umAssignClinicSelect.value = u.agent_id || "";
               apikey: anonKey,
               Authorization: `Bearer ${accessToken}`
             },
-            // NOTE: include agent_id
             body: JSON.stringify({ email, password, full_name, role, status, permissions, agent_id })
           });
           text = await res.text();
@@ -660,9 +644,8 @@ if (umAssignClinicSelect) umAssignClinicSelect.value = u.agent_id || "";
         }
       }
 
-      // Email is locked (do not update email here)
       const patch = admin
-        ? { full_name, role, status, permissions, agent_id } // include agent_id for admin
+        ? { full_name, role, status, permissions, agent_id }
         : { full_name, permissions };
 
       const { data, error } = await supabaseClient
