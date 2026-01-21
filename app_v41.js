@@ -929,12 +929,10 @@ window.addEventListener("DOMContentLoaded", () => {
   async function hydrateAfterLogin(session) {
    
     if (!session?.user?.id) {
-      console.warn("[AUTH] hydrateAfterLogin aborted (no user id)");
       return;
     }
 
     if (hydratedUserId === session.user.id) {
-      console.log("[AUTH] hydrateAfterLogin skipped (already hydrated)", session.user.id);
       return;
     }
     hydratedUserId = session.user.id;
@@ -945,8 +943,7 @@ window.addEventListener("DOMContentLoaded", () => {
       let profile = null;
       try {
         profile = await loadProfileForUser(session.user.id);
-        console.log("[AUTH] profile lookup:", profile ? { role: profile.role, status: profile.status } : null);
-      } catch (e) {
+        } catch (e) {
       }
 
       if (!profile) {
@@ -984,7 +981,7 @@ window.addEventListener("DOMContentLoaded", () => {
       try { labsModule.resetLabsScreen(); } catch (_e) {}
       try { productTypesModule.resetProductTypesScreen(); } catch (_e) {}
 
-      console.log("[AUTH] hydrateAfterLogin complete");
+      
     } catch (e) {
      setAuthMsg("Error after login: " + (e?.message || "Unknown error"));
     }
@@ -1010,7 +1007,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
         await hydrateAfterLogin(data.session);
       } catch (e) {
-        console.error("[AUTH] Login crashed:", e);
+       
         setAuthMsg("Login crashed: " + (e?.message || "Unknown error"));
       }
     });
@@ -1030,16 +1027,16 @@ window.addEventListener("DOMContentLoaded", () => {
     try {
       const { data, error } = await supabaseClient.auth.getSession();
       if (error) {
-        console.warn("[AUTH] getSession error:", error.message);
+        
         setLoggedOutUI("Not logged in");
         return;
       }
 
       if (data?.session) {
-        console.log("[AUTH] Initial restore: session found");
+       
         await hydrateAfterLogin(data.session);
       } else {
-        console.log("[AUTH] Initial restore: no session");
+        
         setLoggedOutUI("Not logged in");
       }
     } catch (e) {
@@ -1048,7 +1045,7 @@ window.addEventListener("DOMContentLoaded", () => {
   })();
 
   supabaseClient.auth.onAuthStateChange((event, session) => {
-    console.log("[AUTH] Auth state change:", event, { hasSession: !!session });
+   
 
     if (event === "SIGNED_OUT") {
       setLoggedOutUI("Logged out");
