@@ -1,9 +1,9 @@
-// app_v41.js (Portal v42.1) — DROP-IN VERSION
-// Fixes:
-// - ✅ Syntax error (missing ')' / broken braces)
-// - ✅ Restores safe guards (if(loginBtn) etc)
-// - ✅ Adds clear auth debug logs (login click, signIn result, hydrate start, profile lookup, signout reasons)
+// app_v41.js (Portal v42.1) — DROP-IN VERSION (CLEAN)
+// Notes:
+// - ✅ Fixes ordering issues (no module referenced before init)
+// - ✅ Keeps safe guards (if(loginBtn) etc)
 // - ✅ Keeps PASSWORD_RECOVERY flow + opens Change Password tool
+// - ✅ Removes temporary auth-debug logs (keeps real console.error / console.warn)
 
 import { showWelcomePanel } from "./modules/welcome.js";
 import { initNavigation } from "./modules/navigation.js";
@@ -88,9 +88,6 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // =========================================================
-  // BLOCK: CONFIRM DIALOG
-  // =========================================================
   async function confirmExact(message) {
     const existing = document.getElementById("exactConfirmOverlay");
     if (existing) existing.remove();
@@ -184,6 +181,36 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function isValidEmail(email) {
+    if (!email) return true;
+    const e = email.trim();
+    if (e.includes(" ")) return false;
+    const at = e.indexOf("@");
+    if (at < 1) return false;
+    const dot = e.lastIndexOf(".");
+    return dot > at + 1 && dot < e.length - 1;
+  }
+
+  function isValidPhone(phone) {
+    if (!phone) return true;
+    const digits = phone.replace(/[^\d]/g, "");
+    return digits.length >= 7;
+  }
+
+  function markField(el, state) {
+    if (!el) return;
+    el.classList.remove("field-error", "field-ok");
+    if (state === "error") el.classList.add("field-error");
+    if (state === "ok") el.classList.add("field-ok");
+  }
+
+  function clearFieldMarks(...els) {
+    els.forEach(el => {
+      if (!el) return;
+      el.classList.remove("field-error", "field-ok");
+    });
+  }
+
   // =========================================================
   // BLOCK: CHANGE PASSWORD (TOOL + SUBTLE LINK)
   // =========================================================
@@ -236,7 +263,6 @@ window.addEventListener("DOMContentLoaded", () => {
       if (a !== b) { setPwMsg("Passwords do not match."); return; }
 
       setPwMsg("Updating…");
-
       const { error } = await supabaseClient.auth.updateUser({ password: a });
       if (error) { setPwMsg("Update failed: " + error.message); return; }
 
@@ -270,39 +296,6 @@ window.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       renderChangePasswordTool(containerEl);
       wrap.remove();
-    });
-  }
-
-  // =========================================================
-  // BLOCK: VALIDATION
-  // =========================================================
-  function isValidEmail(email) {
-    if (!email) return true;
-    const e = email.trim();
-    if (e.includes(" ")) return false;
-    const at = e.indexOf("@");
-    if (at < 1) return false;
-    const dot = e.lastIndexOf(".");
-    return dot > at + 1 && dot < e.length - 1;
-  }
-
-  function isValidPhone(phone) {
-    if (!phone) return true;
-    const digits = phone.replace(/[^\d]/g, "");
-    return digits.length >= 7;
-  }
-
-  function markField(el, state) {
-    if (!el) return;
-    el.classList.remove("field-error", "field-ok");
-    if (state === "error") el.classList.add("field-error");
-    if (state === "ok") el.classList.add("field-ok");
-  }
-
-  function clearFieldMarks(...els) {
-    els.forEach(el => {
-      if (!el) return;
-      el.classList.remove("field-error", "field-ok");
     });
   }
 
@@ -413,7 +406,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const ptTbody = document.getElementById("pt_tbody");
   const ptStatus = document.getElementById("pt_status");
 
-  // Formulary tabs (kept for navigation; actual ingredients UI may be inside formulatedProducts module)
+  // Formulary tabs shell
   const fxTabIngredients = document.getElementById("fxTabIngredients");
   const fxTabProducts = document.getElementById("fxTabProducts");
   const fxSectionIngredients = document.getElementById("fxSectionIngredients");
@@ -472,7 +465,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const paSaveBtn = document.getElementById("paSaveBtn");
   const paCancelBtn = document.getElementById("paCancelBtn");
 
-  // User Management UI (IMPORTANT: define all fields used by module init)
+  // User Management UI
   const umViewBtn = document.getElementById("umViewBtn");
   const umAddBtn = document.getElementById("umAddBtn");
   const umClearBtn = document.getElementById("umClearBtn");
@@ -516,7 +509,6 @@ window.addEventListener("DOMContentLoaded", () => {
   let currentSession = null;
   let currentProfile = null;
   let hydratedUserId = null;
-
   let agentNameMap = {};
 
   const setAgentMsg = (t) => { if (agentMsg) agentMsg.textContent = t || ""; };
@@ -538,12 +530,9 @@ window.addEventListener("DOMContentLoaded", () => {
     if (!email) { setForgotMsg("Please enter your email."); return; }
 
     setForgotMsg("Sending…");
-
-    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: SITE_URL
-    });
-
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: SITE_URL });
     if (error) { setForgotMsg("Failed: " + error.message); return; }
+
     setForgotMsg("Reset email sent. Check your inbox.");
   });
 
@@ -551,19 +540,16 @@ window.addEventListener("DOMContentLoaded", () => {
   // BLOCK: AUTH + PROFILE LOOKUPS
   // =========================================================
   async function loadProfileForUser(userId) {
-    const res = await supabaseClient
+    const { data, error } = await supabaseClient
       .from("agent_users")
       .select("agent_id, role, status, email, full_name, permissions")
       .eq("auth_user_id", userId)
       .maybeSingle();
 
-    const { data, error } = res;
-
     if (error) {
       console.error("agent_users lookup error:", error);
       throw error;
     }
-
     return data || null;
   }
 
@@ -613,68 +599,25 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================================================
-  // BLOCK: FORMULARY TABS (simple shell)
-  // =========================================================
-  function setActiveFormularyTab(tabKey) {
-    fxTabIngredients?.classList.toggle("active", tabKey === "ingredients");
-    fxTabProducts?.classList.toggle("active", tabKey === "products");
-    show(fxSectionIngredients, tabKey === "ingredients");
-    show(fxSectionProducts, tabKey === "products");
-  }
-
-  if (fxTabIngredients && fxTabIngredients.dataset.bound !== "1") {
-    fxTabIngredients.addEventListener("click", () => setActiveFormularyTab("ingredients"));
-    fxTabIngredients.dataset.bound = "1";
-  }
-
-  if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
-    fxTabProducts.addEventListener("click", async () => {
-      setActiveFormularyTab("products");
-      try { await formulatedProductsModule.enter(); } catch (_e) {}
-    });
-    fxTabProducts.dataset.bound = "1";
-  }
-
-  // =========================================================
   // BLOCK: MODULE INITS
   // =========================================================
   const customerModule = initCustomerManagement({
     supabaseClient,
     ui: {
-      cmViewBtn,
-      cmAddBtn,
-      cmClearBtn,
-      custMsg,
-      cmViewPanel,
-      cmAddPanel,
-      cmSearch,
-      cmSearchBtn,
-      cmShowAllBtn,
+      cmViewBtn, cmAddBtn, cmClearBtn, custMsg,
+      cmViewPanel, cmAddPanel,
+      cmSearch, cmSearchBtn, cmShowAllBtn,
       customerList,
-      firstNameInput,
-      lastNameInput,
-      custDobInput,
-      custGenderInput,
-      custEmailInput,
-      custPhoneInput,
-      custShipAddressInput,
-      custShipCityInput,
-      custShipCountryInput,
+      firstNameInput, lastNameInput, custDobInput, custGenderInput,
+      custEmailInput, custPhoneInput,
+      custShipAddressInput, custShipCityInput, custShipCountryInput,
       addCustomerBtn,
-      assignClinicRow,
-      assignClinicSelect,
-      agentClinicRow,
-      agentClinicName
+      assignClinicRow, assignClinicSelect,
+      agentClinicRow, agentClinicName
     },
     helpers: {
-      show,
-      escapeHtml,
-      formatDateShort,
-      confirmExact,
-      isValidEmail,
-      isValidPhone,
-      markField,
-      clearFieldMarks
+      show, escapeHtml, formatDateShort, confirmExact,
+      isValidEmail, isValidPhone, markField, clearFieldMarks
     },
     state: {
       get currentProfile() { return currentProfile; },
@@ -685,22 +628,12 @@ window.addEventListener("DOMContentLoaded", () => {
   const agentModule = initAgentManagement({
     supabaseClient,
     ui: {
-      amViewBtn,
-      amAddBtn,
-      amClearBtn,
-      agentMsg,
-      amViewPanel,
-      amAddPanel,
-      amSearch,
-      amSearchBtn,
-      amShowAllBtn,
+      amViewBtn, amAddBtn, amClearBtn, agentMsg,
+      amViewPanel, amAddPanel,
+      amSearch, amSearchBtn, amShowAllBtn,
       agentList,
-      agentNameInput,
-      agentEmailInput,
-      agentPhoneInput,
-      agentShipAddressInput,
-      agentShipCityInput,
-      agentShipCountryInput,
+      agentNameInput, agentEmailInput, agentPhoneInput,
+      agentShipAddressInput, agentShipCityInput, agentShipCountryInput,
       addAgentBtn
     },
     helpers: { show, escapeHtml, formatDateShort, confirmExact },
@@ -715,19 +648,11 @@ window.addEventListener("DOMContentLoaded", () => {
   const labsModule = initLabManagement({
     supabaseClient,
     ui: {
-      lmViewBtn,
-      lmAddBtn,
-      lmClearBtn,
-      labMsg,
-      lmViewPanel,
-      lmAddPanel,
+      lmViewBtn, lmAddBtn, lmClearBtn, labMsg,
+      lmViewPanel, lmAddPanel,
       labList,
-      lmName,
-      lmEmail,
-      lmOrdersEmail,
-      lmPhone,
-      lmAddress,
-      lmShipping,
+      lmName, lmEmail, lmOrdersEmail, lmPhone,
+      lmAddress, lmShipping,
       lmSaveBtn
     },
     helpers: { show, confirmExact }
@@ -769,19 +694,10 @@ window.addEventListener("DOMContentLoaded", () => {
   const accountManagersModule = initAccountManagersManagement({
     supabaseClient,
     ui: {
-      amgrViewBtn,
-      amgrAddBtn,
-      amgrClearBtn,
-      amgrMsg,
-      amgrViewPanel,
-      amgrAddPanel,
-      amgrList,
-      amgrFirstName,
-      amgrLastName,
-      amgrEmail,
-      amgrPhone,
-      amgrAddress,
-      amgrNotes,
+      amgrViewBtn, amgrAddBtn, amgrClearBtn, amgrMsg,
+      amgrViewPanel, amgrAddPanel, amgrList,
+      amgrFirstName, amgrLastName, amgrEmail, amgrPhone,
+      amgrAddress, amgrNotes,
       amgrSaveBtn
     },
     helpers: { show, confirmExact }
@@ -829,6 +745,29 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   // =========================================================
+  // BLOCK: FORMULARY TABS (now safe: module exists)
+  // =========================================================
+  function setActiveFormularyTab(tabKey) {
+    fxTabIngredients?.classList.toggle("active", tabKey === "ingredients");
+    fxTabProducts?.classList.toggle("active", tabKey === "products");
+    show(fxSectionIngredients, tabKey === "ingredients");
+    show(fxSectionProducts, tabKey === "products");
+  }
+
+  if (fxTabIngredients && fxTabIngredients.dataset.bound !== "1") {
+    fxTabIngredients.addEventListener("click", () => setActiveFormularyTab("ingredients"));
+    fxTabIngredients.dataset.bound = "1";
+  }
+
+  if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
+    fxTabProducts.addEventListener("click", async () => {
+      setActiveFormularyTab("products");
+      try { await formulatedProductsModule.enter(); } catch (_e) {}
+    });
+    fxTabProducts.dataset.bound = "1";
+  }
+
+  // =========================================================
   // BLOCK: VIEWS + MENU (MODULE)
   // =========================================================
   const nav = initNavigation({
@@ -852,7 +791,6 @@ window.addEventListener("DOMContentLoaded", () => {
       if (!currentProfile) return false;
 
       const role = String(currentProfile.role || "").trim().toLowerCase();
-
       if (viewKey === "userMgmt") return role === "admin";
       if (role === "admin") return true;
 
@@ -863,7 +801,6 @@ window.addEventListener("DOMContentLoaded", () => {
     onEnter: {
       welcome: () => {
         showWelcomePanel({ containerEl: welcomeContent });
-
         const role = String(currentProfile?.role || "").trim().toLowerCase();
         if (role !== "admin") renderChangePasswordLink(welcomeContent);
       },
@@ -879,9 +816,7 @@ window.addEventListener("DOMContentLoaded", () => {
       labs: () => labsModule.resetLabsScreen(),
       orders: async () => { await ordersModule.enter(); },
       userMgmt: () => userMgmtModule.resetUserScreen(),
-      formulary: () => {
-        setActiveFormularyTab("ingredients");
-      }
+      formulary: () => setActiveFormularyTab("ingredients")
     }
   });
 
@@ -904,7 +839,6 @@ window.addEventListener("DOMContentLoaded", () => {
     currentSession = null;
     currentProfile = null;
     hydratedUserId = null;
-
     agentNameMap = {};
 
     try { customerModule.resetCustomerScreen(); } catch (_e) {}
@@ -927,14 +861,8 @@ window.addEventListener("DOMContentLoaded", () => {
   // BLOCK: HYDRATION (AFTER LOGIN)
   // =========================================================
   async function hydrateAfterLogin(session) {
-   
-    if (!session?.user?.id) {
-      return;
-    }
-
-    if (hydratedUserId === session.user.id) {
-      return;
-    }
+    if (!session?.user?.id) return;
+    if (hydratedUserId === session.user.id) return;
     hydratedUserId = session.user.id;
 
     try {
@@ -943,7 +871,8 @@ window.addEventListener("DOMContentLoaded", () => {
       let profile = null;
       try {
         profile = await loadProfileForUser(session.user.id);
-        } catch (e) {
+      } catch (e) {
+        console.error("loadProfileForUser failed:", e?.message || e, e);
       }
 
       if (!profile) {
@@ -981,9 +910,9 @@ window.addEventListener("DOMContentLoaded", () => {
       try { labsModule.resetLabsScreen(); } catch (_e) {}
       try { productTypesModule.resetProductTypesScreen(); } catch (_e) {}
 
-      
     } catch (e) {
-     setAuthMsg("Error after login: " + (e?.message || "Unknown error"));
+      console.error("hydrateAfterLogin error:", e);
+      setAuthMsg("Error after login: " + (e?.message || "Unknown error"));
     }
   }
 
@@ -1001,13 +930,11 @@ window.addEventListener("DOMContentLoaded", () => {
 
       try {
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-
         if (error) { setAuthMsg("Login failed: " + error.message); return; }
         if (!data?.session) { setAuthMsg("Login succeeded but session missing."); return; }
-
         await hydrateAfterLogin(data.session);
       } catch (e) {
-       
+        console.error("Login crashed:", e);
         setAuthMsg("Login crashed: " + (e?.message || "Unknown error"));
       }
     });
@@ -1026,33 +953,21 @@ window.addEventListener("DOMContentLoaded", () => {
   (async () => {
     try {
       const { data, error } = await supabaseClient.auth.getSession();
-      if (error) {
-        
-        setLoggedOutUI("Not logged in");
-        return;
-      }
-
-      if (data?.session) {
-       
-        await hydrateAfterLogin(data.session);
-      } else {
-        
-        setLoggedOutUI("Not logged in");
-      }
+      if (error) { setLoggedOutUI("Not logged in"); return; }
+      if (data?.session) await hydrateAfterLogin(data.session);
+      else setLoggedOutUI("Not logged in");
     } catch (e) {
+      console.error("Initial restore crashed:", e);
       setLoggedOutUI("Not logged in");
     }
   })();
 
   supabaseClient.auth.onAuthStateChange((event, session) => {
-   
-
     if (event === "SIGNED_OUT") {
       setLoggedOutUI("Logged out");
       return;
     }
 
-    // Password recovery: after user clicks the email link
     if (event === "PASSWORD_RECOVERY" && session) {
       hydrateAfterLogin(session).then(() => {
         try {
