@@ -952,6 +952,8 @@ return `
   </div>
 `.trim();
 
+}).join("");
+
 
 
     <!-- INCI + Description stacked in ONE column -->
