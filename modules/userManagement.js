@@ -130,7 +130,7 @@ export function initUserManagement({ supabaseClient, ui, helpers, state }) {
     const clinics = clinicsCache || await loadClinicsFallback();
 
     umAssignClinicSelect.innerHTML =
-      `<option value="">— Select clinic —</option>` +
+      `<option value="">— Select agent —</option>` +
       clinics
         .map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name || "Unnamed")}</option>`)
         .join("");
