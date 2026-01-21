@@ -910,17 +910,27 @@ window.addEventListener("DOMContentLoaded", () => {
       const inci = escapeHtml(r.inci_name || "");
       const desc = escapeHtml(r.short_description || "");
 
-      return `
-      <div class="customer-row" data-id="${id}">
-        <div>${psi}</div>
-        <div>${inci}</div>
-        <div class="subtle">${desc}</div>
-        <div class="customer-actions">
-          <button class="btn-primary fxIng-edit" type="button">Edit</button>
-          <button class="btn-danger fxIng-del" type="button">Delete</button>
-        </div>
+return `
+  <div class="customer-row" data-id="${id}">
+    <div>${psi}</div>
+
+    <!-- INCI + Description stacked in ONE column -->
+    <div style="min-width:0;">
+      <div style="font-weight:600; line-height:1.2; white-space:normal; word-break:normal;">
+        ${inci}
       </div>
-    `.trim();
+      <div class="subtle" style="margin-top:4px; white-space:normal; word-break:normal;">
+        ${desc}
+      </div>
+    </div>
+
+    <div class="customer-actions">
+      <button class="btn-primary fxIng-edit" type="button">Edit</button>
+      <button class="btn-danger fxIng-del" type="button">Delete</button>
+    </div>
+  </div>
+`.trim();
+
     }).join("");
 
     fxIngList.querySelectorAll(".fxIng-edit").forEach(btn => {
