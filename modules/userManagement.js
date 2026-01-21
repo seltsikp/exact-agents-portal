@@ -321,7 +321,7 @@ if (umSaveBtn) {
 
     let q = supabaseClient
       .from("agent_users")
-      .select("id, auth_user_id, full_name, email, role, status, permissions, created_at")
+      .select("id, auth_user_id, full_name, email, role, status, permissions, created_at, agent_id")
       .order("created_at", { ascending: false });
 
     const t = (term || "").trim();
