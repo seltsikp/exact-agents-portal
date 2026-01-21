@@ -174,17 +174,16 @@ if (custGenderInput) custGenderInput.value = "";
 
     let clinicPill = "";
     if (role === "admin") {
-      const clinicName = agentNameMap?.[c.agent_id] || "Unknown clinic";
-      clinicPill = `<span class="pill-soft pill-soft-gold">Clinic: ${escapeHtml(clinicName)}</span>`;
+      const clinicName = agentNameMap?.[c.agent_id] || "Unknown agent";
+      clinicPill = `<span class="pill-soft pill-soft-gold">Agent: ${escapeHtml(clinicName)}</span>`;
     }
 
     const createdPill = created ? `<span class="pill-soft">Created: ${escapeHtml(created)}</span>` : "";
 
-const clinicName =
+const agentName =
   role === "admin"
-    ? (agentNameMap?.[c.agent_id] || "Unknown clinic")
+    ? (agentNameMap?.[c.agent_id] || "Unknown agent")
     : (agentNameMap?.[c.agent_id] || "—");
-
 
     return `
       <div class="customer-row" data-customer-id="${escapeHtml(c.id)}">
@@ -200,7 +199,7 @@ const clinicName =
 
        <!-- MIDDLE: CLINIC (admin only) + CREATED -->
 <div>
-  ${role === "admin" ? `<div>Clinic: ${escapeHtml(clinicName || "—")}</div>` : ""}
+  ${role === "admin" ? `<div>Agent: ${escapeHtml(clinicName || "—")}</div>` : ""}
   <div class="subtle">Created: ${escapeHtml(created || "—")}</div>
 </div>
 
@@ -410,7 +409,7 @@ markField(custGenderInput, "ok");
 
       if (state.currentProfile?.role === "admin") {
         agent_id = assignClinicSelect?.value || null;
-        if (!agent_id) { setCustMsg("Please select a clinic to assign this customer to."); return; }
+        if (!agent_id) { setCustMsg("Please select an agent to assign this customer to."); return; }
       } else {
         agent_id = state.currentProfile?.agent_id || null;
         if (!agent_id) { setCustMsg("No clinic linked to this login."); return; }
