@@ -354,12 +354,7 @@ const clinicName =
   el.addEventListener("blur", validateCustomerFieldsLive);
 });
 
-    if (!el) return;
-    el.addEventListener("input", validateCustomerFieldsLive);
-    el.addEventListener("blur", validateCustomerFieldsLive);
-  });
-
-  // buttons
+   // buttons
   if (cmViewBtn) cmViewBtn.addEventListener("click", () => showViewCustomersPanel());
   if (cmAddBtn) cmAddBtn.addEventListener("click", () => { clearAddForm(); showAddCustomerPanel(); });
   if (cmClearBtn) cmClearBtn.addEventListener("click", () => resetCustomerScreen());
@@ -470,15 +465,15 @@ if (error) {
 
 const row = (data && data[0]) ? data[0] : null;
 if (!row?.out_customer_id) {
-  setCustMsg("Create/link error: No customer_id returned.");
+  setCustMsg("Create/link error: No out_customer_id returned.");
   return;
 }
 
-setCustMsg(row.was_created ? "Customer created ✅" : "Customer linked to your clinic ✅");
+setCustMsg(row.out_was_created ? "Customer created ✅" : "Customer linked to your clinic ✅");
 clearAddForm();
 showViewCustomersPanel();
 await runCustomerSearch(cmSearch?.value || "");
-
-                                        });
+      
+    });
   }
 }
