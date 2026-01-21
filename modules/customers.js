@@ -58,6 +58,9 @@ export function initCustomerManagement({
     const last  = (lastNameInput?.value || "").trim();
     const email = (custEmailInput?.value || "").trim();
     const phone = (custPhoneInput?.value || "").trim();
+    const dob = (custDobInput?.value || "").trim();
+    const gender = (custGenderInput?.value || "").trim();
+
 
     if (!first) markField(firstNameInput, "error"); else markField(firstNameInput, "ok");
     if (!last) markField(lastNameInput, "error"); else markField(lastNameInput, "ok");
@@ -74,7 +77,6 @@ export function initCustomerManagement({
   function clearAddForm() {
     if (firstNameInput) firstNameInput.value = "";
     if (lastNameInput) lastNameInput.value = "";
-    if (custDobInput) custDobInput.value = "";
     if (custDobInput) custDobInput.value = "";
 
     if (custEmailInput) custEmailInput.value = "";
@@ -149,6 +151,13 @@ export function initCustomerManagement({
     else if (email) metaLine = `${codePart}<span>${email}</span>`;
     else if (phone) metaLine = `${codePart}<span>${phone}</span>`;
     else metaLine = codePart || `<span style="opacity:.65;">No contact details</span>`;
+
+    if (!dob) markField(custDobInput, "error");
+    else markField(custDobInput, "ok");
+
+    if (!gender) markField(custGenderInput, "error");
+    else markField(custGenderInput, "ok");
+
 
     let clinicPill = "";
     if (role === "admin") {
@@ -352,7 +361,7 @@ const clinicName =
   const shipping_country = (custShipCountryInput?.value || "").trim() || null;
 
 
-      clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
+clearFieldMarks(firstNameInput, lastNameInput, custDobInput, custGenderInput, custEmailInput, custPhoneInput);
 
       if (!first_name) { markField(firstNameInput, "error"); setCustMsg("First name is required."); return; }
       markField(firstNameInput, "ok");
@@ -360,8 +369,12 @@ const clinicName =
       if (!last_name) { markField(lastNameInput, "error"); setCustMsg("Last name is required."); return; }
       markField(lastNameInput, "ok");
 
-     if (!date_of_birth) {  setCustMsg("Date of birth is required.");  return; }
-      if (!gender) { setCustMsg("Gender is required."); return; }
+    if (!date_of_birth) { markField(custDobInput, "error"); setCustMsg("Date of birth is required."); return; }
+markField(custDobInput, "ok");
+
+if (!gender) { markField(custGenderInput, "error"); setCustMsg("Gender is required."); return; }
+markField(custGenderInput, "ok");
+
 
 
       if (email && !isValidEmail(email)) { markField(custEmailInput, "error"); setCustMsg("Please enter a valid email address."); return; }
