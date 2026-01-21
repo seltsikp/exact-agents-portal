@@ -911,13 +911,12 @@ window.addEventListener("DOMContentLoaded", () => {
       const desc = escapeHtml(r.short_description || "");
 
 return `
-  <div class="customer-row" data-id="${id}">
-    <div style="
-  width: 72px;
-  min-width: 72px;
-  font-weight: 600;
-  white-space: nowrap;
-">
+  <div class="customer-row" data-id="${id}" style="
+    grid-template-columns: 78px 1fr auto;
+    column-gap: 12px;
+    align-items: start;
+  ">
+
   ${psi}
 </div>
 
