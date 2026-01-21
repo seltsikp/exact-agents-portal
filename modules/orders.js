@@ -449,41 +449,64 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
   }
 
   // ---------------------------------------------------------
-  // Generate pack
-  // ---------------------------------------------------------
-  async function generatePack() {
-    if (!selectedOrderId) return;
+// Generate pack (PAYMENT-GATED)
+// ---------------------------------------------------------
+async function generatePack() {
+  if (!selectedOrderId) return;
 
-    if (!canGeneratePackNow()) { setMsg("Not allowed."); return; }
-    if (typeof window.exactGeneratePack !== "function") { setMsg("Missing window.exactGeneratePack(orderId)."); return; }
+  if (!canGeneratePackNow()) { setMsg("Not allowed."); return; }
+  if (typeof window.exactGeneratePack !== "function") { setMsg("Missing window.exactGeneratePack(orderId)."); return; }
 
-    const btn = ordersGeneratePackBtn;
-    const prevHtml = btn?.innerHTML || "Generate Pack";
+  // HARD GATE: re-check payment status right now (server truth)
+  const { data: o, error: oErr } = await supabaseClient
+    .from("orders")
+    .select("payment_status")
+    .eq("id", selectedOrderId)
+    .maybeSingle();
+
+  if (oErr) { setMsg("Payment check failed: " + oErr.message); return; }
+
+  const pay = String(o?.payment_status || "unpaid").toLowerCase();
+  const isPaidLike = (pay === "paid" || pay === "comped");
+
+  if (!isPaidLike) {
+    setMsg("Payment required — please Pay Now first.");
+    // keep button disabled text consistent
+    if (ordersGeneratePackBtn) {
+      ordersGeneratePackBtn.disabled = true;
+      ordersGeneratePackBtn.textContent = "Generate Pack (unpaid)";
+    }
+    return;
+  }
+
+  const btn = ordersGeneratePackBtn;
+  const prevHtml = btn?.innerHTML || "Generate Pack";
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner" style="margin-right:8px;"></span>Generating…`;
+  }
+  setMsg("Generating pack…");
+
+  try {
+    const result = await window.exactGeneratePack(selectedOrderId);
+    await openOrder(selectedOrderId);
+
+    const v = result?.version ?? result?.pack_version ?? null;
+    setMsg(v ? `Pack generated (v${v}).` : "Pack generated.");
+
+    if (btn) btn.style.display = "none";
+  } catch (e) {
+    const msg = String(e?.message || e);
+    setMsg(msg.includes("402") ? "Payment required (admin: Mark Paid or Comp)." : ("Generate pack failed: " + msg));
 
     if (btn) {
-      btn.disabled = true;
-      btn.innerHTML = `<span class="spinner" style="margin-right:8px;"></span>Generating…`;
-    }
-    setMsg("Generating pack…");
-
-    try {
-      const result = await window.exactGeneratePack(selectedOrderId);
-      await openOrder(selectedOrderId);
-
-      const v = result?.version ?? result?.pack_version ?? null;
-      setMsg(v ? `Pack generated (v${v}).` : "Pack generated.");
-
-      if (btn) btn.style.display = "none";
-    } catch (e) {
-      const msg = String(e?.message || e);
-      setMsg(msg.includes("402") ? "Payment required (admin: Mark Paid or Comp)." : ("Generate pack failed: " + msg));
-
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = prevHtml;
-      }
+      btn.disabled = false;
+      btn.innerHTML = prevHtml;
     }
   }
+}
+
 
   // ---------------------------------------------------------
   // Stripe payment (client)
