@@ -521,8 +521,6 @@ async function generatePack() {
   }
 }
 
-}
-
 
   // ---------------------------------------------------------
   // Stripe payment (client)
