@@ -119,19 +119,42 @@ const MODULES = [
   // =========================================================
   // Permissions UI
   // =========================================================
-  function renderPerms(permsObj) {
-    if (!umPerms) return;
-    const p = permsObj && typeof permsObj === "object" ? permsObj : {};
-    umPerms.innerHTML = MODULES.map(m => {
-      const checked = !!p[m.key];
-      return `
-        <label class="perm-card">
-          <input type="checkbox" data-perm="${escapeHtml(m.key)}" ${checked ? "checked" : ""} />
-          <span>${escapeHtml(m.label)}</span>
-        </label>
-      `;
-    }).join("");
-  }
+function renderPerms(permsObj) {
+  if (!umPerms) return;
+  const p = permsObj && typeof permsObj === "object" ? permsObj : {};
+
+  umPerms.innerHTML = MODULES.map(m => {
+    const checked = !!p[m.key];
+
+    // Optional: short helper text (remove if you don't want subtitles)
+    const sub =
+      m.key === "orders" ? "Create / view / manage orders" :
+      m.key === "customers" ? "Add & manage customers" :
+      m.key === "agents" ? "Manage clinics / agents" :
+      m.key === "accountManagers" ? "Manage account managers" :
+      m.key === "productTypes" ? "Manage product groups" :
+      m.key === "formulary" ? "Ingredients + formulated products" :
+      m.key === "labs" ? "Manage labs + addresses" :
+      m.key === "userMgmt" ? "Admin-only user controls" :
+      "";
+
+    return `
+      <label class="perm-card">
+        <div>
+          <div class="perm-label">${escapeHtml(m.label)}</div>
+          ${sub ? `<div class="perm-sub">${escapeHtml(sub)}</div>` : ``}
+        </div>
+
+        <input
+          type="checkbox"
+          data-perm="${escapeHtml(m.key)}"
+          ${checked ? "checked" : ""}
+        />
+      </label>
+    `;
+  }).join("");
+}
+
 
   function readPermsFromUI() {
     const out = {};
