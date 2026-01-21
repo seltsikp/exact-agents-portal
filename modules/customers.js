@@ -85,6 +85,7 @@ export function initCustomerManagement({
     if (firstNameInput) firstNameInput.value = "";
     if (lastNameInput) lastNameInput.value = "";
     if (custDobInput) custDobInput.value = "";
+if (custGenderInput) custGenderInput.value = "";
 
     if (custEmailInput) custEmailInput.value = "";
     if (custPhoneInput) custPhoneInput.value = "";
@@ -94,7 +95,15 @@ export function initCustomerManagement({
     if (custShipCountryInput) custShipCountryInput.value = "";
 
     editingCustomerId = null;
-    clearFieldMarks(firstNameInput, lastNameInput, custDobInput, custGenderInput, custEmailInput, custPhoneInput);
+    clearFieldMarks(
+  firstNameInput,
+  lastNameInput,
+  custDobInput,
+  custGenderInput,
+  custEmailInput,
+  custPhoneInput
+);
+
 
   }
 
@@ -331,8 +340,20 @@ const clinicName =
     else setCustMsg(`Found ${rows.length} customer${rows.length === 1 ? "" : "s"}.`);
   }
 
-  // live validation listeners
- [firstNameInput, lastNameInput, custDobInput, custGenderInput, custEmailInput, custPhoneInput].forEach((el) => {
+ // live validation listeners
+[
+  firstNameInput,
+  lastNameInput,
+  custDobInput,
+  custGenderInput,
+  custEmailInput,
+  custPhoneInput
+].forEach((el) => {
+  if (!el) return;
+  el.addEventListener("input", validateCustomerFieldsLive);
+  el.addEventListener("blur", validateCustomerFieldsLive);
+});
+
     if (!el) return;
     el.addEventListener("input", validateCustomerFieldsLive);
     el.addEventListener("blur", validateCustomerFieldsLive);
