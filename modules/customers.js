@@ -72,6 +72,13 @@ export function initCustomerManagement({
     if (!phone) markField(custPhoneInput, null);
     else if (!isValidPhone(phone)) markField(custPhoneInput, "error");
     else markField(custPhoneInput, "ok");
+
+    if (!dob) markField(custDobInput, "error");
+    else markField(custDobInput, "ok");
+
+    if (!gender) markField(custGenderInput, "error");
+    else markField(custGenderInput, "ok");
+
   }
 
   function clearAddForm() {
@@ -87,7 +94,8 @@ export function initCustomerManagement({
     if (custShipCountryInput) custShipCountryInput.value = "";
 
     editingCustomerId = null;
-    clearFieldMarks(firstNameInput, lastNameInput, custEmailInput, custPhoneInput);
+    clearFieldMarks(firstNameInput, lastNameInput, custDobInput, custGenderInput, custEmailInput, custPhoneInput);
+
   }
 
   function resetCustomerScreen() {
@@ -152,11 +160,7 @@ export function initCustomerManagement({
     else if (phone) metaLine = `${codePart}<span>${phone}</span>`;
     else metaLine = codePart || `<span style="opacity:.65;">No contact details</span>`;
 
-    if (!dob) markField(custDobInput, "error");
-    else markField(custDobInput, "ok");
 
-    if (!gender) markField(custGenderInput, "error");
-    else markField(custGenderInput, "ok");
 
 
     let clinicPill = "";
@@ -328,7 +332,7 @@ const clinicName =
   }
 
   // live validation listeners
-  [firstNameInput, lastNameInput, custEmailInput, custPhoneInput].forEach((el) => {
+ [firstNameInput, lastNameInput, custDobInput, custGenderInput, custEmailInput, custPhoneInput].forEach((el) => {
     if (!el) return;
     el.addEventListener("input", validateCustomerFieldsLive);
     el.addEventListener("blur", validateCustomerFieldsLive);
@@ -362,6 +366,7 @@ const clinicName =
 
 
 clearFieldMarks(firstNameInput, lastNameInput, custDobInput, custGenderInput, custEmailInput, custPhoneInput);
+
 
       if (!first_name) { markField(firstNameInput, "error"); setCustMsg("First name is required."); return; }
       markField(firstNameInput, "ok");
@@ -452,3 +457,7 @@ setCustMsg(row.was_created ? "Customer created ✅" : "Customer linked to your c
 clearAddForm();
 showViewCustomersPanel();
 await runCustomerSearch(cmSearch?.value || "");
+
+                                        });
+  }
+}
