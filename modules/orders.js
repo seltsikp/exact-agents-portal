@@ -66,7 +66,7 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
   // ---------------------------------------------------------
   // Create Order modal
   // ---------------------------------------------------------
-  function renderCreateOrderModal({ customers, agent, onSubmit, onCancel }) {
+function renderCreateOrderModal({ products, defaultProductId, customers, agent, onSubmit, onCancel }) {
     const overlay = document.createElement("div");
     overlay.style.position = "fixed";
     overlay.style.inset = "0";
