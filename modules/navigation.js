@@ -28,9 +28,6 @@ Object.entries(views || {}).forEach(([key, v]) => {
 });
 
 
-
-
-
     // menu highlight
     if (menuItems) {
       const btns = menuItems.querySelectorAll("button[data-view]");
