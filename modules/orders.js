@@ -932,12 +932,11 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
             await loadOrders({ mode: "all" });
             await openOrder(order_id);
 
-            // Run workflow immediately after create (current product uses exact_trio_v1_generate_pack)
-            if (p.workflow_key === "exact_trio_v1" && typeof window.exactGeneratePack === "function") {
-              setMsg("Draft order created ✅ Generating pack…");
-              await generatePack(); // uses selectedOrderId set by openOrder()
-            } else {
-              setMsg("Draft order created ✅");
+           // IMPORTANT: Do NOT generate pack on create.
+// Pack generation is gated by payment_status in openOrder().
+// User must Pay Now -> payment_status becomes paid/comped -> Generate Pack becomes enabled.
+setMsg("Draft order created ✅ (Pay now to enable Generate Pack)");
+
             }
           }
         });
