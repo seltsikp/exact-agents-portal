@@ -754,18 +754,7 @@ window.addEventListener("DOMContentLoaded", () => {
     show(fxSectionProducts, tabKey === "products");
   }
 
-  if (fxTabIngredients && fxTabIngredients.dataset.bound !== "1") {
-    fxTabIngredients.addEventListener("click", () => setActiveFormularyTab("ingredients"));
-    fxTabIngredients.dataset.bound = "1";
-  }
-
-  if (fxTabProducts && fxTabProducts.dataset.bound !== "1") {
-    fxTabProducts.addEventListener("click", async () => {
-      setActiveFormularyTab("products");
-      try { await formulatedProductsModule.enter(); } catch (_e) {}
-    });
-    fxTabProducts.dataset.bound = "1";
-  }
+  
 
   // =========================================================
   // BLOCK: VIEWS + MENU (MODULE)
@@ -816,7 +805,11 @@ window.addEventListener("DOMContentLoaded", () => {
       labs: () => labsModule.resetLabsScreen(),
       orders: async () => { await ordersModule.enter(); },
       userMgmt: () => userMgmtModule.resetUserScreen(),
-      formulary: () => setActiveFormularyTab("ingredients")
+      formulary: async () => {
+  setActiveFormularyTab("ingredients");
+  // Optional: if your formulated products module needs a first-time init later, leave it.
+}
+
     }
   });
 
