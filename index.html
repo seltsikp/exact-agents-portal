@@ -289,6 +289,33 @@
         margin: 6px 0 12px;
         align-items: center;
       }
+
+      /* ======================================================= 
+          BLOCK: CLINICIAN TOOL TIPS
+         ========================================================= */
+.tip-trigger{
+  cursor: help;
+  text-decoration: underline dotted rgba(0,0,0,0.25);
+  text-underline-offset: 3px;
+}
+.tip-pop{
+  position: fixed;
+  z-index: 9999;
+  max-width: 420px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(15, 20, 30, 0.96);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.35;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+  display: none;
+}
+.tip-pop .tip-title{
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
 /* =========================================================
    USER MGMT — PERMISSIONS GRID (CLEAN)
    ========================================================= */
@@ -1796,5 +1823,7 @@
       <script type="module" src="./app_v41.js?v=42"></script>
 
     </div>
+              <div id="tipPop" class="tip-pop" role="tooltip" aria-hidden="true"></div>
+
   </body>
 </html>
