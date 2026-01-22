@@ -1317,7 +1317,7 @@ disposeIdleLogout = initIdleLogout({
     setLoggedOutUI(reason === "jwt-expiry" ? "Session expired" : "Logged out due to inactivity");
   }
 });
-
+  }
 
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
