@@ -45,7 +45,7 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
   .tip-pop{
     position: fixed;
     z-index: 9999;
-    max-width: 420px;
+    max-width: min(420px, calc(100vw - 20px));
     padding: 10px 12px;
     border-radius: 12px;
     background: rgba(15,20,30,0.96);
@@ -108,7 +108,7 @@ function tipShow(targetEl, title, text) {
   // Hard-set baseline styles so popup is visible even if CSS is missing/overridden
   el.style.position = "fixed";
   el.style.zIndex = "99999";
-  el.style.maxWidth = "420px";
+  el.style.maxWidth = "min(420px, calc(100vw - 20px))";
   el.style.padding = "10px 12px";
   el.style.borderRadius = "12px";
   el.style.background = "rgba(15, 20, 30, 0.96)";
@@ -124,23 +124,39 @@ function tipShow(targetEl, title, text) {
   `;
 
   const r = targetEl.getBoundingClientRect();
-  const pad = 10;
+const pad = 10;
 
-  el.style.display = "block";
-  el.style.visibility = "visible";
-  el.setAttribute("aria-hidden", "false");
+el.style.display = "block";
+el.style.visibility = "visible";
+el.setAttribute("aria-hidden", "false");
 
-  const w = el.offsetWidth || 320;
-  const h = el.offsetHeight || 80;
+// Preferred position (below the label)
+let left = r.left;
+let top = r.bottom + 8;
 
-  let left = Math.min(window.innerWidth - w - pad, Math.max(pad, r.left));
-  let top = r.bottom + 8;
+// First paint at preferred coords so we can measure real size
+el.style.left = Math.round(left) + "px";
+el.style.top = Math.round(top) + "px";
 
-  // if would overflow bottom, show above
-  if (top + h + pad > window.innerHeight) top = Math.max(pad, r.top - h - 8);
+// Measure + clamp to viewport (fixes mobile overflow/off-screen)
+const pr = el.getBoundingClientRect();
+const vw = window.innerWidth;
+const vh = window.innerHeight;
 
-  el.style.left = left + "px";
-  el.style.top = top + "px";
+// Clamp horizontally
+if (pr.left < pad) left += (pad - pr.left);
+if (pr.right > vw - pad) left -= (pr.right - (vw - pad));
+
+// Clamp vertically: if it overflows bottom, place above label
+if (pr.bottom > vh - pad) {
+  top = r.top - pr.height - 8;
+}
+// If still too high, clamp to top padding
+if (top < pad) top = pad;
+
+el.style.left = Math.round(left) + "px";
+el.style.top = Math.round(top) + "px";
+
 }
 
 // close tooltip on outside click/tap
