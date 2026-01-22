@@ -1,0 +1,58 @@
+// modules/idleLogout.js
+// EXACT Portal — inactivity logout (client enforced)
+
+export function initIdleLogout({
+  supabaseClient,
+  idleMs = 15 * 60 * 1000, // 15 minutes default
+  onLogout
+}) {
+  if (!supabaseClient?.auth) return () => {};
+
+  let lastActivity = Date.now();
+  let timer = null;
+
+  const mark = () => { lastActivity = Date.now(); };
+
+  const events = [
+    "mousemove",
+    "mousedown",
+    "keydown",
+    "scroll",
+    "touchstart",
+    "touchmove",
+    "pointerdown",
+    "pointermove"
+  ];
+
+  async function check() {
+    const { data } = await supabaseClient.auth.getSession();
+    if (!data?.session) return cleanup();
+
+    if (Date.now() - lastActivity >= idleMs) {
+      cleanup();
+      await supabaseClient.auth.signOut();
+      if (typeof onLogout === "function") onLogout("idle");
+    }
+  }
+
+  function cleanup() {
+    events.forEach(e => window.removeEventListener(e, mark));
+    window.removeEventListener("focus", mark);
+    document.removeEventListener("visibilitychange", onVis);
+    if (timer) clearInterval(timer);
+    timer = null;
+  }
+
+  function onVis() {
+    if (!document.hidden) mark();
+  }
+
+  // init
+  events.forEach(e => window.addEventListener(e, mark, { passive: true }));
+  window.addEventListener("focus", mark);
+  document.addEventListener("visibilitychange", onVis);
+
+  timer = setInterval(check, 1000);
+
+  return cleanup;
+}
