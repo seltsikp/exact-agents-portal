@@ -118,12 +118,13 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
 
   function renderClinicianScoresPanel(scoresObj) {
     if (!ordersClinicianPanel || !ordersScoresList) return;
+    try {
 
     clinicianScores = normalizeScores(scoresObj);
 
     const rowHtml = (key) => {
       const val = clampScore(clinicianScores[key]);
-      const label = escapeHtml(key.replaceAll("_", " "));
+      const label = escapeHtml(String(key || "").split("_").join(" "));
       return `
         <div class="scoreRow" data-score-key="${escapeHtml(key)}">
           <div class="scoreLabel">${label}</div>
@@ -164,6 +165,14 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
       input.addEventListener("change", apply);
       apply();
     });
+
+    } catch (e) {
+      console.error("[ClinicianScores] render failed:", e);
+      ordersScoresList.innerHTML = "";
+      setScoresMsg("Scores UI error: " + (e?.message || e));
+    }
+  }
+
 
 
   function setClinicianInputsLocked(locked) {
@@ -959,7 +968,12 @@ async function generatePack() {
       if (ordersClinicianPanel) ordersClinicianPanel.style.display = "";
 
       const saved = setClinicianStateFromOrderRow(o);
-      renderClinicianScoresPanel(saved || defaultScores50());
+      try {
+        renderClinicianScoresPanel(saved || defaultScores50());
+      } catch (e) {
+        console.error("[ClinicianScores] render failed:", e);
+        setScoresMsg("Scores UI error: " + (e?.message || e));
+      }
 
       if (!saved) {
         // First-time entry: editable, must save to proceed
