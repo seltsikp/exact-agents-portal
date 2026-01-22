@@ -7,6 +7,53 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
     viewOrders,
     ordersCreateBtn,
 
+    // ===== Tooltip helper (hover + tap) =====
+const tipPop = document.getElementById("tipPop");
+
+function tipHide() {
+  if (!tipPop) return;
+  tipPop.style.display = "none";
+  tipPop.setAttribute("aria-hidden", "true");
+}
+function tipShow(targetEl, title, text) {
+  if (!tipPop || !targetEl) return;
+
+  tipPop.innerHTML = `
+    <div class="tip-title">${escapeHtml(title || "")}</div>
+    <div>${escapeHtml(text || "")}</div>
+  `;
+
+  // position near element
+  const r = targetEl.getBoundingClientRect();
+  const pad = 10;
+
+  tipPop.style.display = "block";
+  tipPop.setAttribute("aria-hidden", "false");
+
+  // after display so offsetWidth/Height are correct
+  const w = tipPop.offsetWidth;
+  const h = tipPop.offsetHeight;
+
+  let left = Math.min(window.innerWidth - w - pad, Math.max(pad, r.left));
+  let top  = r.bottom + 8;
+
+  // if would overflow bottom, show above
+  if (top + h + pad > window.innerHeight) top = Math.max(pad, r.top - h - 8);
+
+  tipPop.style.left = left + "px";
+  tipPop.style.top  = top + "px";
+}
+
+// close tooltip on outside click/tap
+document.addEventListener("pointerdown", (e) => {
+  if (!tipPop) return;
+  if (tipPop.contains(e.target)) return;
+  if (e.target && e.target.closest && e.target.closest(".tip-trigger")) return;
+  tipHide();
+});
+window.addEventListener("scroll", tipHide, { passive: true });
+window.addEventListener("resize", tipHide);
+
     // list UI
     ordersMsg,
     ordersListPanel,
@@ -66,6 +113,35 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
     "translucency",
     "uniformness",
   ];
+
+const DIM_TIPS = {
+  hydration:
+    "The hydration parameter reflects how skin suffers from a lack of water. Problems with hydration can be identified through indirect skin features, such as fine lines or cracks, irritation, flaking, scaling, or peeling. The higher parameter values are associated with better hydration levels.",
+
+  acne:
+    "Acne is a disorder of the skin that has many variances in its appearance between genders. The pathogenesis of acne is multifactorial and it involves four main pathways: excess sebum production, comedogenesis, Propionibacterium acnes and complex inflammatory mechanisms involving both innate and acquired immunity. Acne areas are detected and the ratio of skin area covered by detected acne is calculated. Also for each acne spot the local irritation is estimated. The higher the value of this parameter, the fewer acne spots and pimples you have",
+
+  lines:
+    "Lines, also known as wrinkles, appear as a sign of the aging process. As we age and are exposed to adverse environmental factors, the collagen and hyaluronic acid content of our skin decreases, causing the loss of moisture and elasticity. These changes lead to the development of wrinkles and sagging, or downward shifts of the skin causing nasolabial folds, marionette folds, and jowls. Over time, our lines become more prominent, developing from fine lines into deep lines. The higher the value of this parameter, the less prominent lines you have.",
+
+  pigmentation:
+    "Pigmentation refers to the coloring of the skin and is determined mainly by the brown pigment melanin. Pigmentation takes into account the prominence of dark spots, moles and freckles. Hyperpigmentation is usually harmless but can sometimes be caused by an underlying medical condition. In case of very low parameter values, it is recommended to consult a specialist. The higher the value of this parameter, the fewer pigmented spots you have.",
+
+  eye_area_condition:
+    "Eye bags are formed because of the loss of skin elasticity of lower eyelid. Eye bags progression is associated with the aging process, but it can be a sign of lack of sleep or stagnation of blood in vessels under the skin in case of circulatory disorders. The higher value in this parameter is associated with less prominent eye bags, lacrimal grooves, and dark circles.",
+
+  redness:
+    "Our skin has a natural pink color because of our blood vessels. Increased skin redness can be associated with allergic reactions and inflammatory processes. The most common environmental factors leading to facial redness are cold air or ultraviolet radiation. A higher skin redness level is associated with a lower value for this parameter.",
+
+  pores:
+    "Skin usually has pores in different conditions. They contain tiny ostia from either pilosebaceous follicles (with sebaceous glands) or sweat glands that affect their condition. Enlarged, filamented, or black-headed pores require care. The algorithm calculates the size of each pore and the number of pores. The pores are classified into small and large pores. The ratio of skin area covered by large pores is non-linearly transformed to a score that is calculated for different facial areas and the whole face. The higher the value of this parameter, the less large pores you have.",
+
+  translucency:
+    "Translucency describes how bright, clear, and radiant your skin looks. This effect comes from the way light reflects off the surface of your skin. Several factors influence this reflection—such as skin firmness, evenness of pigmentation, oil levels, and hydration. When these elements are balanced and healthy, light spreads smoothly across the skin. This creates the appearance of naturally luminous, “translucent” skin. Higher translucency values indicate better skin radiance and clarity.",
+
+  uniformness:
+    "The uniformness metric shows how smooth and even your skin is. It takes into account eruption, age spots, freckles, and blood vessels close to the surface, along with texture-associated skin features. The higher the value of this parameter, the more uniform and smooth your skin is."
+};
 
   let clinicianScores = null; // current in-UI values (object)
   let clinicianEnabledForOrder = false;
