@@ -7,53 +7,6 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
     viewOrders,
     ordersCreateBtn,
 
-    // ===== Tooltip helper (hover + tap) =====
-const tipPop = document.getElementById("tipPop");
-
-function tipHide() {
-  if (!tipPop) return;
-  tipPop.style.display = "none";
-  tipPop.setAttribute("aria-hidden", "true");
-}
-function tipShow(targetEl, title, text) {
-  if (!tipPop || !targetEl) return;
-
-  tipPop.innerHTML = `
-    <div class="tip-title">${escapeHtml(title || "")}</div>
-    <div>${escapeHtml(text || "")}</div>
-  `;
-
-  // position near element
-  const r = targetEl.getBoundingClientRect();
-  const pad = 10;
-
-  tipPop.style.display = "block";
-  tipPop.setAttribute("aria-hidden", "false");
-
-  // after display so offsetWidth/Height are correct
-  const w = tipPop.offsetWidth;
-  const h = tipPop.offsetHeight;
-
-  let left = Math.min(window.innerWidth - w - pad, Math.max(pad, r.left));
-  let top  = r.bottom + 8;
-
-  // if would overflow bottom, show above
-  if (top + h + pad > window.innerHeight) top = Math.max(pad, r.top - h - 8);
-
-  tipPop.style.left = left + "px";
-  tipPop.style.top  = top + "px";
-}
-
-// close tooltip on outside click/tap
-document.addEventListener("pointerdown", (e) => {
-  if (!tipPop) return;
-  if (tipPop.contains(e.target)) return;
-  if (e.target && e.target.closest && e.target.closest(".tip-trigger")) return;
-  tipHide();
-});
-window.addEventListener("scroll", tipHide, { passive: true });
-window.addEventListener("resize", tipHide);
-
     // list UI
     ordersMsg,
     ordersListPanel,
@@ -75,6 +28,53 @@ window.addEventListener("resize", tipHide);
     ordersBatchSummary,
     ordersArtifactsList,
   } = ui;
+
+  // ===== Tooltip helper (hover + tap) =====
+  const tipPop = document.getElementById("tipPop");
+
+  function tipHide() {
+    if (!tipPop) return;
+    tipPop.style.display = "none";
+    tipPop.setAttribute("aria-hidden", "true");
+  }
+
+  function tipShow(targetEl, title, text) {
+    if (!tipPop || !targetEl) return;
+
+    tipPop.innerHTML = `
+      <div class="tip-title">${escapeHtml(title || "")}</div>
+      <div>${escapeHtml(text || "")}</div>
+    `;
+
+    const r = targetEl.getBoundingClientRect();
+    const pad = 10;
+
+    tipPop.style.display = "block";
+    tipPop.setAttribute("aria-hidden", "false");
+
+    const w = tipPop.offsetWidth;
+    const h = tipPop.offsetHeight;
+
+    let left = Math.min(window.innerWidth - w - pad, Math.max(pad, r.left));
+    let top = r.bottom + 8;
+
+    if (top + h + pad > window.innerHeight) top = Math.max(pad, r.top - h - 8);
+
+    tipPop.style.left = left + "px";
+    tipPop.style.top = top + "px";
+  }
+
+  // close tooltip on outside click/tap
+  document.addEventListener("pointerdown", (e) => {
+    if (!tipPop) return;
+    if (tipPop.contains(e.target)) return;
+    if (e.target && e.target.closest && e.target.closest(".tip-trigger")) return;
+    tipHide();
+  });
+
+  window.addEventListener("scroll", tipHide, { passive: true });
+  window.addEventListener("resize", tipHide);
+
 
   // Admin-only buttons live in index.html (not in ui map)
   const ordersMarkPaidBtn = document.getElementById("ordersMarkPaidBtn");
