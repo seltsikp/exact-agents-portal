@@ -240,9 +240,6 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
     return saved;
   }
 
-    setScoresMsg("");
-  }
-
   async function persistClinicianScoresToOrder(orderId, scores) {
     // We don't assume an exact schema: we try common column names until one succeeds.
     // This makes the UI resilient even if your SQL used a slightly different naming.
