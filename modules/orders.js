@@ -73,71 +73,82 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
   }
 })();
 
-const tipPop = document.getElementById("tipPop");
-  // Harden baseline tooltip styles (prevents "invisible tooltip" when CSS is missing/overridden)
-  if (tipPop) {
-    tipPop.style.position = "fixed";
-    tipPop.style.zIndex = "999999";
-    tipPop.style.maxWidth = tipPop.style.maxWidth || "420px";
-    // default hidden until shown
-    if (!tipPop.style.display) tipPop.style.display = "none";
+
+// --- Tooltip helpers (hover + tap) ---
+function ensureTipPopExists(){
+  let el = document.getElementById("tipPop");
+  if (!el) {
+    // Create if missing (safe fallback)
+    el = document.createElement("div");
+    el.id = "tipPop";
+    el.className = "tip-pop";
+    el.setAttribute("role", "tooltip");
+    el.setAttribute("aria-hidden", "true");
+    (document.body || document.documentElement).appendChild(el);
   }
+  return el;
+}
 
-  function tipHide() {
-    if (!tipPop) return;
-    tipPop.style.display = "none";
-    tipPop.setAttribute("aria-hidden", "true");
-  }
+function tipHide() {
+  const el = ensureTipPopExists();
+  el.style.display = "none";
+  el.style.visibility = "hidden";
+  el.setAttribute("aria-hidden", "true");
+}
 
-  function tipShow(targetEl, title, text) {
-    if (!tipPop || !targetEl) return;
+function tipShow(targetEl, title, text) {
+  const el = ensureTipPopExists();
+  if (!targetEl) return;
 
-    // Ensure visible styling even if CSS is missing/overridden
-    tipPop.style.position = "fixed";
-    tipPop.style.zIndex = "999999";
-    tipPop.style.maxWidth = "420px";
-    tipPop.style.padding = "10px 12px";
-    tipPop.style.borderRadius = "12px";
-    tipPop.style.background = "rgba(15,20,30,0.96)";
-    tipPop.style.color = "#fff";
-    tipPop.style.fontSize = "13px";
-    tipPop.style.lineHeight = "1.35";
-    tipPop.style.boxShadow = "0 12px 28px rgba(0,0,0,0.25)";
+  // Hard-set baseline styles so popup is visible even if CSS is missing/overridden
+  el.style.position = "fixed";
+  el.style.zIndex = "99999";
+  el.style.maxWidth = "420px";
+  el.style.padding = "10px 12px";
+  el.style.borderRadius = "12px";
+  el.style.background = "rgba(15, 20, 30, 0.96)";
+  el.style.color = "#fff";
+  el.style.fontSize = "13px";
+  el.style.lineHeight = "1.35";
+  el.style.boxShadow = "0 12px 28px rgba(0,0,0,0.25)";
+  el.style.pointerEvents = "auto";
 
-    tipPop.innerHTML = `
-      <div class="tip-title">${escapeHtml(title || "")}</div>
-      <div>${escapeHtml(text || "")}</div>
-    `;
+  el.innerHTML = `
+    <div class="tip-title">${escapeHtml(title || "")}</div>
+    <div>${escapeHtml(text || "")}</div>
+  `;
 
-    const r = targetEl.getBoundingClientRect();
-    const pad = 10;
+  const r = targetEl.getBoundingClientRect();
+  const pad = 10;
 
-    tipPop.style.display = "block";
-    tipPop.setAttribute("aria-hidden", "false");
+  el.style.display = "block";
+  el.style.visibility = "visible";
+  el.setAttribute("aria-hidden", "false");
 
-    const w = tipPop.offsetWidth;
-    const h = tipPop.offsetHeight;
+  const w = el.offsetWidth || 320;
+  const h = el.offsetHeight || 80;
 
-    let left = Math.min(window.innerWidth - w - pad, Math.max(pad, r.left));
-    let top = r.bottom + 8;
+  let left = Math.min(window.innerWidth - w - pad, Math.max(pad, r.left));
+  let top = r.bottom + 8;
 
-    // if would overflow bottom, show above
-    if (top + h + pad > window.innerHeight) top = Math.max(pad, r.top - h - 8);
+  // if would overflow bottom, show above
+  if (top + h + pad > window.innerHeight) top = Math.max(pad, r.top - h - 8);
 
-    tipPop.style.left = left + "px";
-    tipPop.style.top = top + "px";
-  }
+  el.style.left = left + "px";
+  el.style.top = top + "px";
+}
 
-  // close tooltip on outside click/tap
-  document.addEventListener("pointerdown", (e) => {
-    if (!tipPop) return;
-    if (tipPop.contains(e.target)) return;
-    if (e.target && e.target.closest && e.target.closest(".tip-trigger")) return;
-    tipHide();
-  });
+// close tooltip on outside click/tap
+document.addEventListener("pointerdown", (e) => {
+  const el = document.getElementById("tipPop");
+  if (!el) return;
+  if (el.contains(e.target)) return;
+  if (e.target && e.target.closest && e.target.closest(".tip-trigger")) return;
+  tipHide();
+});
 
-  window.addEventListener("scroll", tipHide, { passive: true });
-  window.addEventListener("resize", tipHide);
+window.addEventListener("scroll", tipHide, { passive: true });
+window.addEventListener("resize", tipHide);
 
 
 
