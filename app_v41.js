@@ -1261,39 +1261,63 @@ async function loadIngredients(term) {
     // ---- START inactivity logout timer
 if (disposeIdleLogout) disposeIdleLogout();
 
+const idleWarnBanner = document.getElementById("idleWarnBanner");
+
+function showIdleBanner(html) {
+  if (!idleWarnBanner) return;
+  idleWarnBanner.innerHTML = html;
+  idleWarnBanner.style.display = "block";
+  idleWarnBanner.style.position = "fixed";
+  idleWarnBanner.style.left = "12px";
+  idleWarnBanner.style.right = "12px";
+  idleWarnBanner.style.bottom = "12px";
+  idleWarnBanner.style.zIndex = "999999";
+}
+
+function hideIdleBanner() {
+  if (!idleWarnBanner) return;
+  idleWarnBanner.style.display = "none";
+  idleWarnBanner.innerHTML = "";
+}
+
 disposeIdleLogout = initIdleLogout({
   supabaseClient,
-  idleMs: 15 * 60 * 1000, // adjust if needed
-  onLogout: () => {
-    setLoggedOutUI("Logged out due to inactivity");
+  idleMs: 15 * 60 * 1000,   // your inactivity timeout
+  warnMs: 60 * 1000,        // 60-second warning
+  jwtBufferMs: 30 * 1000,   // logout 30s before JWT expiry
+
+  onWarn: ({ secondsLeft, reason, stayLoggedIn }) => {
+    // reason = "idle" or "jwt-expiry"
+    const msg =
+      (reason === "jwt-expiry")
+        ? "Your session is about to expire."
+        : "You’ll be logged out due to inactivity.";
+
+    showIdleBanner(`
+      <div style="background:#0b0b0c; color:#fff; border-radius:14px; padding:12px 14px; box-shadow:0 14px 40px rgba(0,0,0,.25);">
+        <div style="font-weight:800; margin-bottom:6px;">Session ending in ${secondsLeft}s</div>
+        <div style="opacity:.9; margin-bottom:10px;">${msg}</div>
+        <button id="idleStayBtn" type="button"
+          style="background:#b89a5b; border:none; color:#fff; font-weight:800; padding:9px 12px; border-radius:12px; cursor:pointer;">
+          Stay logged in
+        </button>
+      </div>
+    `);
+
+    const btn = document.getElementById("idleStayBtn");
+    if (btn) btn.onclick = () => stayLoggedIn();
+  },
+
+  onWarnClear: () => {
+    hideIdleBanner();
+  },
+
+  onLogout: (reason) => {
+    hideIdleBanner();
+    setLoggedOutUI(reason === "jwt-expiry" ? "Session expired" : "Logged out due to inactivity");
   }
 });
 
-  }
-
-  // =========================================================
-  // BLOCK: LOGIN / LOGOUT
-  // =========================================================
-  if (loginBtn) {
-    loginBtn.addEventListener("click", async () => {
-      setAuthMsg("Logging in…");
-
-      const email = (emailInput?.value || "").trim().toLowerCase();
-      const password = passwordInput?.value || "";
-
-      if (!email || !password) { setAuthMsg("Enter email + password."); return; }
-
-      try {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) { setAuthMsg("Login failed: " + error.message); return; }
-        if (!data?.session) { setAuthMsg("Login succeeded but session missing."); return; }
-        await hydrateAfterLogin(data.session);
-      } catch (e) {
-        console.error("Login crashed:", e);
-        setAuthMsg("Login crashed: " + (e?.message || "Unknown error"));
-      }
-    });
-  }
 
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
