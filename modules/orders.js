@@ -48,6 +48,8 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
   const ordersScoresResetBtn = document.getElementById("ordersScoresResetBtn");
 
   let selectedOrderId = null;
+  let lastPaymentStatus = null; // cached for clinician pay gating
+  let lastPayAmountMsg = "";
 
   // ---------------------------------------------------------
   // Clinician scores (manual override) — 9 PS-288 dimensions
@@ -67,6 +69,10 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
 
   let clinicianScores = null; // current in-UI values (object)
   let clinicianEnabledForOrder = false;
+  let clinicianSaved = false;       // saved to DB (exists on order)
+  let clinicianEditing = false;     // currently unlocked for editing
+  let clinicianDirty = false;       // changes made since last save
+  let clinicianPaidLocked = false;  // paid/comped => permanently locked
 
   const setScoresMsg = (t) => { if (ordersScoresMsg) ordersScoresMsg.textContent = t || ""; };
 
@@ -142,14 +148,88 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
 
       const apply = () => {
         const v = clampScore(input.value);
+        const prev = clinicianScores[key];
         clinicianScores[key] = v;
         dot.style.left = v + "%";
+
+        // If editing, any change marks dirty and flips button to "Save scores"
+        if (!clinicianPaidLocked && clinicianEditing && prev !== v) {
+          clinicianDirty = true;
+          updateClinicianButtons();
+          enforceClinicianPaymentGate();
+        }
       };
 
       input.addEventListener("input", apply);
       input.addEventListener("change", apply);
       apply();
     });
+
+
+  function setClinicianInputsLocked(locked) {
+    if (!ordersScoresList) return;
+    ordersScoresList.querySelectorAll('input[type="range"]').forEach(inp => {
+      inp.disabled = !!locked;
+    });
+  }
+
+  function updateClinicianButtons() {
+    if (!ordersScoresSaveBtn) return;
+
+    // Paid orders: permanently locked, hide controls
+    if (clinicianPaidLocked) {
+      ordersScoresSaveBtn.style.display = "none";
+      if (ordersScoresResetBtn) ordersScoresResetBtn.style.display = "none";
+      return;
+    }
+
+    // Unpaid: show controls
+    ordersScoresSaveBtn.style.display = "";
+    if (ordersScoresResetBtn) ordersScoresResetBtn.style.display = clinicianEditing ? "" : "none";
+
+    if (!clinicianSaved) {
+      ordersScoresSaveBtn.textContent = "Save scores";
+      return;
+    }
+
+    // Saved already
+    if (!clinicianEditing) {
+      ordersScoresSaveBtn.textContent = "Edit scores";
+    } else {
+      // Editing: keep 'Edit scores' until any change occurs, then switch to 'Save scores'
+      ordersScoresSaveBtn.textContent = clinicianDirty ? "Save scores" : "Edit scores";
+    }
+  }
+
+
+  function enforceClinicianPaymentGate() {
+    if (!clinicianEnabledForOrder) return;
+    if (!ordersPayBtn) return;
+
+    const ps = String(lastPaymentStatus || "").toLowerCase();
+    if (ps === "paid" || ps === "comped") return;
+
+    const okToPay = clinicianSaved && !clinicianEditing && !clinicianDirty;
+    if (!okToPay) {
+      ordersPayBtn.disabled = true;
+      ordersPayBtn.textContent = "Pay now (save scores first)";
+      ordersPayBtn.onclick = null;
+      if (ordersPayMsg) ordersPayMsg.textContent = "Save clinician scores to proceed to payment.";
+    } else {
+      ordersPayBtn.disabled = false;
+      ordersPayBtn.textContent = "Pay now";
+      ordersPayBtn.onclick = () => mountStripePaymentForOrder(selectedOrderId);
+      if (ordersPayMsg && lastPayAmountMsg) ordersPayMsg.textContent = lastPayAmountMsg;
+    }
+  }
+
+  function setClinicianStateFromOrderRow(o) {
+    const saved = extractScoresFromOrderRow(o);
+    clinicianSaved = !!(saved && typeof saved === "object");
+    clinicianDirty = false;
+    clinicianEditing = false;
+    return saved;
+  }
 
     setScoresMsg("");
   }
@@ -856,37 +936,98 @@ async function generatePack() {
     if (error) { setMsg("Load order failed: " + error.message); return; }
     if (!o) { setMsg("Order not found."); return; }
 
+    lastPaymentStatus = o.payment_status || "unpaid";
+    lastPayAmountMsg = "";
+
     // ===== CLINICIAN SCORES PANEL (product-based) =====
     clinicianEnabledForOrder = false;
+    clinicianPaidLocked = false;
     if (ordersClinicianPanel) ordersClinicianPanel.style.display = "none";
     if (ordersScoresList) ordersScoresList.innerHTML = "";
     setScoresMsg("");
+
+    // Paid/comped => permanently locked
+    {
+      const ps0 = String(o.payment_status || "").toLowerCase();
+      clinicianPaidLocked = (ps0 === "paid" || ps0 === "comped");
+    }
 
     // Determine which product this order is for (based on first order_item)
     const { product } = await loadOrderProductInfo(orderId);
     if (product && isProbablyClinicianProduct(product)) {
       clinicianEnabledForOrder = true;
       if (ordersClinicianPanel) ordersClinicianPanel.style.display = "";
-      const saved = extractScoresFromOrderRow(o);
+
+      const saved = setClinicianStateFromOrderRow(o);
       renderClinicianScoresPanel(saved || defaultScores50());
 
-      // Bind buttons (once)
+      if (!saved) {
+        // First-time entry: editable, must save to proceed
+        clinicianEditing = true;
+        setClinicianInputsLocked(false);
+      } else {
+        // Saved already: lock by default
+        clinicianEditing = false;
+        setClinicianInputsLocked(true);
+      }
+
+      updateClinicianButtons();
+
+      // Bind reset (once)
       if (ordersScoresResetBtn && ordersScoresResetBtn.dataset.bound !== "1") {
         ordersScoresResetBtn.addEventListener("click", () => {
+          if (!clinicianEnabledForOrder || clinicianPaidLocked) return;
+          if (!clinicianEditing) return;
           renderClinicianScoresPanel(defaultScores50());
+          clinicianDirty = true;
+          updateClinicianButtons();
+          enforceClinicianPaymentGate();
           setScoresMsg("Reset to 50.");
         });
         ordersScoresResetBtn.dataset.bound = "1";
       }
 
+      // Bind save/edit (once)
       if (ordersScoresSaveBtn && ordersScoresSaveBtn.dataset.bound !== "1") {
         ordersScoresSaveBtn.addEventListener("click", async () => {
           if (!selectedOrderId) return;
+          if (!clinicianEnabledForOrder) return;
+          if (clinicianPaidLocked) return;
+
+          // If already saved and currently locked, enter edit mode
+          if (clinicianSaved && !clinicianEditing) {
+            clinicianEditing = true;
+            clinicianDirty = false;
+            setClinicianInputsLocked(false);
+            updateClinicianButtons();
+            enforceClinicianPaymentGate();
+            setScoresMsg("Editing…");
+            return;
+          }
+
+          // If editing but nothing changed and already saved: treat as "cancel edit" (re-lock)
+          if (clinicianSaved && clinicianEditing && !clinicianDirty) {
+            clinicianEditing = false;
+            setClinicianInputsLocked(true);
+            updateClinicianButtons();
+            enforceClinicianPaymentGate();
+            setScoresMsg("");
+            return;
+          }
+
+          // Otherwise: save
           try {
             setScoresMsg("Saving…");
             const dims = normalizeScores(clinicianScores);
             const res = await persistClinicianScoresToOrder(selectedOrderId, dims);
             if (!res.ok) throw (res.error || new Error("Save failed"));
+
+            clinicianSaved = true;
+            clinicianEditing = false;
+            clinicianDirty = false;
+            setClinicianInputsLocked(true);
+            updateClinicianButtons();
+            enforceClinicianPaymentGate();
             setScoresMsg("Saved ✅");
           } catch (e) {
             setScoresMsg("Save failed: " + (e?.message || e));
@@ -894,7 +1035,17 @@ async function generatePack() {
         });
         ordersScoresSaveBtn.dataset.bound = "1";
       }
+
+      // If paid/comped: force permanent lock + hide controls
+      if (clinicianPaidLocked) {
+        clinicianSaved = clinicianSaved || !!saved;
+        clinicianEditing = false;
+        clinicianDirty = false;
+        setClinicianInputsLocked(true);
+        updateClinicianButtons();
+      }
     }
+
 
     if (ordersDetailTitle) {
       ordersDetailTitle.textContent = `${o.order_code || "Order"} — ${o.status || ""}`;
@@ -921,13 +1072,32 @@ async function generatePack() {
     } else {
       const ccy = String(o.currency || "AED");
       const amt = Number(o.total ?? o.subtotal ?? 0);
-      if (ordersPayMsg) ordersPayMsg.textContent = `Amount to charge: ${amt} ${ccy}`;
+      lastPayAmountMsg = `Amount to charge: ${amt} ${ccy}`;
+      if (ordersPayMsg) ordersPayMsg.textContent = lastPayAmountMsg;
+
+      // Clinician-driven orders must have saved scores BEFORE payment
+      if (clinicianEnabledForOrder) {
+        const okToPay = clinicianSaved && !clinicianEditing && !clinicianDirty;
+        if (!okToPay) {
+          if (ordersPayMsg) ordersPayMsg.textContent = "Save clinician scores to proceed to payment.";
+          if (ordersPayBtn) {
+            ordersPayBtn.disabled = true;
+            ordersPayBtn.textContent = "Pay now (save scores first)";
+            ordersPayBtn.onclick = null;
+          }
+        }
+      }
 
       if (ordersPayBtn) {
-        ordersPayBtn.disabled = false;
-        ordersPayBtn.textContent = "Pay now";
-        ordersPayBtn.onclick = () => mountStripePaymentForOrder(o.id);
+        // don't override clinician gating if already disabled above
+        if (!ordersPayBtn.disabled) {
+          ordersPayBtn.disabled = false;
+          ordersPayBtn.textContent = "Pay now";
+          ordersPayBtn.onclick = () => mountStripePaymentForOrder(o.id);
+        }
       }
+      // Apply clinician payment gate after payment UI is configured
+      enforceClinicianPaymentGate();
     }
 
     // Reset generate button state on each open
