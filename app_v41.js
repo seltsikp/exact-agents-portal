@@ -16,6 +16,8 @@ import { initAccountManagersManagement } from "./modules/accountManagers.js";
 import { initUserManagement } from "./modules/userManagement.js";
 import { initProductsAdmin } from "./modules/productsAdmin.js";
 import { initOrdersManagement } from "./modules/orders.js";
+import { initIdleLogout } from "./modules/idleLogout.js";
+
 
 console.log("EXACT Agents Portal loaded (v42.1)");
 
@@ -544,6 +546,7 @@ window.addEventListener("DOMContentLoaded", () => {
   let currentProfile = null;
   let hydratedUserId = null;
   let agentNameMap = {};
+  let disposeIdleLogout = null;
 
   const setAgentMsg = (t) => { if (agentMsg) agentMsg.textContent = t || ""; };
   const setAuthMsg = (t) => { if (authMsg) authMsg.textContent = t || ""; };
@@ -1255,6 +1258,17 @@ async function loadIngredients(term) {
       console.error("hydrateAfterLogin error:", e);
       setAuthMsg("Error after login: " + (e?.message || "Unknown error"));
     }
+    // ---- START inactivity logout timer
+if (disposeIdleLogout) disposeIdleLogout();
+
+disposeIdleLogout = initIdleLogout({
+  supabaseClient,
+  idleMs: 15 * 60 * 1000, // adjust if needed
+  onLogout: () => {
+    setLoggedOutUI("Logged out due to inactivity");
+  }
+});
+
   }
 
   // =========================================================
@@ -1283,6 +1297,7 @@ async function loadIngredients(term) {
 
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
+      if (disposeIdleLogout) disposeIdleLogout();
       await supabaseClient.auth.signOut();
       setLoggedOutUI("Logged out");
     });
@@ -1305,6 +1320,7 @@ async function loadIngredients(term) {
 
   supabaseClient.auth.onAuthStateChange((event, session) => {
     if (event === "SIGNED_OUT") {
+      if (disposeIdleLogout) disposeIdleLogout();
       setLoggedOutUI("Logged out");
       return;
     }
