@@ -40,7 +40,160 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
   const ordersPayCancelBtn = document.getElementById("ordersPayCancelBtn");
   const stripePaymentEl = document.getElementById("stripePaymentEl");
 
+  // Clinician-driven manual scores UI (lives in index.html)
+  const ordersClinicianPanel = document.getElementById("ordersClinicianPanel");
+  const ordersScoresList = document.getElementById("ordersScoresList");
+  const ordersScoresMsg = document.getElementById("ordersScoresMsg");
+  const ordersScoresSaveBtn = document.getElementById("ordersScoresSaveBtn");
+  const ordersScoresResetBtn = document.getElementById("ordersScoresResetBtn");
+
   let selectedOrderId = null;
+
+  // ---------------------------------------------------------
+  // Clinician scores (manual override) — 9 PS-288 dimensions
+  // ---------------------------------------------------------
+  const CLINICIAN_NAME_HINT = "clinician"; // used to detect the clinician-driven product by name/workflow
+  const DIMENSION_KEYS = [
+    "hydration",
+    "acne",
+    "lines",
+    "pigmentation",
+    "eye_area_condition",
+    "redness",
+    "pores",
+    "translucency",
+    "uniformness",
+  ];
+
+  let clinicianScores = null; // current in-UI values (object)
+  let clinicianEnabledForOrder = false;
+
+  const setScoresMsg = (t) => { if (ordersScoresMsg) ordersScoresMsg.textContent = t || ""; };
+
+  function clampScore(n) {
+    const x = Number(n);
+    if (!Number.isFinite(x)) return 50;
+    return Math.max(0, Math.min(100, Math.round(x)));
+  }
+
+  function defaultScores50() {
+    const o = {};
+    DIMENSION_KEYS.forEach(k => { o[k] = 50; });
+    return o;
+  }
+
+  function normalizeScores(input) {
+    const base = defaultScores50();
+    if (!input || typeof input !== "object") return base;
+    DIMENSION_KEYS.forEach(k => {
+      if (Object.prototype.hasOwnProperty.call(input, k)) base[k] = clampScore(input[k]);
+    });
+    return base;
+  }
+
+  function isProbablyClinicianProduct(prod) {
+    const name = String(prod?.name || "").toLowerCase();
+    const wf = String(prod?.workflow_key || "").toLowerCase();
+    return name.includes(CLINICIAN_NAME_HINT) || wf.includes(CLINICIAN_NAME_HINT);
+  }
+
+  async function loadOrderProductInfo(orderId) {
+    const { data, error } = await supabaseClient
+      .from("order_items")
+      .select("product_id, product:products ( id, name, workflow_key )")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: true })
+      .limit(1);
+
+    if (error) return { error, product: null };
+    const row = Array.isArray(data) && data.length ? data[0] : null;
+    return { error: null, product: row?.product || null };
+  }
+
+  function renderClinicianScoresPanel(scoresObj) {
+    if (!ordersClinicianPanel || !ordersScoresList) return;
+
+    clinicianScores = normalizeScores(scoresObj);
+
+    const rowHtml = (key) => {
+      const val = clampScore(clinicianScores[key]);
+      const label = escapeHtml(key.replaceAll("_", " "));
+      return `
+        <div class="scoreRow" data-score-key="${escapeHtml(key)}">
+          <div class="scoreLabel">${label}</div>
+          <div>
+            <div class="scoreTrack">
+              <input type="range" min="0" max="100" step="1" value="${val}" />
+              <span class="scoreDot" style="left:${val}%;"></span>
+            </div>
+          </div>
+        </div>
+      `;
+    };
+
+    ordersScoresList.innerHTML = DIMENSION_KEYS.map(rowHtml).join("");
+
+    // Bind range -> dot position
+    ordersScoresList.querySelectorAll(".scoreRow").forEach(row => {
+      const key = row.getAttribute("data-score-key");
+      const input = row.querySelector('input[type="range"]');
+      const dot = row.querySelector(".scoreDot");
+      if (!key || !input || !dot) return;
+
+      const apply = () => {
+        const v = clampScore(input.value);
+        clinicianScores[key] = v;
+        dot.style.left = v + "%";
+      };
+
+      input.addEventListener("input", apply);
+      input.addEventListener("change", apply);
+      apply();
+    });
+
+    setScoresMsg("");
+  }
+
+  async function persistClinicianScoresToOrder(orderId, scores) {
+    // We don't assume an exact schema: we try common column names until one succeeds.
+    // This makes the UI resilient even if your SQL used a slightly different naming.
+    const { data: sessData, error: sessErr } = await supabaseClient.auth.getSession();
+    if (sessErr) throw new Error(sessErr.message);
+    const userId = sessData?.session?.user?.id || null;
+
+    const attempts = [
+      { manual_scores: scores, manual_scores_set_by: userId },
+      { manual_dimensions: scores, manual_dimensions_set_by: userId },
+      { clinician_scores: scores, clinician_scores_set_by: userId },
+      { scan_dimensions: scores, scan_set_by: userId, scan_source: "clinician" },
+      { dimensions_override: scores, dimensions_set_by: userId, dimensions_source: "clinician" },
+    ];
+
+    let lastErr = null;
+    for (const payload of attempts) {
+      const { error } = await supabaseClient
+        .from("orders")
+        .update(payload)
+        .eq("id", orderId);
+
+      if (!error) return { ok: true, used: Object.keys(payload) };
+      lastErr = error;
+      // If the failure isn't "column does not exist", don't keep trying.
+      if (!String(error.message || "").toLowerCase().includes("column")) break;
+    }
+
+    return { ok: false, error: lastErr };
+  }
+
+  function extractScoresFromOrderRow(o) {
+    if (!o || typeof o !== "object") return null;
+    const candidates = ["manual_scores", "manual_dimensions", "clinician_scores", "scan_dimensions", "dimensions_override"];
+    for (const c of candidates) {
+      const v = o[c];
+      if (v && typeof v === "object") return v;
+    }
+    return null;
+  }
 
   const getRole = () => String(state?.currentProfile?.role || "").toLowerCase();
   const isAdminNow = () => getRole() === "admin";
@@ -500,8 +653,21 @@ async function generatePack() {
     }
 
     // Generate
+    // If clinician panel is enabled for this order, persist + send the manual scores
+    let dims = null;
+    if (clinicianEnabledForOrder && clinicianScores) {
+      dims = normalizeScores(clinicianScores);
+      setMsg("Saving clinician scores…");
+      const saved = await persistClinicianScoresToOrder(selectedOrderId, dims);
+      if (!saved.ok) {
+        console.warn("[ORDERS] Could not persist clinician scores:", saved.error);
+        setMsg("Warning: could not persist clinician scores (continuing to generate).");
+      }
+    }
+
+    // Generate (with optional override payload)
     setMsg("Generating pack…");
-    const result = await window.exactGeneratePack(selectedOrderId);
+    const result = await window.exactGeneratePack(selectedOrderId, dims ? { dimensions: dims, dimensions_source: "clinician" } : {});
 
     // Refresh UI after success
     await openOrder(selectedOrderId);
@@ -682,30 +848,52 @@ async function generatePack() {
 
     const { data: o, error } = await supabaseClient
       .from("orders")
-      .select(`
-        id,
-        order_code,
-        status,
-        payment_status,
-        created_at,
-        currency,
-        subtotal,
-        tax,
-        total,
-        dispatch_to,
-        ship_to_name,
-        ship_to_phone,
-        ship_to_email,
-        ship_to_address,
-        ship_to_city,
-        ship_to_country,
-        lab_id
-      `)
+      .select("*")
       .eq("id", orderId)
       .maybeSingle();
 
     if (error) { setMsg("Load order failed: " + error.message); return; }
     if (!o) { setMsg("Order not found."); return; }
+
+    // ===== CLINICIAN SCORES PANEL (product-based) =====
+    clinicianEnabledForOrder = false;
+    if (ordersClinicianPanel) ordersClinicianPanel.style.display = "none";
+    if (ordersScoresList) ordersScoresList.innerHTML = "";
+    setScoresMsg("");
+
+    // Determine which product this order is for (based on first order_item)
+    const { product } = await loadOrderProductInfo(orderId);
+    if (product && isProbablyClinicianProduct(product)) {
+      clinicianEnabledForOrder = true;
+      if (ordersClinicianPanel) ordersClinicianPanel.style.display = "";
+      const saved = extractScoresFromOrderRow(o);
+      renderClinicianScoresPanel(saved || defaultScores50());
+
+      // Bind buttons (once)
+      if (ordersScoresResetBtn && ordersScoresResetBtn.dataset.bound !== "1") {
+        ordersScoresResetBtn.addEventListener("click", () => {
+          renderClinicianScoresPanel(defaultScores50());
+          setScoresMsg("Reset to 50.");
+        });
+        ordersScoresResetBtn.dataset.bound = "1";
+      }
+
+      if (ordersScoresSaveBtn && ordersScoresSaveBtn.dataset.bound !== "1") {
+        ordersScoresSaveBtn.addEventListener("click", async () => {
+          if (!selectedOrderId) return;
+          try {
+            setScoresMsg("Saving…");
+            const dims = normalizeScores(clinicianScores);
+            const res = await persistClinicianScoresToOrder(selectedOrderId, dims);
+            if (!res.ok) throw (res.error || new Error("Save failed"));
+            setScoresMsg("Saved ✅");
+          } catch (e) {
+            setScoresMsg("Save failed: " + (e?.message || e));
+          }
+        });
+        ordersScoresSaveBtn.dataset.bound = "1";
+      }
+    }
 
     if (ordersDetailTitle) {
       ordersDetailTitle.textContent = `${o.order_code || "Order"} — ${o.status || ""}`;
