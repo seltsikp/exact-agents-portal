@@ -37,14 +37,30 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
     const st = document.createElement("style");
     st.id = "exactTooltipStyle";
     st.textContent = `
-      .tip-trigger{ cursor: help; text-decoration: underline dotted rgba(0,0,0,0.25); text-underline-offset: 3px; }
-      .tip-pop{
-        position: fixed; z-index: 9999; max-width: 420px; padding: 10px 12px; border-radius: 12px;
-        background: rgba(15,20,30,0.96); color:#fff; font-size:13px; line-height:1.35;
-        box-shadow: 0 12px 28px rgba(0,0,0,0.25); display:none;
-      }
-      .tip-pop .tip-title{ font-weight: 800; margin-bottom: 6px; }
-    `;
+  .tip-trigger{
+    cursor: pointer;
+    text-decoration: underline dotted rgba(0,0,0,0.25);
+    text-underline-offset: 3px;
+  }
+  .tip-pop{
+    position: fixed;
+    z-index: 9999;
+    max-width: 420px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(15,20,30,0.96);
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.35;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+    display: none;
+  }
+  .tip-pop .tip-title{
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+`;
+
     document.head.appendChild(st);
   }
   if (!document.getElementById("tipPop")) {
