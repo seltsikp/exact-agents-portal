@@ -1172,6 +1172,19 @@ async function loadIngredients(term) {
     show(loginBox, true);
     show(appBox, false);
 
+    // Clear login fields (prevents “autofill looks filled but click does nothing”)
+if (emailInput) {
+  emailInput.value = "";
+  emailInput.dispatchEvent(new Event("input", { bubbles: true }));
+  emailInput.dispatchEvent(new Event("change", { bubbles: true }));
+}
+if (passwordInput) {
+  passwordInput.value = "";
+  passwordInput.dispatchEvent(new Event("input", { bubbles: true }));
+  passwordInput.dispatchEvent(new Event("change", { bubbles: true }));
+}
+try { emailInput?.focus(); } catch (_e) {}
+
     if (topBarTitle) topBarTitle.textContent = "";
     if (topBarSub) topBarSub.textContent = "";
     if (menuItems) menuItems.innerHTML = "";
