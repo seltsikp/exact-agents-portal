@@ -73,7 +73,17 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
   }
 })();
 
-const tipPop = document.getElementById("tipPop");function tipHide() {
+const tipPop = document.getElementById("tipPop");
+  // Harden baseline tooltip styles (prevents "invisible tooltip" when CSS is missing/overridden)
+  if (tipPop) {
+    tipPop.style.position = "fixed";
+    tipPop.style.zIndex = "999999";
+    tipPop.style.maxWidth = tipPop.style.maxWidth || "420px";
+    // default hidden until shown
+    if (!tipPop.style.display) tipPop.style.display = "none";
+  }
+
+  function tipHide() {
     if (!tipPop) return;
     tipPop.style.display = "none";
     tipPop.setAttribute("aria-hidden", "true");
@@ -81,6 +91,18 @@ const tipPop = document.getElementById("tipPop");function tipHide() {
 
   function tipShow(targetEl, title, text) {
     if (!tipPop || !targetEl) return;
+
+    // Ensure visible styling even if CSS is missing/overridden
+    tipPop.style.position = "fixed";
+    tipPop.style.zIndex = "999999";
+    tipPop.style.maxWidth = "420px";
+    tipPop.style.padding = "10px 12px";
+    tipPop.style.borderRadius = "12px";
+    tipPop.style.background = "rgba(15,20,30,0.96)";
+    tipPop.style.color = "#fff";
+    tipPop.style.fontSize = "13px";
+    tipPop.style.lineHeight = "1.35";
+    tipPop.style.boxShadow = "0 12px 28px rgba(0,0,0,0.25)";
 
     tipPop.innerHTML = `
       <div class="tip-title">${escapeHtml(title || "")}</div>
