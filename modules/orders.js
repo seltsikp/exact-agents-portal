@@ -205,7 +205,7 @@ const DIM_TIPS = {
       const label = escapeHtml(String(key || "").split("_").join(" "));
       return `
         <div class="scoreRow" data-score-key="${escapeHtml(key)}">
-          <div class="scoreLabel"><span class="tip-trigger" data-tip-title="${label}" data-tip="${escapeHtml(DIM_TIPS[key] || \"\" )}">${label}</span></div>
+          <div class="scoreLabel"><span class="tip-trigger" data-tip-title="${label}" data-tip="${escapeHtml(DIM_TIPS[key] || "" )}">${label}</span></div>
           <div>
             <div class="scoreTrack">
               <input type="range" min="0" max="100" step="1" value="${val}" />
