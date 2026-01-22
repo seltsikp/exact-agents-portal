@@ -912,7 +912,61 @@
 
 }
 
-    </style>
+    
+/* ===== Clinician scores panel ===== */
+.scorePanel{ padding:14px; }
+.scoreRow{ display:grid; grid-template-columns: 160px 1fr; gap:12px; align-items:center; margin:10px 0; }
+@media (max-width: 720px){
+  .scoreRow{ grid-template-columns: 1fr; gap:6px; }
+}
+.scoreLabel{ font-weight:700; }
+.scoreTrack{
+  position:relative;
+  height:14px;
+  border-radius:999px;
+  overflow:hidden;
+  background: linear-gradient(90deg,
+    #c0392b 0%,
+    #e67e22 20%,
+    #f1c40f 40%,
+    #9acd32 55%,
+    #27ae60 70%,
+    #d4af37 85%,
+    #b8860b 100%
+  );
+  border: 1px solid rgba(0,0,0,0.10);
+}
+.scoreTrack input[type="range"]{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  opacity:0;
+  cursor:pointer;
+}
+.scoreDot{
+  position:absolute;
+  top:50%;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  transform: translate(-50%, -50%);
+  background:#fff;
+  border: 2px solid rgba(0,0,0,0.35);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  pointer-events:none;
+}
+.scoreTicks{
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  color: var(--muted);
+  margin-top:6px;
+  user-select:none;
+}
+.scoreMetaRow{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+
+</style>
   
   </head>
 
@@ -1118,6 +1172,30 @@
 
   <div id="stripePaymentEl" class="card" style="box-shadow:none; margin-top:12px; display:none;"></div>
 </div>
+
+
+<!-- CLINICIAN SCORES (manual) -->
+<div id="ordersClinicianPanel" class="card scorePanel" style="margin-top:14px; display:none;">
+  <div class="scoreMetaRow">
+    <div>
+      <h3 style="margin:0 0 4px 0;">Clinician scores</h3>
+      <div class="subtle">Set the 9 concern scores (Poor → Excellent). Default = 50.</div>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+      <button id="ordersScoresResetBtn" type="button">Reset to 50</button>
+      <button id="ordersScoresSaveBtn" class="btn-primary" type="button">Save scores</button>
+    </div>
+  </div>
+
+  <div id="ordersScoresMsg" class="subtle" style="margin-top:10px;"></div>
+
+  <div class="scoreTicks" style="margin-top:10px;">
+    <span>Very poor</span><span>Poor</span><span>Average</span><span>Good</span><span>Very good</span><span>Excellent</span>
+  </div>
+
+  <div id="ordersScoresList" style="margin-top:10px;"></div>
+</div>
+
 
       <div style="margin-top:14px;">
         <h3 style="margin:0 0 8px 0;">Batch / process summary</h3>
