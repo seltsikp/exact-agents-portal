@@ -342,7 +342,8 @@ ordersScoresList.querySelectorAll('.scoreTrack input[type="range"]').forEach(inp
       el.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (tipPop && tipPop.style.display === "block") tipHide();
+        const _tp = document.getElementById("tipPop");
+        if (_tp && _tp.style.display === "block") tipHide();
         else tipShow(el, title, text);
       });
     });
