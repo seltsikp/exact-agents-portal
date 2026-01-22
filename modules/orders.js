@@ -30,9 +30,34 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
   } = ui;
 
   // ===== Tooltip helper (hover + tap) =====
-  const tipPop = document.getElementById("tipPop");
+  // ===== Tooltip helper (hover + tap) =====
+// Ensure tooltip container + minimal styles exist (so tooltips work even if index.html is outdated/cached)
+(function ensureExactTooltips(){
+  if (!document.getElementById("exactTooltipStyle")) {
+    const st = document.createElement("style");
+    st.id = "exactTooltipStyle";
+    st.textContent = `
+      .tip-trigger{ cursor: help; text-decoration: underline dotted rgba(0,0,0,0.25); text-underline-offset: 3px; }
+      .tip-pop{
+        position: fixed; z-index: 9999; max-width: 420px; padding: 10px 12px; border-radius: 12px;
+        background: rgba(15,20,30,0.96); color:#fff; font-size:13px; line-height:1.35;
+        box-shadow: 0 12px 28px rgba(0,0,0,0.25); display:none;
+      }
+      .tip-pop .tip-title{ font-weight: 800; margin-bottom: 6px; }
+    `;
+    document.head.appendChild(st);
+  }
+  if (!document.getElementById("tipPop")) {
+    const d = document.createElement("div");
+    d.id = "tipPop";
+    d.className = "tip-pop";
+    d.setAttribute("role","tooltip");
+    d.setAttribute("aria-hidden","true");
+    document.body.appendChild(d);
+  }
+})();
 
-  function tipHide() {
+const tipPop = document.getElementById("tipPop");function tipHide() {
     if (!tipPop) return;
     tipPop.style.display = "none";
     tipPop.setAttribute("aria-hidden", "true");
@@ -218,7 +243,19 @@ const DIM_TIPS = {
 
     ordersScoresList.innerHTML = DIMENSION_KEYS.map(rowHtml).join("");
 
-    // Bind range -> dot position
+    
+// Force the "colour track + dot" UI even if CSS didn't load (prevents grey native sliders)
+// Make the native range input invisible but still interactive.
+ordersScoresList.querySelectorAll('.scoreTrack input[type="range"]').forEach(inp => {
+  inp.style.position = "absolute";
+  inp.style.inset = "0";
+  inp.style.width = "100%";
+  inp.style.height = "100%";
+  inp.style.opacity = "0";
+  inp.style.cursor = "pointer";
+  inp.style.margin = "0";
+});
+// Bind range -> dot position
     ordersScoresList.querySelectorAll(".scoreRow").forEach(row => {
       const key = row.getAttribute("data-score-key");
       const input = row.querySelector('input[type="range"]');
