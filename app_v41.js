@@ -46,14 +46,25 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 window.supabaseClient = supabaseClient;
 window.sb = supabaseClient;
 
-window.exactGeneratePack = async (orderId) => {
+window.exactGeneratePack = async (orderId, opts = {}) => {
   const { data: { session }, error: sessErr } = await window.supabaseClient.auth.getSession();
   if (sessErr) throw sessErr;
   if (!session?.access_token) throw new Error("No active session (JWT missing). Log in first, then retry.");
 
+  const body = { order_id: orderId };
+
+  // Optional override for clinician-driven (manual) scores
+  // Expected shape: { hydration: 50, acne: 50, ... } (0–100 ints)
+  if (opts && typeof opts === "object") {
+    if (opts.dimensions && typeof opts.dimensions === "object") {
+      body.dimensions_override = opts.dimensions;
+      body.dimensions_source = opts.dimensions_source || "clinician";
+    }
+  }
+
   const { data, error } = await window.supabaseClient.functions.invoke(
     "exact_trio_v1_generate_pack",
-    { body: { order_id: orderId } }
+    { body }
   );
 
   if (error) throw error;
