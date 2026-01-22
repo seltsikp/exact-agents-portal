@@ -162,6 +162,7 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
     const userId = sessData?.session?.user?.id || null;
 
     const attempts = [
+      { clinician_dimensions: scores, clinician_set_by: userId, clinician_set_at: new Date().toISOString() },
       { manual_scores: scores, manual_scores_set_by: userId },
       { manual_dimensions: scores, manual_dimensions_set_by: userId },
       { clinician_scores: scores, clinician_scores_set_by: userId },
@@ -187,7 +188,7 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
 
   function extractScoresFromOrderRow(o) {
     if (!o || typeof o !== "object") return null;
-    const candidates = ["manual_scores", "manual_dimensions", "clinician_scores", "scan_dimensions", "dimensions_override"];
+    const candidates = ["clinician_dimensions", "manual_scores", "manual_dimensions", "clinician_scores", "scan_dimensions", "dimensions_override"];
     for (const c of candidates) {
       const v = o[c];
       if (v && typeof v === "object") return v;
