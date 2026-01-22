@@ -342,8 +342,8 @@ ordersScoresList.querySelectorAll('.scoreTrack input[type="range"]').forEach(inp
       el.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const _tp = document.getElementById("tipPop");
-        if (_tp && _tp.style.display === "block") tipHide();
+        const pop = document.getElementById("tipPop");
+        if (pop && pop.style && pop.style.display === "block" && pop.getAttribute("aria-hidden") === "false") tipHide();
         else tipShow(el, title, text);
       });
     });
