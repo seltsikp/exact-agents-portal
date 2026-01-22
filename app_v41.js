@@ -1214,6 +1214,30 @@ try { emailInput?.focus(); } catch (_e) {}
     setAuthMsg("Logged in ✅");
   }
 
+    // =========================================================
+  // BLOCK: LOGIN BUTTON (MISSING — REQUIRED)
+  // =========================================================
+  if (loginBtn) {
+    loginBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+
+      const email = (emailInput?.value || "").trim().toLowerCase();
+      const password = passwordInput?.value || "";
+
+      if (!email || !password) { setAuthMsg("Enter email + password."); return; }
+
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) { setAuthMsg("Login failed: " + error.message); return; }
+        if (!data?.session) { setAuthMsg("Login succeeded but session missing."); return; }
+        await hydrateAfterLogin(data.session);
+      } catch (err) {
+        console.error("Login crashed:", err);
+        setAuthMsg("Login crashed: " + (err?.message || "Unknown error"));
+      }
+    });
+  }
+
   // =========================================================
   // BLOCK: HYDRATION (AFTER LOGIN)
   // =========================================================
