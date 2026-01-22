@@ -53,6 +53,7 @@ export function initOrdersManagement({ supabaseClient, ui, helpers, state }) {
     font-size: 13px;
     line-height: 1.35;
     box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+    pointer-events: none;
     display: none;
   }
   .tip-pop .tip-title{
@@ -86,6 +87,10 @@ function ensureTipPopExists(){
     el.setAttribute("aria-hidden", "true");
     (document.body || document.documentElement).appendChild(el);
   }
+  // If tipPop exists but is inside a hidden container, move it to <body> so fixed positioning works.
+  if (el && document.body && el.parentElement !== document.body) {
+    document.body.appendChild(el);
+  }
   return el;
 }
 
@@ -111,7 +116,7 @@ function tipShow(targetEl, title, text) {
   el.style.fontSize = "13px";
   el.style.lineHeight = "1.35";
   el.style.boxShadow = "0 12px 28px rgba(0,0,0,0.25)";
-  el.style.pointerEvents = "auto";
+  el.style.pointerEvents = "none";
 
   el.innerHTML = `
     <div class="tip-title">${escapeHtml(title || "")}</div>
@@ -336,7 +341,7 @@ ordersScoresList.querySelectorAll('.scoreTrack input[type="range"]').forEach(inp
       const text = el.getAttribute("data-tip") || "";
 
       el.addEventListener("mouseenter", () => tipShow(el, title, text));
-      el.addEventListener("mouseleave", () => tipHide());
+      el.addEventListener("mouseleave", () => { window.setTimeout(tipHide, 80); });
 
       // mobile tap toggle
       el.addEventListener("click", (e) => {
