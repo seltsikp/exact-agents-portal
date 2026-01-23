@@ -854,21 +854,53 @@ ordersScoresList.querySelectorAll('.scoreTrack input[type="range"]').forEach(inp
     ordersArtifactsList.innerHTML = items;
   }
 
+  // NOTE: Artifacts are stored in Supabase Storage and require a signed URL.
+  // We try the Edge Function first (preferred), then fall back to RPC names that may exist
+  // depending on which DB function you deployed.
   async function openArtifactSignedUrl(artifactType, version) {
-    if (!selectedOrderId) return;
+    if (!selectedOrderId) return null;
 
-    const { data, error } = await supabaseClient.rpc("get_order_artifact_signed_url", {
-      p_order_id: selectedOrderId,
-      p_artifact_type: artifactType,
-      p_version: version,
-    });
+    const payload = {
+      order_id: selectedOrderId,
+      artifact_type: artifactType,
+      version: version,
+    };
 
-    if (error) { setMsg("Signed URL failed: " + error.message); return; }
+    // 1) Preferred: Edge Function (service-role boundary)
+    try {
+      const res = await supabaseClient.functions.invoke("get_artifact_signed_url", { body: payload });
+      if (!res?.error) {
+        const d = res?.data;
+        const url = typeof d === "string" ? d : (d?.url || d?.signed_url || d?.signedUrl || null);
+        if (url) return url;
+      }
+    } catch (_e) {
+      // ignore and fall through
+    }
 
-    const url = typeof data === "string" ? data : (data?.url || data?.signed_url || null);
-    if (!url) { setMsg("Signed URL returned no url."); return; }
+    // 2) Fallback: RPC (older implementation)
+    const rpcAttempts = [
+      { fn: "get_order_artifact_signed_url", args: { p_order_id: selectedOrderId, p_artifact_type: artifactType, p_version: version } },
+      { fn: "get_order_artifact_signed_url", args: { order_id: selectedOrderId, artifact_type: artifactType, version: version } },
+      { fn: "get_artifact_signed_url", args: { p_order_id: selectedOrderId, p_artifact_type: artifactType, p_version: version } },
+      { fn: "get_artifact_signed_url", args: { order_id: selectedOrderId, artifact_type: artifactType, version: version } },
+    ];
 
-    window.open(url, "_blank", "noopener,noreferrer");
+    let lastErr = null;
+    for (const a of rpcAttempts) {
+      try {
+        const { data, error } = await supabaseClient.rpc(a.fn, a.args);
+        if (error) { lastErr = error; continue; }
+        const url = typeof data === "string" ? data : (data?.url || data?.signed_url || data?.signedUrl || null);
+        if (url) return url;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+
+    if (lastErr) setMsg("Signed URL failed: " + (lastErr?.message || String(lastErr)));
+    else setMsg("Signed URL returned no url.");
+    return null;
   }
 
   // ---------------------------------------------------------
@@ -1410,14 +1442,29 @@ async function generatePack() {
     }
 
     if (ordersArtifactsList && ordersArtifactsList.dataset.bound !== "1") {
-      ordersArtifactsList.addEventListener("click", (e) => {
+      ordersArtifactsList.addEventListener("click", async (e) => {
         const btn = e.target.closest("[data-open-artifact='1']");
         if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+
         const t = btn.getAttribute("data-artifact-type");
         const vStr = btn.getAttribute("data-artifact-version");
         const v = Number(vStr);
         if (!t || !Number.isFinite(v)) return;
-        openArtifactSignedUrl(t, v);
+
+        // UX: show something happening even if the status message is off-screen
+        const prev = btn.textContent || "Open";
+        btn.disabled = true;
+        btn.textContent = "Opening…";
+
+        try {
+          const url = await openArtifactSignedUrl(t, v);
+          if (url) window.open(url, "_blank", "noopener,noreferrer");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = prev;
+        }
       });
       ordersArtifactsList.dataset.bound = "1";
     }
