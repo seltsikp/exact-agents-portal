@@ -30,6 +30,7 @@ export function initProductsAdmin({ supabaseClient, ui, helpers }) {
 
   const paEdgeFn = el("paEdgeFn", "paEdgeFn");
   const paBoosterGate = el("paBoosterGate", "paBoosterGate");
+  const paDefaultLab = el("paDefaultLab", "paDefaultLab"); // <select> (admin-only)
 
   const paSubject = el("paSubject", "paSubject");
   const paBody = el("paBody", "paBody");
@@ -44,7 +45,7 @@ export function initProductsAdmin({ supabaseClient, ui, helpers }) {
   let productsCache = [];
   let selectedProduct = null;
   let execSettingsCache = null;
-
+  let labsCache = null; // [{id,name,orders_email,lab_code,...}]
 
   const setMsg = (t) => { if (paMsg) paMsg.textContent = t || ""; };
 
@@ -99,6 +100,42 @@ export function initProductsAdmin({ supabaseClient, ui, helpers }) {
     if (paBoosterGate) paBoosterGate.value = "75";
 
   }
+
+  async function loadLabsOnce() {
+  if (labsCache) return labsCache;
+
+  const { data, error } = await supabaseClient
+    .from("labs")
+    .select("id, name, lab_code, orders_email")
+    .order("lab_code", { ascending: true });
+
+  if (error) throw error;
+
+  labsCache = data || [];
+  return labsCache;
+}
+
+function populateLabsDropdown(selectedLabId) {
+  if (!paDefaultLab) return;
+
+  const labs = Array.isArray(labsCache) ? labsCache : [];
+  const sel = String(selectedLabId || "");
+
+  // First option = blank => fallback (agent default)
+  const opts = [
+    `<option value="">(Use Agent Default)</option>`,
+    ...labs.map(l => {
+      const id = escapeHtml(l.id);
+      const code = escapeHtml(l.lab_code || "");
+      const name = escapeHtml(l.name || "");
+      const label = (code ? `${code} — ${name}` : name) || id;
+      const isSel = (sel && sel === l.id) ? " selected" : "";
+      return `<option value="${id}"${isSel}>${label}</option>`;
+    })
+  ];
+
+  paDefaultLab.innerHTML = opts.join("");
+}
 
   async function loadProductsList() {
     setMsg("Loading products…");
@@ -199,6 +236,18 @@ if (paBoosterGate) {
     gateVal === null || gateVal === undefined ? "75" : String(gateVal);
 }
 
+    // Default lab dropdown (admin-only product config)
+try {
+  await loadLabsOnce();
+  const labVal = execSettingsCache?.settings?.default_lab_id || "";
+  populateLabsDropdown(labVal);
+} catch (e) {
+  console.error("[ProductsAdmin] loadLabs failed:", e);
+  if (paDefaultLab) {
+    paDefaultLab.innerHTML = `<option value="">(Use Agent Default)</option>`;
+  }
+}
+
     if (sErr) { setMsg("Load settings failed: " + sErr.message); return; }
 
     if (paEdgeFn) paEdgeFn.value = s?.edge_function_name || "";
@@ -274,10 +323,12 @@ gate = Math.max(0, Math.min(100, Math.round(gate)));
   send_lab_email: !!paSendEmail?.checked,
   include_signed_links: !!paIncludeLinks?.checked,
   include_attachments: !!paIncludeAttachments?.checked,
-  settings: {
+    settings: {
     ...(execSettingsCache?.settings || {}),
     booster_trigger_threshold: gate,
+    default_lab_id: (String(paDefaultLab?.value || "").trim() || null),
   },
+
 };
 
     setMsg("Saving execution settings…");
