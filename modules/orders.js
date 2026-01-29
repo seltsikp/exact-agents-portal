@@ -1303,7 +1303,8 @@ async function generatePack() {
       parts.push(`Status: ${o.status || "—"}`);
       parts.push(`Payment: ${o.payment_status || "unpaid"}`);
       if (o.dispatch_to) parts.push(`Dispatch: ${o.dispatch_to}`);
-      if (o.lab_id) parts.push(`Lab: ${o.lab_id}`);
+      if (o.lab_name_snapshot) parts.push(`Lab: ${o.lab_name_snapshot}`);
+      else if (o.lab_id) parts.push(`Lab: ${o.lab_id}`);
       ordersDetailMeta.textContent = parts.join(" | ");
     }
 
