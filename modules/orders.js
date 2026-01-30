@@ -1207,7 +1207,13 @@ async function generatePack() {
     // Cancel: admin or agent, only when draft/confirmed
     const cancellable = !isCancelled && (isAdmin || getRole() === "agent")
       && ["draft", "confirmed"].includes(String(o.status || "").toLowerCase());
-    if (ordersCancelBtn) show(ordersCancelBtn, cancellable);
+    const st = String(o.status || "").toLowerCase();
+const pay = String(o.payment_status || "").toLowerCase();
+const agentPaidBlock = (!isAdmin && pay === "paid");
+const canCancel = (st === "draft" || st === "confirmed") && !isCancelled && !agentPaidBlock;
+
+   if (ordersCancelBtn) show(ordersCancelBtn, canCancel);
+
 
     lastPaymentStatus = o.payment_status || "unpaid";
     lastPayAmountMsg = "";
