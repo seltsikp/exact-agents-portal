@@ -1160,12 +1160,12 @@ async function generatePack() {
     show(ordersArtifactsList, isAdmin);
 
     // Buttons (refund/cancel need order row, set later)
-    if (ordersMarkPaidBtn) show(ordersMarkPaidBtn, isAdmin);
-    if (ordersCompBtn) show(ordersCompBtn, isAdmin);
+    if (ordersMarkPaidBtn) show(ordersMarkPaidBtn, isAdmin && !isCancelled);
+    if (ordersCompBtn) show(ordersCompBtn, isAdmin && !isCancelled);
     if (ordersRefundBtn) show(ordersRefundBtn, false);
     if (ordersCancelBtn) show(ordersCancelBtn, false);
 
-    show(ordersGeneratePackBtn, canGeneratePack);
+    show(ordersGeneratePackBtn, canGeneratePack && !isCancelled);
 
     // Hide section headers too (they're separate from the content divs)
     const batchHeaderEl = ordersBatchSummary?.previousElementSibling;
@@ -1186,14 +1186,24 @@ async function generatePack() {
     const status = String(o.status || "").toLowerCase();
     const isCancelled = status === "cancelled";
 
+    // For cancelled orders, lock down actions + payment/score UI
+    if (ordersMarkPaidBtn) show(ordersMarkPaidBtn, isAdmin && !isCancelled);
+    if (ordersCompBtn) show(ordersCompBtn, isAdmin && !isCancelled);
+    if (ordersGeneratePackBtn) show(ordersGeneratePackBtn, canGeneratePack && !isCancelled);
+
+    // ===== CANCELLED ORDER UI LOCKDOWN =====
+    // Hide payment + clinician panels entirely when cancelled
+    if (ordersPayPanel) show(ordersPayPanel, !isCancelled);
+    if (ordersClinicianPanel) show(ordersClinicianPanel, !isCancelled);
+
     // Refund: admin-only, only when cancelled + paid
     const refundable = isAdmin
-      && String(o.status || "").toLowerCase() === "cancelled"
+      && isCancelled
       && String(o.payment_status || "").toLowerCase() === "paid";
     if (ordersRefundBtn) show(ordersRefundBtn, refundable);
 
     // Cancel: admin or agent, only when draft/confirmed
-    const cancellable = (isAdmin || getRole() === "agent")
+    const cancellable = !isCancelled && (isAdmin || getRole() === "agent")
       && ["draft", "confirmed"].includes(String(o.status || "").toLowerCase());
     if (ordersCancelBtn) show(ordersCancelBtn, cancellable);
 
@@ -1215,7 +1225,7 @@ async function generatePack() {
 
     // Determine which product this order is for (based on first order_item)
     const { product } = await loadOrderProductInfo(orderId);
-    if (product && isProbablyClinicianProduct(product)) {
+    if (!isCancelled && product && isProbablyClinicianProduct(product)) {
       clinicianEnabledForOrder = true;
       if (ordersClinicianPanel) ordersClinicianPanel.style.display = "";
 
@@ -1335,7 +1345,13 @@ async function generatePack() {
 
 
     // ===== PAYMENT (Stripe) =====
-    if (ordersPayPanel) ordersPayPanel.style.display = "";
+    // Cancelled orders: hide payment UI completely
+    if (isCancelled) {
+      if (ordersPayPanel) ordersPayPanel.style.display = "none";
+      if (stripePaymentEl) { stripePaymentEl.style.display = "none"; stripePaymentEl.innerHTML = ""; }
+      if (ordersPayMsg) ordersPayMsg.textContent = "";
+    } else {
+      if (ordersPayPanel) ordersPayPanel.style.display = "";
     if (stripePaymentEl) { stripePaymentEl.style.display = "none"; stripePaymentEl.innerHTML = ""; }
     if (ordersPayMsg) ordersPayMsg.textContent = "";
 
@@ -1373,9 +1389,11 @@ async function generatePack() {
       enforceClinicianPaymentGate();
     }
 
+    }
+
     // Reset generate button state on each open
     if (ordersGeneratePackBtn) {
-      ordersGeneratePackBtn.style.display = canGeneratePack ? "" : "none";
+      ordersGeneratePackBtn.style.display = (canGeneratePack && !isCancelled) ? "" : "none";
       ordersGeneratePackBtn.disabled = false;
       ordersGeneratePackBtn.textContent = "Generate Pack";
     }
