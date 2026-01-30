@@ -176,6 +176,7 @@ window.addEventListener("resize", tipHide);
   // Admin-only buttons live in index.html (not in ui map)
   const ordersMarkPaidBtn = document.getElementById("ordersMarkPaidBtn");
   const ordersCompBtn = document.getElementById("ordersCompBtn");
+  const ordersCancelBtn = document.getElementById("ordersCancelBtn");
   const ordersRefundBtn = document.getElementById("ordersRefundBtn");
 
 
@@ -1158,12 +1159,13 @@ async function generatePack() {
     show(ordersBatchSummary, canGeneratePack);
     show(ordersArtifactsList, isAdmin);
 
-  // Buttons (basic visibility; refund requires order row so set it later)
-if (ordersMarkPaidBtn) show(ordersMarkPaidBtn, isAdmin);
-if (ordersCompBtn) show(ordersCompBtn, isAdmin);
-if (ordersRefundBtn) show(ordersRefundBtn, false);
+    // Buttons (refund/cancel need order row, set later)
+    if (ordersMarkPaidBtn) show(ordersMarkPaidBtn, isAdmin);
+    if (ordersCompBtn) show(ordersCompBtn, isAdmin);
+    if (ordersRefundBtn) show(ordersRefundBtn, false);
+    if (ordersCancelBtn) show(ordersCancelBtn, false);
 
-show(ordersGeneratePackBtn, canGeneratePack);
+    show(ordersGeneratePackBtn, canGeneratePack);
 
     // Hide section headers too (they're separate from the content divs)
     const batchHeaderEl = ordersBatchSummary?.previousElementSibling;
@@ -1182,11 +1184,15 @@ show(ordersGeneratePackBtn, canGeneratePack);
     if (!o) { setMsg("Order not found."); return; }
 
     // Refund: admin-only, only when cancelled + paid
-const refundable = isAdmin
-  && String(o.status || "").toLowerCase() === "cancelled"
-  && String(o.payment_status || "").toLowerCase() === "paid";
-if (ordersRefundBtn) show(ordersRefundBtn, refundable);
+    const refundable = isAdmin
+      && String(o.status || "").toLowerCase() === "cancelled"
+      && String(o.payment_status || "").toLowerCase() === "paid";
+    if (ordersRefundBtn) show(ordersRefundBtn, refundable);
 
+    // Cancel: admin or agent, only when draft/confirmed
+    const cancellable = (isAdmin || getRole() === "agent")
+      && ["draft", "confirmed"].includes(String(o.status || "").toLowerCase());
+    if (ordersCancelBtn) show(ordersCancelBtn, cancellable);
 
     lastPaymentStatus = o.payment_status || "unpaid";
     lastPayAmountMsg = "";
@@ -1459,7 +1465,49 @@ if (ordersRefundBtn) show(ordersRefundBtn, refundable);
       ordersCompBtn.dataset.bound = "1";
     }
 
-      if (ordersRefundBtn && ordersRefundBtn.dataset.bound !== "1") {
+      
+    if (ordersCancelBtn && ordersCancelBtn.dataset.bound !== "1") {
+      ordersCancelBtn.addEventListener("click", async () => {
+        if (!selectedOrderId) return;
+
+        const ok = confirm("Cancel this order?");
+        if (!ok) return;
+
+        const reason = prompt("Cancellation reason (required):", "");
+        if (!reason || String(reason).trim().length < 3) {
+          setMsg("Cancellation reason required.");
+          return;
+        }
+
+        setMsg("Cancelling…");
+
+        const { data: sessData, error: sessErr } = await supabaseClient.auth.getSession();
+        if (sessErr) { setMsg("Session error: " + sessErr.message); return; }
+        const token = sessData?.session?.access_token;
+        if (!token) { setMsg("No active session token (please log in again)."); return; }
+
+        const res = await supabaseClient.functions.invoke("cancel-order", {
+          body: { order_id: selectedOrderId, reason: String(reason).trim() },
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (res.error?.context?.response) {
+          const txt = await res.error.context.response.text();
+          setMsg("Cancel failed: " + txt);
+          return;
+        }
+        if (res.error) {
+          setMsg("Cancel failed: " + (res.error.message || ""));
+          return;
+        }
+
+        setMsg("Cancelled ✅ Refreshing…");
+        await openOrder(selectedOrderId);
+      });
+      ordersCancelBtn.dataset.bound = "1";
+    }
+
+if (ordersRefundBtn && ordersRefundBtn.dataset.bound !== "1") {
     ordersRefundBtn.addEventListener("click", async () => {
       if (!selectedOrderId) return;
       if (!isAdminNow()) { setMsg("Not allowed."); return; }
