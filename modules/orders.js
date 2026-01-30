@@ -176,6 +176,8 @@ window.addEventListener("resize", tipHide);
   // Admin-only buttons live in index.html (not in ui map)
   const ordersMarkPaidBtn = document.getElementById("ordersMarkPaidBtn");
   const ordersCompBtn = document.getElementById("ordersCompBtn");
+  const ordersRefundBtn = document.getElementById("ordersRefundBtn");
+
 
   // Payment (Stripe) UI lives in index.html (not in ui map)
   const ordersPayPanel = document.getElementById("ordersPayPanel");
@@ -1157,8 +1159,14 @@ async function generatePack() {
     show(ordersArtifactsList, isAdmin);
 
     // Buttons
-    show(ordersMarkPaidBtn, isAdmin);
-    show(ordersCompBtn, isAdmin);
+show(ordersMarkPaidBtn, isAdmin);
+show(ordersCompBtn, isAdmin);
+
+const refundable = isAdmin
+  && String(o.status || "").toLowerCase() === "cancelled"
+  && String(o.payment_status || "").toLowerCase() === "paid";
+show(ordersRefundBtn, refundable);
+
     show(ordersGeneratePackBtn, canGeneratePack);
 
     // Hide section headers too (they're separate from the content divs)
@@ -1447,6 +1455,56 @@ async function generatePack() {
       ordersCompBtn.addEventListener("click", async () => setPaymentStatus("comped"));
       ordersCompBtn.dataset.bound = "1";
     }
+
+      if (ordersRefundBtn && ordersRefundBtn.dataset.bound !== "1") {
+    ordersRefundBtn.addEventListener("click", async () => {
+      if (!selectedOrderId) return;
+      if (!isAdminNow()) { setMsg("Not allowed."); return; }
+
+      const ok = confirm("Refund this order? This will call Stripe and mark the order as unpaid.");
+      if (!ok) return;
+
+      const note = prompt("Refund note (optional):", "Refund processed") || "";
+      const amtStr = prompt("Refund amount (optional, leave blank for full):", "") || "";
+      const refund_amount = (amtStr.trim() !== "") ? Number(amtStr) : null;
+
+      if (refund_amount !== null && (!Number.isFinite(refund_amount) || refund_amount <= 0)) {
+        setMsg("Invalid refund amount.");
+        return;
+      }
+
+      setMsg("Processing refund…");
+
+      const { data: sessData, error: sessErr } = await supabaseClient.auth.getSession();
+      if (sessErr) { setMsg("Session error: " + sessErr.message); return; }
+      const token = sessData?.session?.access_token;
+      if (!token) { setMsg("No active session token (please log in again)."); return; }
+
+      const body = { order_id: selectedOrderId };
+      if (refund_amount !== null) body.refund_amount = refund_amount;
+      if (note.trim() !== "") body.note = note.trim();
+
+      const res = await supabaseClient.functions.invoke("refund-order", {
+        body,
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.error?.context?.response) {
+        const txt = await res.error.context.response.text();
+        setMsg("Refund failed: " + txt);
+        return;
+      }
+      if (res.error) {
+        setMsg("Refund failed: " + (res.error.message || ""));
+        return;
+      }
+
+      setMsg("Refund succeeded ✅ Refreshing…");
+      await openOrder(selectedOrderId);
+    });
+
+    ordersRefundBtn.dataset.bound = "1";
+  }
 
     if (ordersArtifactsList && ordersArtifactsList.dataset.bound !== "1") {
       ordersArtifactsList.addEventListener("click", async (e) => {
