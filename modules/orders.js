@@ -1155,6 +1155,8 @@ async function generatePack() {
     const isAdmin = isAdminNow();
     const canGeneratePack = canGeneratePackNow();
 
+    let isCancelled = false;
+
     // Base visibility
     show(ordersBatchSummary, canGeneratePack);
     show(ordersArtifactsList, isAdmin);
@@ -1184,7 +1186,7 @@ async function generatePack() {
     if (!o) { setMsg("Order not found."); return; }
 
     const status = String(o.status || "").toLowerCase();
-    const isCancelled = status === "cancelled";
+    isCancelled = status === "cancelled";
 
     // For cancelled orders, lock down actions + payment/score UI
     if (ordersMarkPaidBtn) show(ordersMarkPaidBtn, isAdmin && !isCancelled);
