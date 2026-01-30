@@ -1521,9 +1521,7 @@ const canCancel = (st === "draft" || st === "confirmed") && !isCancelled && !age
           
         });
 
-        console.log("[CANCEL] invoke result:", res);
-
-        if (res.error?.context?.response) {
+          if (res.error?.context?.response) {
           const txt = await res.error.context.response.text();
           setMsg("Cancel failed: " + txt);
           return;
