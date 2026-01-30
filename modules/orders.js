@@ -1025,10 +1025,14 @@ const isPaidLike = (pay === "paid" || pay === "comped");
       const token = sessData?.session?.access_token;
       if (!token) throw new Error("No session token");
 
-      const res = await supabaseClient.functions.invoke("stripe_sync_payment_status", {
-        body: { order_id: orderId },
-        headers: { Authorization: `Bearer ${token}` }
-      });
+     const res = await supabaseClient.functions.invoke("stripe_create_payment_intent", {
+  body: { order_id: orderId },
+  headers: {
+    Authorization: `Bearer ${token}`,
+    apikey: state.supabaseAnonKey
+  },
+});
+
 
       if (res.error?.context) {
         const txt = res.error?.context?.response
