@@ -1187,6 +1187,8 @@ async function generatePack() {
 
     const status = String(o.status || "").toLowerCase();
     isCancelled = status === "cancelled";
+    const isRefunded = !!o.refunded_at;
+
 
     // For cancelled orders, lock down actions + payment/score UI
     if (ordersMarkPaidBtn) show(ordersMarkPaidBtn, isAdmin && !isCancelled);
@@ -1339,7 +1341,7 @@ const canCancel = (st === "draft" || st === "confirmed") && !isCancelled && !age
   const parts = [];
   parts.push(`Order ID: ${o.id}`);
   parts.push(`Status: ${o.status || "—"}`);
-  parts.push(`Payment: ${o.payment_status || "unpaid"}`);
+  parts.push(`Payment: ${isRefunded ? "refunded" : (o.payment_status || "unpaid")}`);
   if (o.dispatch_to) parts.push(`Dispatch: ${o.dispatch_to}`);
 
   // Admin-only: show lab
