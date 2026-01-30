@@ -1183,6 +1183,9 @@ async function generatePack() {
     if (error) { setMsg("Load order failed: " + error.message); return; }
     if (!o) { setMsg("Order not found."); return; }
 
+    const status = String(o.status || "").toLowerCase();
+    const isCancelled = status === "cancelled";
+
     // Refund: admin-only, only when cancelled + paid
     const refundable = isAdmin
       && String(o.status || "").toLowerCase() === "cancelled"
