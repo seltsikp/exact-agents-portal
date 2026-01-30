@@ -1159,13 +1159,15 @@ async function generatePack() {
     show(ordersArtifactsList, isAdmin);
 
     // Buttons
-show(ordersMarkPaidBtn, isAdmin);
-show(ordersCompBtn, isAdmin);
+if (ordersMarkPaidBtn) show(ordersMarkPaidBtn, isAdmin);
+if (ordersCompBtn) show(ordersCompBtn, isAdmin);
 
 const refundable = isAdmin
   && String(o.status || "").toLowerCase() === "cancelled"
   && String(o.payment_status || "").toLowerCase() === "paid";
-show(ordersRefundBtn, refundable);
+
+if (ordersRefundBtn) show(ordersRefundBtn, refundable);
+
 
     show(ordersGeneratePackBtn, canGeneratePack);
 
