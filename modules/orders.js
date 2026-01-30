@@ -967,7 +967,7 @@ async function generatePack() {
     if (oErr) throw new Error("Payment check failed: " + oErr.message);
 
     const pay = String(o?.payment_status || "unpaid").toLowerCase();
-    const isPaidLike = (pay === "paid" || pay === "comped");
+    const isPaidLike = (pay2 === "paid" || pay2 === "comped");
     if (!isPaidLike) {
       setMsg("Payment required — please Pay Now first.");
       if (btn) {
@@ -1407,7 +1407,7 @@ const canCancel = (st === "draft" || st === "confirmed") && !isCancelled && !age
     }
 
     // Disable generate unless paid/comped
-    const pay = String(o.payment_status || "unpaid").toLowerCase();
+    const pay2 = String(o.payment_status || "unpaid").toLowerCase();
     const isPaidLike = (pay === "paid" || pay === "comped");
 
     // Detect existing pack (any batch exists)
