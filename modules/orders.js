@@ -1158,18 +1158,12 @@ async function generatePack() {
     show(ordersBatchSummary, canGeneratePack);
     show(ordersArtifactsList, isAdmin);
 
-    // Buttons
+  // Buttons (basic visibility; refund requires order row so set it later)
 if (ordersMarkPaidBtn) show(ordersMarkPaidBtn, isAdmin);
 if (ordersCompBtn) show(ordersCompBtn, isAdmin);
+if (ordersRefundBtn) show(ordersRefundBtn, false);
 
-const refundable = isAdmin
-  && String(o.status || "").toLowerCase() === "cancelled"
-  && String(o.payment_status || "").toLowerCase() === "paid";
-
-if (ordersRefundBtn) show(ordersRefundBtn, refundable);
-
-
-    show(ordersGeneratePackBtn, canGeneratePack);
+show(ordersGeneratePackBtn, canGeneratePack);
 
     // Hide section headers too (they're separate from the content divs)
     const batchHeaderEl = ordersBatchSummary?.previousElementSibling;
@@ -1186,6 +1180,13 @@ if (ordersRefundBtn) show(ordersRefundBtn, refundable);
 
     if (error) { setMsg("Load order failed: " + error.message); return; }
     if (!o) { setMsg("Order not found."); return; }
+
+    // Refund: admin-only, only when cancelled + paid
+const refundable = isAdmin
+  && String(o.status || "").toLowerCase() === "cancelled"
+  && String(o.payment_status || "").toLowerCase() === "paid";
+if (ordersRefundBtn) show(ordersRefundBtn, refundable);
+
 
     lastPaymentStatus = o.payment_status || "unpaid";
     lastPayAmountMsg = "";
