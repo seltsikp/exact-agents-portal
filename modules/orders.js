@@ -1061,10 +1061,21 @@ async function generatePack() {
     const token = sessData?.session?.access_token;
     if (!token) { ordersPayMsg.textContent = "No active session token (please log in again)."; return; }
 
-    const res = await supabaseClient.functions.invoke("stripe_create_payment_intent", {
-      body: { order_id: orderId },
-      headers: { Authorization: `Bearer ${token}` }
-    });
+// Get a fresh access token from Supabase auth
+const { data: sessionData, error: sessErr } = await supabaseClient.auth.getSession();
+if (sessErr) throw new Error("Auth session error: " + sessErr.message);
+
+const token = sessionData?.session?.access_token;
+if (!token) throw new Error("Not logged in or session expired. Please log in again.");
+
+// Invoke Edge Function with explicit Authorization header
+const res = await supabaseClient.functions.invoke("stripe_create_payment_intent", {
+  body: { order_id: orderId },
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+});
+
 
     if (res.error?.context) {
       const txt = await res.error.context.text();
