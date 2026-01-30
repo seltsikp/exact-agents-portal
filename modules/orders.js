@@ -966,8 +966,9 @@ async function generatePack() {
 
     if (oErr) throw new Error("Payment check failed: " + oErr.message);
 
-    const pay = String(o?.payment_status || "unpaid").toLowerCase();
-    const isPaidLike = (pay2 === "paid" || pay2 === "comped");
+const pay = String(o?.payment_status || "unpaid").toLowerCase();
+const isPaidLike = (pay === "paid" || pay === "comped");
+;
     if (!isPaidLike) {
       setMsg("Payment required — please Pay Now first.");
       if (btn) {
@@ -1056,17 +1057,13 @@ async function generatePack() {
     stripePaymentEl.style.display = "none";
     stripePaymentEl.innerHTML = "";
 
-    const { data: sessData, error: sessErr } = await supabaseClient.auth.getSession();
-    if (sessErr) { ordersPayMsg.textContent = "Session error: " + sessErr.message; return; }
-    const token = sessData?.session?.access_token;
-    if (!token) { ordersPayMsg.textContent = "No active session token (please log in again)."; return; }
-
-// Get a fresh access token from Supabase auth
+// Get a fresh access token from Supabase auth (JWT required because Verify JWT is ON)
 const { data: sessionData, error: sessErr } = await supabaseClient.auth.getSession();
-if (sessErr) throw new Error("Auth session error: " + sessErr.message);
+if (sessErr) { ordersPayMsg.textContent = "Session error: " + sessErr.message; return; }
 
 const token = sessionData?.session?.access_token;
-if (!token) throw new Error("Not logged in or session expired. Please log in again.");
+if (!token) { ordersPayMsg.textContent = "No active session token (please log in again)."; return; }
+
 
 // Invoke Edge Function with explicit Authorization header
 const res = await supabaseClient.functions.invoke("stripe_create_payment_intent", {
@@ -1420,8 +1417,9 @@ const canCancel = (st === "draft" || st === "confirmed") && !isCancelled && !age
     }
 
     // Disable generate unless paid/comped
-    const pay2 = String(o.payment_status || "unpaid").toLowerCase();
-    const isPaidLike = (pay === "paid" || pay === "comped");
+const pay2 = String(o.payment_status || "unpaid").toLowerCase();
+const isPaidLike = (pay2 === "paid" || pay2 === "comped");
+;
 
     // Detect existing pack (any batch exists)
     const { data: existingBatches } = await supabaseClient
