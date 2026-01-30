@@ -25,7 +25,7 @@ console.log("EXACT Agents Portal loaded (v42.1)");
 // BLOCK: SUPABASE CLIENT
 // =========================================================
 const SUPABASE_URL = "https://hwsycurvaayknghfgjxo.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_SUid4pV3X35G_WyTPGuhMg_WQbOMJyJ";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3c3ljdXJ2YWF5a25naGZnanhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc2MzYzNjksImV4cCI6MjA4MzIxMjM2OX0.Dyqgo3Wegv4WHeVzTlumv8YWkpcxPog_7AQtDf8CBW0";
 const STRIPE_PUBLISHABLE_KEY =
   "pk_test_51SrZvuH7nI5LR99YsjnLy2FKDx0Fcl8KAQMyWkK8LGHlg6IB1Ex97sqKJfvTOBxCw1snPG65A2WLEE2WdrlxaFS600sU5ZDKty";
 
