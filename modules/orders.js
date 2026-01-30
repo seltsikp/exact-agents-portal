@@ -1502,7 +1502,7 @@ async function generatePack() {
           return;
         }
 
-        setMsg("Cancelling…");
+        setMsg("Cancelling… (please wait)");
 
         const { data: sessData, error: sessErr } = await supabaseClient.auth.getSession();
         if (sessErr) { setMsg("Session error: " + sessErr.message); return; }
@@ -1512,7 +1512,10 @@ async function generatePack() {
         const res = await supabaseClient.functions.invoke("cancel-order", {
           body: { order_id: selectedOrderId, reason: String(reason).trim() },
           headers: { Authorization: `Bearer ${token}` }
+          
         });
+
+        console.log("[CANCEL] invoke result:", res);
 
         if (res.error?.context?.response) {
           const txt = await res.error.context.response.text();
